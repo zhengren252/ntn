@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="TACoreService Acceptance Tests" tests="2" failures="1" errors="0" time="3.801" timestamp="2025-08-08T11:54:34.989101">
+  <testsuite name="演示测试套件" tests="2" failures="1" errors="0" time="3.801" package="tacoreservice.acceptance.DEMO_SUITE">
+    <testcase name="API基础功能测试" classname="tacoreservice.acceptance.DEMO_SUITE.DEMO-001" time="1.234">
+      <system-out>[PASS] API响应时间检查
+  Details: 响应时间: 45ms
+[PASS] 数据格式验证
+  Details: JSON格式正确</system-out>
+    </testcase>
+    <testcase name="连接稳定性测试" classname="tacoreservice.acceptance.DEMO_SUITE.DEMO-002" time="2.567">
+      <failure message="连接超时" type="ConnectionError">连接超时</failure>
+      <system-out>[FAIL] 连接稳定性测试
+  Details: 连接在第3次尝试时失败</system-out>
+    </testcase>
+  </testsuite>
+</testsuites>

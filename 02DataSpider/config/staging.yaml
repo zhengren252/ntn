@@ -1,0 +1,36 @@
+api:
+  cors:
+    enabled: true
+  host: 0.0.0.0
+  port: 5000
+  rate_limit:
+    requests_per_minute: 60
+  workers: 1
+app:
+  debug: false
+  environment: development
+  log_level: INFO
+  name: NeuroTrade DataSpider
+  version: 1.0.0
+crawler:
+  concurrent_requests: 16
+  download_delay: 1.0
+  retry_times: 3
+  timeout: 30
+  user_agents:
+  - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+  - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+monitoring:
+  alert_thresholds:
+    cpu_percent: 80.0
+    memory_percent: 85.0
+  health_check_interval: 60
+  metrics_retention_days: 7
+processor:
+  batch_size: 100
+  cleaning_level: standard
+  max_workers: 4
+  validation_level: standard
+zmq:
+  high_water_mark: 1000
+  publisher_port: 5555

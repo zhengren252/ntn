@@ -1,0 +1,22 @@
+{
+  "name": "mock-reviewguard",
+  "version": "1.0.0",
+  "description": "模拟ReviewGuard服务，用于TradeGuard集成测试",
+  "main": "mock-reviewguard.js",
+  "scripts": {
+    "start": "node mock-reviewguard.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "redis": "^4.6.0",
+    "zeromq": "^6.0.0"
+  },
+  "keywords": [
+    "mock",
+    "reviewguard",
+    "integration-test",
+    "tradeguard"
+  ],
+  "author": "TradeGuard Test Team",
+  "license": "MIT"
+}

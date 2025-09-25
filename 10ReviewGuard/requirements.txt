@@ -1,0 +1,48 @@
+﻿# ReviewGuard Module - Python Dependencies
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+aiosqlite==0.19.0
+greenlet==3.0.1
+
+# Communication & Messaging
+zmq==0.0.0
+pyzmq==25.1.1
+redis==5.0.1
+httpx==0.25.2
+
+# Data Processing
+numpy==1.24.3
+pandas==2.0.3
+requests==2.31.0
+
+# Utilities
+python-multipart==0.0.6
+python-dotenv==1.0.0
+pyyaml==6.0.1
+psutil==5.9.5
+loguru==0.7.2
+click==8.1.7
+colorama==0.4.6
+tabulate==0.9.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Security & Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+email-validator==2.1.0
+
+# Code Analysis & Review
+flake8==6.0.0
+black==23.7.0
+mypy==1.5.1
+bandit==1.7.5

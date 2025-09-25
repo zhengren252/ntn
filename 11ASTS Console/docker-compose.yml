@@ -1,0 +1,185 @@
+# NeuroTrade Nexus - 前端管理界面 Docker Compose 配置
+# 容器名称: 11ASTS Console
+version: '3.8'
+
+services:
+  # 基础服务
+  redis:
+    image: redis:alpine
+    container_name: ntn_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ntn_network
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前端管理界面 (ASTS Console)
+  m11_asts_console:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: "11_asts_console"
+    ports:
+      - "3000:80"  # 映射到宿主机3000端口
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=production
+    env_file:
+      - .env.production
+    depends_on:
+      redis:
+        condition: service_healthy
+      api_factory:
+        condition: service_started
+      tacore_service:
+        condition: service_started
+    networks:
+      - ntn_network
+    volumes:
+      - ./logs/frontend:/var/log/nginx  # 日志挂载
+      - nginx_cache:/var/cache/nginx    # Nginx缓存
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.asts-console.rule=Host(`console.neurotrade.local`)"
+      - "traefik.http.services.asts-console.loadbalancer.server.port=80"
+
+  # 核心AI服务 (TACoreService)
+  tacore_service:
+    image: neurotrade/tacore-service:latest
+    container_name: ntn_tacore_service
+    command: python main.py
+    ports:
+      - "5555:5555"
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ntn_network
+    volumes:
+      - tacore_data:/app/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # TACoreService 工作进程
+  tacore_worker:
+    image: neurotrade/tacore-service:latest
+    command: python worker.py
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - tacore_service
+      - redis
+    networks:
+      - ntn_network
+    restart: unless-stopped
+    deploy:
+      replicas: 4  # 4个工作进程
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # API工厂 (前端主要依赖)
+  api_factory:
+    image: neurotrade/api-factory:latest
+    container_name: ntn_api_factory
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - TACORE_URL=tcp://tacore_service:5555
+    depends_on:
+      redis:
+        condition: service_healthy
+      tacore_service:
+        condition: service_started
+    networks:
+      - ntn_network
+    volumes:
+      - api_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 人工审核模组
+  review_guard:
+    image: neurotrade/review-guard:latest
+    container_name: ntn_review_guard
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - ntn_network
+    restart: unless-stopped
+
+  # 系统监控 (可观测性中心)
+  monitoring_center:
+    image: neurotrade/monitoring-center:latest
+    container_name: ntn_monitoring
+    ports:
+      - "9090:9090"
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - ntn_network
+    volumes:
+      - monitoring_data:/app/data
+    restart: unless-stopped
+
+# 网络配置
+networks:
+  ntn_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 数据卷配置
+volumes:
+  redis_data:
+    driver: local
+  tacore_data:
+    driver: local
+  api_logs:
+    driver: local
+  monitoring_data:
+    driver: local
+  nginx_cache:
+    driver: local

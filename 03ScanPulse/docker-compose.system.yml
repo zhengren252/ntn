@@ -1,0 +1,409 @@
+# AI智能体驱动交易系统 V3.5 - 完整系统编排
+# 包含所有12个模组的统一部署配置
+
+services:
+  # ===================================================================
+  # 核心服务层
+  # ===================================================================
+  
+  # TradingAgents-CN 核心服务
+  tacore_service:
+    build:
+      context: ../12TACoreService
+      dockerfile: Dockerfile
+    container_name: ntn-ta-core-service
+    restart: unless-stopped
+    # ports:
+    #   - "5555:5555"
+    volumes:
+      - ./logs/tacore:/app/logs
+    environment:
+      - SERVICE_ENV=production
+      - BIND_ADDRESS=tcp://*:5555
+      - WORKER_COUNT=4
+    networks:
+      - trading_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',5555)); s.close(); sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: ntn-redis
+    restart: unless-stopped
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ../config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - trading_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ===================================================================
+  # 业务模组层 (11个模组)
+  # ===================================================================
+
+  # 01. API工厂模组
+  api_forge:
+    build:
+      context: ../01APIForge
+      dockerfile: Dockerfile
+    container_name: ntn-api-forge
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./logs/api_factory:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          python - << 'PY'
+          import urllib.request, sys, socket
+          socket.setdefaulttimeout(4)
+          paths = ['/health','/api/health','/live','/ready']
+          base = 'http://localhost:8000'
+          ok = False
+          for p in paths:
+              try:
+                  with urllib.request.urlopen(base + p) as r:
+                      if 200 <= r.getcode() < 300:
+                          ok = True
+                          break
+              except Exception:
+                  pass
+          sys.exit(0 if ok else 1)
+          PY
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 02. 爬虫模组
+  data_spider:
+    build:
+      context: ../02DataSpider
+      dockerfile: Dockerfile
+    container_name: ntn-data-spider
+    restart: unless-stopped
+    ports:
+      - "8002:5000"
+    volumes:
+      - ./logs/crawler:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          python - << 'PY'
+          import urllib.request, sys, socket
+          socket.setdefaulttimeout(4)
+          paths = ['/health','/api/health','/live','/ready']
+          base = 'http://localhost:5000'
+          ok = False
+          for p in paths:
+              try:
+                  with urllib.request.urlopen(base + p) as r:
+                      if 200 <= r.getcode() < 300:
+                          ok = True
+                          break
+              except Exception:
+                  pass
+          sys.exit(0 if ok else 1)
+          PY
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 03. 扫描器模组
+  scan_pulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ntn-scan-pulse
+    restart: unless-stopped
+    # ports:
+    #   - "8003:8000"
+    #   - "5556:5556"  # ZMQ Publisher
+    #   - "5557:5557"  # ZMQ Subscriber
+    #   - "5558:5558"  # ZMQ Reply
+    volumes:
+      - ./logs/scanner:/app/logs
+      - ./config:/app/config
+    env_file:
+      - ./.env.prod
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+      - PYTHONPATH=/app:/app/deps
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+            python - << 'PY'
+            import urllib.request, sys, socket
+            socket.setdefaulttimeout(4)
+            paths = ['/health','/api/health','/live','/ready']
+            base = 'http://localhost:8000'
+            ok = False
+            for p in paths:
+                try:
+                    with urllib.request.urlopen(base + p) as r:
+                        if 200 <= r.getcode() < 300:
+                            ok = True
+                            break
+                except Exception:
+                    pass
+            sys.exit(0 if ok else 1)
+            PY
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 04. 交易员模组
+  trader:
+    build:
+      context: ./04TraderBot
+      dockerfile: Dockerfile
+    container_name: trader
+    restart: unless-stopped
+    # ports:
+    #   - "8004:8000"
+    volumes:
+      - ./logs/trader:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 05. 风控模组
+  risk_manager:
+    build:
+      context: ./05RiskGuard
+      dockerfile: Dockerfile
+    container_name: risk_manager
+    restart: unless-stopped
+    # ports:
+    #   - "8005:8000"
+    volumes:
+      - ./logs/risk_manager:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 06. 投资组合模组
+  portfolio:
+    build:
+      context: ./06PortfolioSync
+      dockerfile: Dockerfile
+    container_name: portfolio
+    restart: unless-stopped
+    # ports:
+    #   - "8006:8000"
+    volumes:
+      - ./logs/portfolio:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 07. 通知模组
+  notifier:
+    build:
+      context: ./07NotifyHub
+      dockerfile: Dockerfile
+    container_name: notifier
+    restart: unless-stopped
+    # ports:
+    #   - "8007:8000"
+    volumes:
+      - ./logs/notifier:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 08. 报告与审计模组
+  auditor:
+    build:
+      context: ./08AuditTrail
+      dockerfile: Dockerfile
+    container_name: auditor
+    restart: unless-stopped
+    # ports:
+    #   - "8008:8000"
+    volumes:
+      - ./logs/auditor:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 09. 回测模组
+  backtester:
+    build:
+      context: ../04OptiCore
+      dockerfile: Dockerfile
+    container_name: backtester
+    restart: unless-stopped
+    # ports:
+    #   - "8009:8000"
+    volumes:
+      - ./logs/backtester:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+  # 10. 用户界面模组
+  web_ui:
+    build:
+      context: "../11ASTS Console"
+      dockerfile: Dockerfile
+    container_name: web_ui
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./logs/web_ui:/app/logs
+    environment:
+      - MODULE_ENV=production
+      - API_BASE_URL=http://api_forge:8000
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - api_forge
+      - redis
+    networks:
+      - trading_network
+
+  # 11. 监控模组
+  monitor:
+    build:
+      context: ../14ObservabilityCenter
+      dockerfile: Dockerfile
+    container_name: monitor
+    restart: unless-stopped
+    ports:
+      - "8011:8000"
+      - "9090:9090"  # Prometheus
+    volumes:
+      - ./logs/monitor:/app/logs
+      - prometheus_data:/prometheus
+    environment:
+      - MODULE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading_network
+
+# ===================================================================
+# 网络和存储配置
+# ===================================================================
+
+networks:
+  trading_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local

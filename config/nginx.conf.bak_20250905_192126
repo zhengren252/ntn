@@ -1,0 +1,233 @@
+﻿# Nginx 鐢熶骇鐜閰嶇疆鏂囦欢
+# AI鏅鸿兘浣撻┍鍔ㄤ氦鏄撶郴缁烿1.2 - 鍏ㄥ眬闆嗘垚娴嬭瘯涓撶敤
+
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # 鏃ュ織鏍煎紡
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+
+    # 鍩虹閰嶇疆
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    client_max_body_size 100M;
+    
+    # Gzip鍘嬬缉
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+
+    # 涓婃父鏈嶅姟鍣ㄩ厤缃?
+    upstream api_forge {
+        server api_forge:8000;
+    }
+
+    upstream data_spider {
+        server data_spider:5000;
+    }
+
+    upstream scan_pulse {
+        server scan_pulse:8000;
+    }
+
+    upstream opti_core {
+        server opti_core:8000;
+    }
+
+    upstream trade_guard {
+        server trade_guard:8000;
+    }
+
+    upstream neuro_hub {
+        server neuro_hub:8000;
+    }
+
+    upstream mms {
+        server mms:8000;
+    }
+
+    upstream review_guard {
+        server review_guard:8000;
+    }
+
+    upstream asts_console {
+        server asts_console:80;
+    }
+
+    upstream ta_core_service {
+        server ta_core_service:8000;
+    }
+
+    upstream ai_strategy_assistant {
+        server ai_strategy_assistant:8000;
+    }
+
+    upstream observability_center {
+        server observability_center:80;
+    }
+
+    # 涓绘湇鍔″櫒閰嶇疆
+    server {
+        listen 80;
+        server_name localhost;
+
+        # API缃戝叧璺敱
+        location /api/forge/ {
+            proxy_pass http://api_forge/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/spider/ {
+            proxy_pass http://data_spider/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/scan/ {
+            proxy_pass http://scan_pulse/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/opti/ {
+            proxy_pass http://opti_core/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/trade/ {
+            proxy_pass http://trade_guard/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/hub/ {
+            proxy_pass http://neuro_hub/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/mms/ {
+            proxy_pass http://mms/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/review/ {
+            proxy_pass http://review_guard/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /console/ {
+            proxy_pass http://asts_console/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/ta/ {
+            proxy_pass http://ta_core_service/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/ai/ {
+            proxy_pass http://ai_strategy_assistant/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /observability/ {
+            proxy_pass http://observability_center/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 榛樿棣栭〉
+        location / {
+            proxy_pass http://asts_console/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 鍋ュ悍妫€鏌?
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+
+    # SSL閰嶇疆锛堢敓浜х幆澧冧娇鐢級
+    # server {
+    #     listen 443 ssl http2;
+    #     server_name your-domain.com;
+    #     
+    #     ssl_certificate /etc/ssl/certs/your-cert.pem;
+    #     ssl_certificate_key /etc/ssl/private/your-key.pem;
+    #     
+    #     ssl_protocols TLSv1.2 TLSv1.3;
+    #     ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    #     ssl_prefer_server_ciphers off;
+    #     
+    #     # 鍏朵粬閰嶇疆涓嶩TTP鐩稿悓
+    # }
+}

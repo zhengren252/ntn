@@ -1,0 +1,148 @@
+# 开发环境配置
+# 严格遵循全局规范：数据隔离与环境管理规范
+# 环境定义：development - 开发环境独立配置
+
+# Redis配置 - 开发环境使用独立数据库
+redis:
+  host: localhost
+  port: 6379
+  db: 1  # 开发环境使用db1，与生产环境隔离
+  password: null
+  
+# 日志配置 - 开发环境使用DEBUG级别
+logging:
+  level: DEBUG  # 开发环境详细日志
+  
+  # 控制台输出配置
+  console:
+    enabled: true
+    colorized: true
+    
+  # 文件日志配置
+  file:
+    enabled: true
+    path: "./logs/dev/scanner.log"
+    level: DEBUG
+    
+  # 结构化日志
+  structured:
+    enabled: true
+    format: "json"
+    pretty_print: true  # 开发环境美化输出
+    
+# 扫描器配置 - 开发环境调整
+scanner:
+  scan_interval: 60  # 开发环境延长扫描间隔
+  max_opportunities: 50  # 减少处理数量
+  batch_size: 20
+  timeout: 15  # 增加超时时间便于调试
+  
+# 规则配置 - 开发环境宽松阈值
+rules:
+  three_high:
+    volatility_threshold: 0.03  # 降低阈值便于测试
+    volume_threshold: 500000    # 降低成交量要求
+    min_score: 50               # 降低最低分数
+    
+  black_horse:
+    score_multiplier: 1.2       # 降低倍数
+    news_timeout: 7200          # 延长新闻有效期
+    min_confidence: 0.5         # 降低置信度要求
+    
+  potential_gems:
+    max_market_cap: 200000000   # 放宽市值限制
+    max_price: 2.0              # 放宽价格限制
+    min_volume: 20000           # 降低成交量要求
+    
+# Mock数据配置 - 仅限开发环境
+mock_data:
+  enabled: true  # 开发环境启用Mock数据
+  
+  # 模拟市场数据
+  market_data:
+    symbols:
+      - "BTC/USDT"
+      - "ETH/USDT" 
+      - "RNDR/USDT"
+      - "SOL/USDT"
+      - "AVAX/USDT"
+    update_interval: 30
+    
+  # 模拟新闻数据
+  news_data:
+    enabled: true
+    events:
+      - type: "listing_announcement"
+        exchange: "coinbase"
+        symbol: "RNDR"
+        content: "Coinbase announces RNDR listing"
+      - type: "partnership"
+        exchange: "binance"
+        symbol: "SOL"
+        content: "Solana partners with major DeFi protocol"
+    
+# API工厂配置 - 开发环境
+api_factory:
+  url: "http://localhost:8000"
+  timeout: 20  # 增加超时时间
+  retry_times: 2  # 减少重试次数
+  
+  # 开发环境使用模拟端点
+  mock_endpoints:
+    enabled: true
+    base_url: "http://localhost:8001/mock"
+    
+# TACoreService配置 - 开发环境
+tacore_service:
+  enabled: true
+  server_address: "tcp://localhost:5555"
+  timeout: 30000  # 30秒超时
+  mock_mode: true  # 开发环境启用模拟模式
+  retry_attempts: 3
+  retry_delay: 1000  # 1秒重试延迟
+  
+# 性能监控 - 开发环境宽松配置
+monitoring:
+  enabled: true
+  metrics_interval: 120  # 延长指标收集间隔
+  
+  thresholds:
+    max_memory_mb: 1024    # 增加内存限制
+    max_cpu_percent: 90    # 放宽CPU限制
+    max_scan_time: 60      # 增加扫描时间限制
+    
+# 数据清理配置 - 开发环境
+data_quality:
+  cleanup:
+    enabled: true
+    cleanup_interval: 1800  # 30分钟清理一次
+    max_age_hours: 6        # 数据保存6小时
+    
+# 调试配置
+debug:
+  enabled: true
+  
+  # 详细输出配置
+  verbose:
+    zmq_messages: true      # 输出ZMQ消息详情
+    redis_operations: true  # 输出Redis操作详情
+    rule_processing: true   # 输出规则处理详情
+    
+  # 性能分析
+  profiling:
+    enabled: false
+    output_dir: "./logs/dev/profiling"
+    
+# 测试配置
+testing:
+  enabled: true
+  
+  # 单元测试配置
+  unit_tests:
+    mock_external_apis: true
+    use_test_redis_db: true  # 使用测试专用Redis数据库
+    
+  # 集成测试配置
+  integration_tests:
+    timeout: 30
+    max_retries: 3

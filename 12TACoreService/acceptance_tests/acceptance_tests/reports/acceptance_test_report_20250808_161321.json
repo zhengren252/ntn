@@ -1,0 +1,96 @@
+{
+  "report_info": {
+    "title": "TACoreService 验收测试报告",
+    "version": "1.0.0",
+    "generated_at": "2025-08-08T16:13:21.662983",
+    "plan_id": "ACCEPTANCE-TEST-PLAN-M12-TACORESVC-V1.0"
+  },
+  "summary": {
+    "timestamp": "2025-08-08 16:13:21",
+    "total_tests": 3,
+    "passed_tests": 0,
+    "failed_tests": 3,
+    "success_rate": 0.0,
+    "total_duration": 1.0550973415374756
+  },
+  "test_results": [
+    {
+      "case_id": "HTTP-API-01",
+      "title": "GET /status - 服务状态接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 0.04012703895568848,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": false,
+          "details": "实际状态码: 404"
+        },
+        {
+          "description": "验证响应JSON体中包含关键字段",
+          "passed": false,
+          "details": "缺失字段: ['service_status', 'active_workers', 'total_requests_processed']"
+        },
+        {
+          "description": "验证字段类型和值的合理性",
+          "passed": false,
+          "details": "service_status: None (类型错误: NoneType); active_workers: None (无效); total_requests_processed: None (无效)"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HTTP-API-02",
+      "title": "GET /workers - 工作进程列表接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 0.004586458206176758,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": false,
+          "details": "实际状态码: 404"
+        },
+        {
+          "description": "验证响应JSON体是一个数组",
+          "passed": false,
+          "details": "响应类型: dict, 长度: N/A"
+        },
+        {
+          "description": "验证数组中每个对象的结构都符合规格",
+          "passed": true,
+          "details": "工作进程列表为空"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HTTP-API-03",
+      "title": "GET /logs - 日志获取接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 0.002688169479370117,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": false,
+          "details": "实际状态码: 404"
+        },
+        {
+          "description": "验证返回的日志条数不超过50条",
+          "passed": true,
+          "details": "实际日志条数: 0"
+        },
+        {
+          "description": "验证返回的日志级别均为INFO或更高级别",
+          "passed": true,
+          "details": "无日志数据"
+        }
+      ],
+      "error_message": null
+    }
+  ]
+}

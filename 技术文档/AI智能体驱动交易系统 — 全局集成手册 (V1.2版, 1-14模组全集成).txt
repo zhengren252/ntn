@@ -1,0 +1,301 @@
+# AI智能体驱动交易系统 — 全局集成手册 (V1.2版, 1-14模组全集成)
+
+## 手册导读
+
+本文档是AI智能体驱动交易系统（ASTS）的最终集成技术说明，详细描述了全部14个模组如何协同工作，构成一个完整的、生产级的交易系统。本文档旨在为所有团队成员提供统一的架构认知，并为自动化部署提供机器可读的配置蓝图。
+
+---
+
+## 1. 系统核心设计理念 (V1.2 全集成版)
+
+* [cite_start]**核心思想**: 系统严格遵循“化整为零，分而治之”的设计哲学 [cite: 3, 95, 169, 392, 457, 526, 808, 871][cite_start]。它由**14个**高内聚、低耦合的独立模组构成，每个模组都作为独立的Docker容器运行 [cite: 23, 115, 189, 412, 477, 546, 668, 828, 891]。
+* [cite_start]**通信与协作**: 模组之间通过一个名为ZeroMQ的高性能消息总线进行异步通信 [cite: 5, 97, 171, 394, 459, 528, 810, 873][cite_start]，并辅以标准的HTTP API进行服务调用 [cite: 218, 346, 865]。
+* [cite_start]**架构核心**: 系统的AI交易能力已完全服务化，由**模组十二 (TACoreService)** 统一提供，所有业务模组通过网络请求调用此中央服务，实现了架构的最终统一 [cite: 279, 671, 997]。
+
+---
+
+## 2. 系统模组规格详述 (Modules 1-14)
+
+### **基础服务层**
+
+#### **模组十二：TACoreService 高性能核心服务**
+* [cite_start]**核心职责**: 作为`TradingAgents-CN`库的唯一、统一的服务化封装，通过高性能的负载均衡架构，为其他所有模组提供稳定、可扩展的AI交易能力 [cite: 631, 754]。
+* **核心功能**:
+    * [cite_start]统一功能接口（市场扫描、订单执行、风险评估等） [cite: 631, 755]
+    * [cite_start]多工作进程并行处理 [cite: 631, 755]
+    * [cite_start]自动负载均衡与高可用性 [cite: 631, 755]
+* [cite_start]**系统依赖**: `TradingAgents-CN`库, `模组一：API工厂` (用于获取认证后的交易所实例) [cite: 756, 759]。
+
+#### **模组一：API统一管理工厂 (APIForge)**
+* [cite_start]**核心职责**: 系统的统一对外网关，负责管理所有第三方API（交易所、LLM等）的请求、认证、路由、配额和成本控制 [cite: 215, 232, 282, 674, 1131]。
+* [cite_start]**核心功能**: API网关、认证中心、配额与熔断、API集群管理 [cite: 233, 283, 675]。
+* [cite_start]**系统依赖**: 无内部模组依赖，是系统的基础服务 [cite: 233, 284]。
+
+### **数据与信息层**
+
+#### **模组二：信息源爬虫 (DataSpider)**
+* [cite_start]**核心职责**: 负责从无标准API的信息源（如网站、社交媒体）抓取非结构化数据，并将其清洗、格式化后，通过消息总线广播给全系统 [cite: 294, 438, 448, 686]。
+* [cite_start]**核心功能**: 网站爬虫、Telegram监听、数据清洗与格式化、数据分发 [cite: 295, 450, 687]。
+* [cite_start]**系统依赖**: `模组一：API工厂` (可能需要通过其调用Telegram等API) [cite: 296, 450, 688]。
+
+#### **模组三：扫描器 (ScanPulse)**
+* [cite_start]**核心职责**: 系统的“雷达站”，结合行情数据和外部情报（来自爬虫），发现潜在的交易机会，并将其投入“预备池” [cite: 302, 502, 517, 694]。
+* [cite_start]**核心功能**: 常规扫描（三高规则）、黑马监测器、潜力挖掘 [cite: 303, 519, 695]。
+* [cite_start]**系统依赖**: `模组一：API工厂`, `模组二：信息源爬虫`, `模组十二：TACoreService` (调用`scan.market`方法) [cite: 304, 519, 696]。
+
+### **决策与执行层**
+
+#### **模组四：策略优化 (OptiCore)**
+* [cite_start]**核心职责**: 系统的“军事参谋部”，对扫描器发现的机会进行严格的回测、压力测试和参数优化，产出合格的“策略参数包” [cite: 310, 571, 587, 702]。
+* [cite_start]**核心功能**: 压力测试沙盒、参数自动优化、决策引擎、内置策略库 [cite: 311, 589, 703]。
+* [cite_start]**系统依赖**: `模组一：API工厂`, `模组九：MMS` (调用`simulate`方法) [cite: 312, 704]。
+
+#### **模组十：人工审核 (ReviewGuard)**
+* [cite_start]**核心职责**: 连接自动化流程与人类智慧的关键“安全阀”，对中高风险或按规则需要人工审核的交易进行放行或拦截 [cite: 348, 853, 740]。
+* [cite_start]**核心功能**: 接收策略包、提供人工审核界面接口、发布审核通过的交易指令 [cite: 349, 853, 741]。
+* [cite_start]**系统依赖**: `模组四：策略优化`, `模组十一：前端管理界面` [cite: 350, 742]。
+
+#### **交易执行铁三角 (模组 5, 6, 7)**
+* [cite_start]**模组五：交易员 (Trader)**: “前线指挥官”，接收已批准的交易指令，协调风控和财务，并最终调用`TACoreService`执行下单 [cite: 49, 84, 320, 712]。
+* [cite_start]**模组六：风控 (RiskControl)**: “安全政委”，在交易前进行量化风险评分，交易中实时监控风险，并有权发布全局警报 [cite: 58, 85, 325, 717]。
+* [cite_start]**模组七：财务 (Finance)**: “后勤部长”，根据风险评分和账户状况，动态分配资金 [cite: 66, 86, 330, 722]。
+
+### **全局指挥与支撑层**
+
+#### **模组八：总控 (NeuroHub)**
+* [cite_start]**核心职责**: 系统的“总司令”，通过监控Redis中的全局状态，做出最高级别的战略决策，如切换市场模式、启动紧急熔断等 [cite: 73, 334, 869, 917, 726]。
+* [cite_start]**核心功能**: 战场仪表盘、资金模式切换器、熔断协议、记忆网络 [cite: 335, 929, 727]。
+* [cite_start]**系统依赖**: 依赖所有模组上报到Redis的状态数据 [cite: 336, 929, 728]。
+
+#### **模组九：市场微结构仿真引擎 (MMS)**
+* [cite_start]**核心职责**: 一个高级的“虚拟现实”引擎，为策略优化和风控演习提供比传统回测更高保真的测试环境 [cite: 93, 142, 342, 734, 1106]。
+* [cite_start]**核心功能**: 参数化市场建模、自适应校准引擎、极端场景沙盒 [cite: 343, 735]。
+* [cite_start]**系统依赖**: `模组一：API工厂`, `模组三：扫描器` (获取数据用于校准) [cite: 344, 736]。
+
+#### **模组十一：前端管理界面 (ASTS Console)**
+* [cite_start]**核心职责**: 系统的统一用户交互界面，一个集“实时战情室”、“AI参谋部”、“策略实验室”和“总指挥台”于一体的综合性平台 [cite: 938, 939, 748]。
+* [cite_start]**核心功能**: 实时仪表盘、模块状态监控、人工审核工作台、AI策略实验室、系统控制开关 [cite: 940, 749]。
+* [cite_start]**系统依赖**: 依赖多个后台模组提供的数据接口，如`API工厂`, `总控`, `人工审核`, `AI策略研究助理`等 [cite: 940, 750]。
+
+#### **模组十三：AI策略研究助理 (AI Strategy Assistant)**
+* [cite_start]**核心职责**: 系统的“创意大脑”，利用大语言模型（LLM）的能力，从海量信息中提炼洞见，辅助人类创造和迭代策略 [cite: 961, 968]。
+* [cite_start]**核心功能**: 市场情绪分析、宏观事件解读、策略灵感生成、策略代码辅助 [cite: 969]。
+* [cite_start]**系统依赖**: `模组一：API工厂`, `模组二：信息源爬虫`, `模组十一：前端管理界面` [cite: 970]。
+
+#### **模组十四：系统可观测性中心 (Observability Center)**
+* [cite_start]**核心职责**: 系统的“行车记录仪”和“健康监视器”，集成专业工具，提供统一的日志、指标和分布式追踪平台，确保任何问题都能被快速发现和定位 [cite: 243, 249]。
+* [cite_start]**核心功能**: 集中式日志管理、核心指标监控、分布式链路追踪、智能告警 [cite: 250]。
+* [cite_start]**系统依赖**: 依赖**所有模组**进行代码埋点以暴露监控数据 [cite: 252]。
+
+---
+
+## 3. 系统核心工作流
+
+#### **3.1 标准交易工作流**
+
+此流程图展示了一笔交易从发现到执行的核心自动化路径。
+
+```mermaid
+sequenceDiagram
+    participant S as 扫描器 (M3)
+    participant TA as TACoreService (M12)
+    participant O as 策略优化 (M4)
+    participant RG as 人工审核 (M10)
+    participant T as 交易员 (M5)
+    participant X as 风控/财务 (M6,M7)
+    participant AF as API工厂 (M1)
+    
+    S->>TA: req: scan.market
+    TA-->>S: resp: opportunities
+    S->>O: pub: new opportunity
+    O->>RG: pub: strategy_package
+    RG-->>T: pub: approved_trade
+    T->>X: req: evaluate & apply_budget
+    X-->>T: resp: approved
+    T->>TA: req: execute.order
+    TA-->>AF: call: place_order
+    AF-->>TA: return: success
+    TA-->>T: resp: success
+```
+
+#### **3.2 风险熔断工作流**
+
+[cite_start]此流程图展示了当系统检测到极端风险时的紧急应对机制。 [cite: 371]
+
+```mermaid
+graph TD
+    A["模组六(风控): 实时监控"] --> B{"异常检测"};
+    [cite_start]B -- "检测到黑天鹅事件" --> M["模组八(总控): 接收警报 [cite: 372]"];
+    [cite_start]M -- "决策" --> M_CMD["发布全局熔断指令 (PUB) [cite: 373]"];
+    M_CMD --> T["模组五(交易员): 接收指令"];
+    T --> T_ACTION["执行紧急清仓"];
+```
+
+---
+
+## 4. 全局集成部署规范 (docker-compose.yml)
+
+以下`docker-compose.yml`文件示例展示了如何将全部14个核心模组（或其代表）集成为一个完整的系统。
+
+```yaml
+# ===================================================================
+# AI Trading System - Full Integration Docker Compose (Modules 1-14)
+# ===================================================================
+version: '3.8'
+
+services:
+  # ------------------ 基础服务 ------------------
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - asts_net
+
+  # ------------------ 核心服务层 ------------------
+  api_factory:
+    build: ./01APIForge
+    container_name: api_factory
+    env_file: .env.prod
+    ports:
+      - "8000:8000"
+    networks:
+      - asts_net
+
+  tacore_service:
+    build: ./12TACoreService
+    container_name: tacore_service
+    command: python main.py
+    ports:
+      - "5555:5555"
+    networks:
+      - asts_net
+    depends_on:
+      - redis
+      - api_factory
+
+  tacore_worker:
+    build: ./12TACoreService
+    command: python worker.py
+    deploy:
+      replicas: 4 # 可根据CPU核心数调整
+    networks:
+      - asts_net
+    depends_on:
+      - tacore_service
+
+  # ------------------ 业务逻辑层 ------------------
+  info_crawler:
+    build: ./02InfoCrawler
+    container_name: info_crawler
+    networks:
+      - asts_net
+    depends_on:
+      - redis
+      - api_factory
+
+  scanner:
+    build: ./03Scanner
+    container_name: scanner
+    networks:
+      - asts_net
+    depends_on:
+      - tacore_service
+
+  strategy_optimizer:
+    build: ./04StrategyOptimizer
+    container_name: strategy_optimizer
+    networks:
+      - asts_net
+    depends_on:
+      - api_factory
+      - mms # 依赖MMS进行仿真
+
+  trader:
+    build: ./05Trader
+    container_name: trader
+    networks:
+      - asts_net
+    depends_on:
+      - tacore_service
+      - risk_control
+      - finance
+
+  risk_control:
+    build: ./06RiskControl
+    container_name: risk_control
+    networks:
+      - asts_net
+      
+  finance:
+    build: ./07Finance
+    container_name: finance
+    networks:
+      - asts_net
+
+  # ------------------ 全局指挥与支撑层 ------------------
+  master_control:
+    build: ./08MasterControl
+    container_name: master_control
+    networks:
+      - asts_net
+    depends_on:
+      - redis
+
+  mms:
+    build: ./09MMS
+    container_name: mms
+    ports:
+      - "50051:50051" # 假设gRPC端口
+    networks:
+      - asts_net
+
+  review_guard:
+    build: ./10ReviewGuard
+    container_name: review_guard
+    ports:
+      - "8001:8000" # 假设为前端提供API的端口
+    networks:
+      - asts_net
+    depends_on:
+      - redis
+
+  frontend_console:
+    build: ./11ASTSConsole
+    container_name: frontend_console
+    ports:
+      - "3000:3000"
+    networks:
+      - asts_net
+    depends_on:
+      - api_factory
+      - review_guard
+      - ai_assistant
+
+  ai_assistant:
+    build: ./13AIStrategyAssistant
+    container_name: ai_assistant
+    ports:
+      - "8002:8000"
+    networks:
+      - asts_net
+    depends_on:
+      - api_factory
+      - info_crawler
+
+  # 可观测性中心通常是一组服务，这里用一个占位符代表
+  observability_center:
+    build: ./14ObservabilityCenter
+    container_name: observability_center
+    ports:
+      - "9090:9090" # Prometheus
+      - "3001:3000" # Grafana
+    networks:
+      - asts_net
+
+networks:
+  asts_net:
+    driver: bridge
+
+```

@@ -1,0 +1,145 @@
+模组八：总控 (Master Control Module)
+核心设计理念
+●口语化说明: 这份蓝图是我们整个项目的顶层设计。核心思想是“化整为零，分而治之”。我们把一个复杂的交易系统，拆分成8个可以独立开发、测试和升级的“积木块”（模组）。它们之间通过一个高效的“信使系统”（消息总线）来沟通，既能协同作战，又互不干扰。这种方式能大大加快开发速度，降低维护成本，而且对服务器要求不高，非常适合初期预算有限的团队。
+●技术选型:
+○模块间通信: ZeroMQ (PUB/SUB, REQ/REP模式)，实现低延迟、高吞吐量的异步消息传递。
+○数据序列化: JSON (易于调试) 或 Protocol Buffers (性能更优)，确保高效、规范的数据交换。
+○缓存与状态存储: Redis，用于存储实时状态、市场数据和作为轻量级消息队列。
+○持久化存储: SQLite，实现零配置、文件型数据库，满足轻量级部署需求。
+○部署: Docker & Docker Compose，实现一键部署和环境隔离。
+○核心AI集成: 深度融合 TradingAgents-CN v3.0 的能力，减少重复开发。
+全局规范
+1. 数据隔离与环境管理规范 (V1.0 新增)
+●口语化说明: 这是我们项目的数据“安全法”。为了防止开发时的测试数据污染了真实的生产环境，我们设立了三套独立的环境：development（开发）、staging（准生产/测试）、production（生产）。每套环境都有自己独立的数据库和配置，就像三个互不相通的房间，确保万无一失。
+规范项	具体内容	注释
+环境定义	系统必须包含三个环境：development, staging, production。	通过环境变量 APP_ENV 进行切换。
+配置管理	1. 严禁硬编码：任何密钥、密码、URL等敏感信息严禁写入代码。 <br> 2. 分环境配置：使用不同的配置文件，如 config/base.yaml, config/prod.yaml。程序根据 APP_ENV 加载相应配置。 <br> 3. 密钥注入：API Key等绝密信息通过Docker的环境变量 (-e 或 env_file) 注入容器。	这是隔离硬数据的核心手段。
+占位数据	1. 仅限开发环境：所有Mock数据、模拟API响应等占位数据，必须通过 if APP_ENV == 'development': 的逻辑判断进行加载。 <br> 2. 严禁入库：占位数据不允许被写入任何 staging 或 production 的数据库/缓存。	从源头上杜绝占位数据污染。
+开发数据	1. 独立数据库：每个环境使用独立的数据库文件（如 dev.db, prod.db）和Redis数据库实例。 <br> 2. 数据清理：development 和 staging 环境应有配套的数据清理脚本，方便一键重置到干净状态。 <br> 3. 数据同步：严禁将生产数据库直接拷贝到开发环境。如需测试，应对数据进行脱敏后方可使用。	隔离与生产无关的数据。
+日志规范	development 环境日志级别为 DEBUG；production 环境为 INFO，错误日志需额外输出到独立文件或日志服务。	避免生产环境产生大量无关日志。
+2. 系统级集成流程
+●口语化说明: 这是整个系统的工作流程图。从“雷达站”（扫描器）发现目标开始，信息会像流水线一样，依次流经“参谋部”（策略优化）、“前线指挥部”（交易员）、“政委”（风控）和“后勤部”（财务），最终由“总司令”（总控）进行全局把控。
+sequenceDiagram
+    participant S as 扫描器
+    participant O as 策略优化
+    participant T as 交易员
+    participant R as 风控
+    participant F as 财务
+    participant A as API工厂
+    participant M as 总控
+
+    M->>S: 命令: 开始扫描
+    S->>A: 请求: 市场行情
+    A-->>S: 响应: 行情数据
+    S-->>O: 推送: 发现潜在交易对 (ZMQ PUB/SUB)
+    O->>A: 请求: 历史K线
+    A-->>O: 响应: K线数据
+    O-->>T: 推送: 优化后的策略参数包 (ZMQ PUB/SUB)
+    T->>R: 请求: 交易风险评估 (ZMQ REQ/REP)
+    R-->>T: 响应: 风险评分(3.1)
+    T->>F: 请求: 预算申请(含风险分) (ZMQ REQ/REP)
+    F-->>T: 响应: 批准资金($48)
+    T->>A: 请求: 执行TWAP订单
+    A-->>T: 响应: 订单成功
+    loop 状态上报
+        T->>M: 上报: 持仓状态 (写入Redis)
+        R->>M: 上报: 风险指标 (写入Redis)
+        F->>M: 上报: 资金状况 (写入Redis)
+    end
+手册导读
+●致项目经理: 本手册是为分布式团队协作而设计的。请将 第一部分 分发给所有开发人员，并将 第二部分 中对应的“模组开发套件”分发给相应的开发团队。
+●致开发人员: 请首先仔细阅读 第一部分 以理解项目全局架构和通用规范。然后，深入研究您负责的模组在 第二部分 中的具体开发套件，它将是您日常开发工作的核心指南。
+通用开发者指南 (所有团队必读)
+1. 系统总体架构
+●核心理念: 系统采用微服务架构，由8个高内聚、低耦合的独立模组构成。各模组作为独立的Docker容器运行，通过一个名为ZeroMQ的轻量级消息总线进行异步通信。
+●架构图:
+●数据流:
+○扫描器发现机会，推送到“预备池”。
+○策略优化从“预备池”获取机会，进行回测，通过后生成“参数包”推送到“交易池”。
+○交易员从“交易池”获取“参数包”，依次向风控和财务申请评估与资金。
+○审批通过后，交易员通过API工厂执行交易。
+○所有模组的运行状态都实时上报至Redis，由总控进行全局监控和决策。
+2. 通信协议与接口规范
+●通信技术: ZeroMQ。它不是一个传统的队列，而是一个高性能的通信库。
+●通信模式:
+○发布/订阅 (PUB/SUB): 用于一对多的广播式通信。例如，扫描器（PUB）发布一个新机会，多个策略优化模组（SUB）都可以收到。
+○请求/响应 (REQ/REP): 用于一对一的服务调用。例如，交易员（REQ）向风控（REP）请求风险评分。
+●ZeroMQ主题 (Topics) 命名规范: [模组来源].[类别].[具体内容]，例如 scanner.pool.preliminary。
+●数据序列化格式: 全系统统一使用 JSON 格式进行数据交换，所有JSON消息必须包含schema_version字段，便于未来升级。
+3. 数据隔离与环境管理规范
+●核心要求: 所有模组的开发都必须严格遵守本规范，以确保开发、测试和生产环境的绝对隔离。
+●规范详情:
+规范项	具体内容	注释
+环境定义	系统必须包含三个环境：development, staging, production。	通过环境变量 APP_ENV 进行切换。
+配置管理	1. 严禁硬编码：任何密钥、密码、URL等敏感信息严禁写入代码。 <br> 2. 分环境配置：使用不同的配置文件，如 config/base.yaml, config/prod.yaml。程序根据 APP_ENV 加载相应配置。 <br> 3. 密钥注入：API Key等绝密信息通过Docker的环境变量 (-e 或 env_file) 注入容器。	这是隔离硬数据的核心手段。
+占位数据	1. 仅限开发环境：所有Mock数据、模拟API响应等占位数据，必须通过 if APP_ENV == 'development': 的逻辑判断进行加载。 <br> 2. 严禁入库：占位数据不允许被写入任何 staging 或 production 的数据库/缓存。	从源头上杜绝占位数据污染。
+开发数据	1. 独立数据库：每个环境使用独立的数据库文件（如 dev.db, prod.db）和Redis数据库实例。 <br> 2. 数据清理：development 和 staging 环境应有配套的数据清理脚本，方便一键重置到干净状态。 <br> 3. 数据同步：严禁将生产数据库直接拷贝到开发环境。如需测试，应对数据进行脱敏后方可使用。	隔离与生产无关的数据。
+日志规范	development 环境日志级别为 DEBUG；production 环境为 INFO，错误日志需额外输出到独立文件或日志服务。	避免生产环境产生大量无关日志。
+4. 部署与集成规范
+●容器化: 每个模组都必须提供一个 Dockerfile，用于构建其独立的运行镜像。
+●集成编排: 项目根目录提供一个 docker-compose.yml 文件，用于一键启动和编排所有模组服务。
+●docker-compose.yml 结构示例:
+version: '3.8'
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  zmq_broker: # 如果需要一个中心化的代理
+    # ...
+
+  api_factory:
+    build: ./api_factory
+    env_file: .env.prod # 通过env文件注入密钥
+    environment:
+      - APP_ENV=production
+    ports:
+      - "8000:8000"
+
+  scanner:
+    build: ./scanner
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+      - api_factory
+  # ... 其他模组
+
+各模组独立开发套件
+模组八：总控 (Master Control Module) 开发套件
+●8.1 模组概述: 您是整个系统的“总司令”。您不执行具体交易，而是通过监控全局状态（从Redis读取），做出最高级别的战略决策，如切换市场模式（牛/熊）、启动紧急熔断等。
+●8.2 接口契约 (Interaction Contracts)
+○调用的服务: 无，总控不直接调用任何服务，以保证解耦。
+○订阅的通知: risk.alerts (接收来自风控的重大警报)。
+○发布的通知 (PUB):
+■主题: control.commands。
+■消息内容: 发布全局指令。
+■数据结构: {"command": "SWITCH_MODE", "payload": "DEFENSIVE", "timestamp": ...} 或 {"command": "EMERGENCY_SHUTDOWN", "payload": "SEC_lawsuit", "timestamp": ...}
+○核心工作方式: 周期性地（如每秒）从Redis读取所有system:status:*的键，聚合分析后做出决策。
+8.3 需求书、实施计划、搭建规范: 
+●口语化说明: 这是整个系统的“总司令”。它不参与具体战斗，但时刻关注着“战场仪表盘”（宏观经济、市场情绪等），并根据战况下达最高指令。比如，发现市场进入牛市，它会下令“全线转入进攻模式”；如果检测到黑天鹅事件，它会立即按下“核按钮”，启动熔断机制，在15秒内清空所有仓位，保全资金。
+1. 需求书 (Requirements Document)
+字段	值	说明
+ID	master-control-module	模块唯一标识
+Version	1.1	版本号
+Description	系统的决策大脑，负责宏观状态监控、模式切换和最终熔断。	模块核心职责
+Features	[{"id":"feat-01", "name":"战场仪表盘", "desc":"监控牛熊指数、板块轮动、市场杠杆率。"}, {"id":"feat-02", "name":"资金模式切换器", "desc":"根据总资金量自动切换微/低/标准资金模式。"}, {"id":"feat-03", "name":"熔断协议", "desc":"在极端风险事件下，执行一键清仓、资产转移等最高权限操作。"}, {"id":"feat-04", "name":"记忆网络", "desc":"存储历史重大事件（如LUNA崩盘）的处置方案，用于未来决策参考。"}]	核心功能列表 (JSON格式)
+Dependencies	["所有模组"]	接收所有模组的状态汇报
+2. 实施计划 (Implementation Plan)
+阶段	任务	预估工时	产出物
+第一周	状态汇总与仪表盘数据结构设计	20小时	能够从Redis读取并展示全系统状态的原型
+第二周	资金模式切换器逻辑开发	20小时	自动化资金模式管理功能
+第三周	熔断协议与决策树引擎开发	30小时	核心的风险应对和指挥系统
+第四周	记忆网络与最终集成	20小时	具备学习能力的总控模块
+3. 搭建规范 (Construction Specification)
+规范项	具体内容	注释
+语言	Python	
+信息汇总	各模块将状态写入Redis，总控只从Redis读取，不直接与其他模块通信。	解耦设计，避免总控成为性能瓶颈
+Redis Key	system:status:trader, system:status:risk, market:bull_bear_index	使用规范的、分层的Key命名空间
+通信协议	ZeroMQ (PUB)	发布全局指令到 control.commands 主题
+指令结构	{"command": "SWITCH_MODE", "payload": "DEFENSIVE", "timestamp": ...}	统一的指令格式
+数据存储	SQLite	表memory_network: event_id, event_type, summary, actions_taken_json, outcome
+核心逻辑	State-Machine 或 Decision-Tree	使用清晰的状态机或决策树来管理系统模式的转换
+用户接口	提供一个简单的Web界面（或CLI），用于人工干预和查看系统状态。	确保在紧急情况下人可以接管
+

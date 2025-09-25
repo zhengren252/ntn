@@ -1,0 +1,156 @@
+<<<<<<< HEAD
+# 信息源爬虫模组 - Docker镜像
+=======
+# 信息源爬虫模�?- Docker镜像
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+# 支持三环境隔离：development/staging/production
+
+FROM python:3.11-slim as base
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 安装系统依赖
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    wget \
+    git \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建应用用户
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制依赖文件
+COPY requirements.txt .
+
+# 安装Python依赖
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 开发环境阶段
+FROM base as development
+
+# 安装开发依赖
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    black \
+    pylint \
+    mypy \
+    ipython
+
+# 复制应用代码
+COPY . .
+
+# 创建必要目录
+RUN mkdir -p data logs temp \
+    && chown -R appuser:appuser /app
+
+# 设置环境变量
+ENV APP_ENV=development \
+    NTN_ENV=development \
+    PYTHONPATH=/app \
+    LOG_LEVEL=DEBUG
+
+<<<<<<< HEAD
+# 切换到应用用户
+USER appuser
+=======
+# 切换到应用用�?USER appuser
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 暴露端口
+EXPOSE 5000 5555 5556
+
+# 启动命令
+CMD ["python", "main.py", "--env", "development", "--mode", "all"]
+
+# 测试环境阶段
+FROM base as staging
+
+# 复制应用代码
+COPY . .
+
+# 创建必要目录
+RUN mkdir -p data logs temp \
+    && chown -R appuser:appuser /app
+
+# 设置环境变量
+ENV APP_ENV=staging \
+    NTN_ENV=staging \
+    PYTHONPATH=/app \
+    LOG_LEVEL=INFO
+
+<<<<<<< HEAD
+# 切换到应用用户
+USER appuser
+=======
+# 切换到应用用�?USER appuser
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 暴露端口
+EXPOSE 5000 5555 5556
+
+<<<<<<< HEAD
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+=======
+# 健康检�?HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# 启动命令
+CMD ["python", "main.py", "--env", "staging", "--mode", "all"]
+
+# 生产环境阶段
+FROM base as production
+
+# 复制应用代码（排除开发文件）
+COPY app/ ./app/
+COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY main.py requirements.txt ./
+
+# 创建必要目录
+RUN mkdir -p data logs temp \
+    && chown -R appuser:appuser /app
+
+# 设置环境变量
+ENV APP_ENV=production \
+    NTN_ENV=production \
+    PYTHONPATH=/app \
+    LOG_LEVEL=INFO
+
+<<<<<<< HEAD
+# 切换到应用用户
+USER appuser
+=======
+# 切换到应用用�?USER appuser
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 暴露端口
+EXPOSE 5000 5555 5556
+
+<<<<<<< HEAD
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# 启动命令
+CMD ["python", "main.py", "--env", "production", "--mode", "all"]
+=======
+# 健康检�?HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# 启动命令
+CMD ["python", "main.py", "--env", "production", "--mode", "all"]
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

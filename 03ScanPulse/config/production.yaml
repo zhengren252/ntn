@@ -1,0 +1,206 @@
+# 生产环境配置
+# 严格遵循全局规范：数据隔离与环境管理规范
+# 环境定义：production - 生产环境独立配置
+
+# Redis配置 - 生产环境
+redis:
+  host: redis  # Docker Compose中的Redis服务名
+  port: 6379
+  db: 0  # 生产环境使用db0
+  password: null  # 通过环境变量REDIS_PASSWORD注入
+  socket_timeout: 3
+  socket_connect_timeout: 3
+  connection_pool_max_connections: 20
+  
+# 日志配置 - 生产环境
+logging:
+  level: INFO  # 生产环境使用INFO级别
+  
+  # 控制台输出配置
+  console:
+    enabled: true  # 临时启用控制台输出用于调试
+    
+  # 文件日志配置
+  file:
+    enabled: true
+    path: "logs/scanner.log"
+    level: INFO
+    max_size: "50MB"
+    backup_count: 10
+    
+  # 错误日志单独输出
+  error_file:
+    enabled: true
+    path: "logs/error.log"
+    level: ERROR
+    
+  # 结构化日志
+  structured:
+    enabled: true
+    format: "json"
+    pretty_print: false  # 生产环境不美化输出
+    
+# 扫描器配置 - 生产环境优化
+scanner:
+  scan_interval: 15  # 生产环境高频扫描
+  max_opportunities: 200  # 增加处理容量
+  batch_size: 100
+  timeout: 5  # 严格超时控制
+  
+# 规则配置 - 生产环境严格阈值
+rules:
+  three_high:
+    volatility_threshold: 0.08  # 提高波动率要求
+    volume_threshold: 2000000   # 提高成交量要求
+    min_score: 75               # 提高最低分数
+    
+  black_horse:
+    score_multiplier: 2.0       # 提高倍数
+    news_timeout: 1800          # 缩短新闻有效期
+    min_confidence: 0.8         # 提高置信度要求
+    
+  potential_gems:
+    max_market_cap: 50000000    # 严格市值限制
+    max_price: 0.5              # 严格价格限制
+    min_volume: 100000          # 提高成交量要求
+    min_age_days: 60            # 增加最小上市天数
+    
+# Mock数据配置 - 生产环境禁用
+mock_data:
+  enabled: false  # 生产环境严禁Mock数据
+  
+# API工厂配置 - 生产环境
+api_factory:
+  url: "http://api-factory:8000"  # 生产环境内部服务
+  timeout: 5  # 严格超时
+  retry_times: 3
+  retry_delay: 0.5
+  
+  # 生产环境禁用模拟端点
+  mock_endpoints:
+    enabled: false
+    
+# TACoreService配置 - 生产环境
+tacore_service:
+  enabled: true
+  server_address: "tcp://tacore-service:5555"
+  timeout: 10000  # 10秒超时
+  mock_mode: false  # 生产环境禁用模拟模式
+  retry_attempts: 5
+  retry_delay: 500  # 0.5秒重试延迟
+  connection_pool_size: 10
+  
+# ZeroMQ配置 - 生产环境优化
+zmq:
+  publisher_port: 5555
+  subscriber_port: 5556
+  context_io_threads: 2  # 增加IO线程
+  socket_linger: 500     # 减少延迟关闭时间
+  high_water_mark: 2000  # 增加高水位标记
+  
+# 性能监控 - 生产环境严格配置
+monitoring:
+  enabled: true
+  metrics_interval: 30   # 频繁指标收集
+  health_check_interval: 15
+  
+  # 严格性能阈值
+  thresholds:
+    max_memory_mb: 256     # 严格内存限制
+    max_cpu_percent: 70    # 严格CPU限制
+    max_scan_time: 10      # 严格扫描时间限制
+    
+  # 告警配置
+  alerts:
+    enabled: true
+    webhook_url: null  # 通过环境变量注入
+    
+# 数据清理配置 - 生产环境
+data_quality:
+  validation:
+    enabled: true
+    strict_mode: true  # 生产环境启用严格模式
+    
+  cleanup:
+    enabled: true
+    cleanup_interval: 3600  # 1小时清理一次
+    max_age_hours: 48       # 数据保存48小时
+    
+# 安全配置
+security:
+  enabled: true
+  
+  # 访问控制
+  access_control:
+    enabled: true
+    allowed_ips: []  # 通过环境变量配置
+    
+  # 数据加密
+  encryption:
+    enabled: false  # 根据需要启用
+    algorithm: "AES-256-GCM"
+    
+# 容错配置
+resilience:
+  # 重试配置
+  retry:
+    max_attempts: 3
+    backoff_factor: 2
+    max_delay: 30
+    
+  # 熔断器配置
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_timeout: 60
+    
+  # 限流配置
+  rate_limiting:
+    enabled: true
+    requests_per_second: 10
+    burst_size: 20
+    
+# 调试配置 - 生产环境禁用
+debug:
+  enabled: false
+  
+  verbose:
+    zmq_messages: false
+    redis_operations: false
+    rule_processing: false
+    
+  profiling:
+    enabled: false
+    
+# 测试配置 - 生产环境禁用
+testing:
+  enabled: false
+  
+# 备份配置
+backup:
+  enabled: true
+  
+  # Redis数据备份
+  redis_backup:
+    enabled: true
+    interval: 3600  # 每小时备份
+    retention_days: 7
+    
+  # 配置文件备份
+  config_backup:
+    enabled: true
+    path: "/var/backup/scanner/config"
+    
+# 健康检查配置
+health_check:
+  enabled: true
+  endpoint: "/health"
+  port: 8080
+  
+  # 检查项目
+  checks:
+    redis_connection: true
+    zmq_connection: true
+    api_factory_connection: true
+    memory_usage: true
+    cpu_usage: true

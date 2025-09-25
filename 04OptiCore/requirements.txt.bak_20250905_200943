@@ -1,0 +1,391 @@
+# NeuroTrade Nexus (NTN) - 策略优化模组依赖包
+# Strategy Optimization Module Dependencies
+
+# 核心框架 Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 异步支持 Async Support
+aiofiles==23.2.1
+aioredis==2.0.1
+aiosqlite==0.19.0
+
+# 数据处理 Data Processing
+pandas==2.1.4
+numpy==1.25.2
+scipy==1.11.4
+
+# 金融数据分析 Financial Data Analysis
+vectorbt==0.28.0
+# TA-Lib==0.4.28  # 临时注释，构建问题
+yfinance==0.2.28
+ccxt==4.1.64
+
+# 机器学习 Machine Learning
+scikit-learn==1.3.2
+deap==1.4.1
+
+# AI加速 AI Acceleration
+groq==0.4.1
+
+# 数据库 Database
+# sqlite3  # Python标准库，无需安装
+redis==5.0.1
+
+# 消息队列 Message Queue
+pyzmq==25.1.2
+
+# 配置管理 Configuration Management
+python-dotenv==1.0.0
+PyYAML==6.0.1
+toml==0.10.2
+
+# 日志记录 Logging
+loguru==0.7.2
+structlog==23.2.0
+
+# 网络请求 HTTP Requests
+httpx==0.25.2
+requests==2.31.0
+
+# 时间处理 Time Handling
+python-dateutil==2.8.2
+pytz==2023.3
+<<<<<<< HEAD
+
+# 数据验证 Data Validation
+jsonschema==4.20.0
+cerberus==1.3.5
+
+# 数据序列化 Data Serialization
+orjson==3.9.10
+msgpack==1.0.7
+
+# 性能监控 Performance Monitoring
+psutil==5.9.6
+prometheus-client==0.19.0
+
+# 数学计算 Mathematical Computing
+sympy==1.12
+numba==0.58.1
+
+# 图表绘制 Plotting
+matplotlib==3.8.2
+plotly==5.17.0
+
+# 数据存储 Data Storage
+h5py==3.10.0
+pyarrow==14.0.1
+
+# 网络通信 Network Communication
+websockets==12.0
+aiohttp==3.9.1
+
+# 加密安全 Cryptography
+cryptography==41.0.8
+bcrypt==4.1.2
+
+# 工具库 Utilities
+click==8.1.7
+rich==13.7.0
+tqdm==4.66.1
+=======
+arrow==1.3.0
+
+# 数据验证 Data Validation
+cerberus==1.3.5
+marshmallow==3.20.2
+
+# 加密安全 Cryptography & Security
+cryptography==41.0.7
+PyJWT==2.8.0
+passlib[bcrypt]==1.7.4
+
+# 性能监控 Performance Monitoring
+psutil==5.9.6
+memory-profiler==0.61.0
+py-spy==0.3.14
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 测试框架 Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+<<<<<<< HEAD
+
+# 代码质量 Code Quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pylint==3.0.3
+
+# 开发工具 Development Tools
+ipython==8.18.1
+jupyter==1.0.0
+
+# 环境管理 Environment Management
+python-decouple==3.8
+
+# 缓存 Caching
+diskcache==5.6.3
+
+# 任务调度 Task Scheduling
+celery==5.3.4
+
+# 文档生成 Documentation
+sphinx==7.2.6
+
+# 配置文件解析 Configuration Parsing
+configparser==6.0.0
+
+# 数据库连接 Database Connectivity
+sqlalchemy==2.0.23
+alembic==1.13.1
+
+# 内存数据库 In-Memory Database
+sqlite3  # Python标准库
+
+# 分布式计算 Distributed Computing
+dask==2023.11.0
+
+# 机器学习扩展 ML Extensions
+xgboost==2.0.2
+lightgbm==4.1.0
+
+# 深度学习 Deep Learning
+torch==2.1.1
+tensorflow==2.15.0
+
+# 自然语言处理 NLP
+nltk==3.8.1
+spacy==3.7.2
+
+# 图像处理 Image Processing
+Pillow==10.1.0
+opencv-python==4.8.1.78
+
+# 音频处理 Audio Processing
+librosa==0.10.1
+
+# 地理信息 Geospatial
+geopandas==0.14.1
+
+# 时间序列 Time Series
+statsmodels==0.14.0
+
+# 优化算法 Optimization
+scipy==1.11.4
+cvxpy==1.4.1
+
+# 并行计算 Parallel Computing
+joblib==1.3.2
+
+# 数据可视化 Data Visualization
+seaborn==0.13.0
+bokeh==3.3.2
+
+# 文件处理 File Processing
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# 压缩解压 Compression
+zstandard==0.22.0
+
+# 系统监控 System Monitoring
+psutil==5.9.6
+
+# 内存分析 Memory Profiling
+memory-profiler==0.61.0
+
+# 性能分析 Performance Profiling
+line-profiler==4.1.1
+
+# 代码覆盖率 Code Coverage
+coverage==7.3.2
+
+# 静态分析 Static Analysis
+bandit==1.7.5
+
+# 依赖管理 Dependency Management
+pipdeptree==2.13.1
+
+# 版本控制 Version Control
+gitpython==3.1.40
+
+# 容器化 Containerization
+docker==6.1.3
+
+# 云服务 Cloud Services
+boto3==1.34.0
+
+# 监控告警 Monitoring & Alerting
+slack-sdk==3.26.1
+
+# 邮件发送 Email
+sendgrid==6.10.0
+
+# 短信发送 SMS
+twilio==8.11.0
+
+# 推送通知 Push Notifications
+pushbullet.py==0.12.0
+
+# 社交媒体 Social Media
+tweepy==4.14.0
+
+# 区块链 Blockchain
+web3==6.13.0
+
+# 量化交易 Quantitative Trading
+zipline==3.0.0
+backtrader==1.9.78.123
+
+# 风险管理 Risk Management
+riskfolio-lib==5.1.0
+
+# 投资组合优化 Portfolio Optimization
+pyportfolioopt==1.5.5
+
+# 期权定价 Options Pricing
+QuantLib==1.32
+
+# 技术指标 Technical Indicators
+talib==0.4.28
+
+# 市场数据 Market Data
+alpha-vantage==2.3.1
+quandl==3.7.0
+
+# 经济数据 Economic Data
+fredapi==0.4.3
+
+# 新闻数据 News Data
+newsapi-python==0.2.7
+
+# 社交情感 Social Sentiment
+vaderSentiment==3.3.2
+
+# 文本分析 Text Analysis
+textblob==0.17.1
+=======
+pytest-xdist==3.5.0
+pytest-benchmark==4.0.0
+pytest-timeout==2.2.0
+pytest-html==4.1.1
+pytest-json-report==1.5.0
+
+# 代码质量 Code Quality
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+pylint==3.0.3
+bandit==1.7.5
+
+# 文档生成 Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+
+# 开发工具 Development Tools
+ipython==8.17.2
+jupyter==1.0.0
+notebook==7.0.6
+
+# 数据可视化 Data Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+bokeh==3.3.2
+
+# 并发处理 Concurrency
+# concurrent-futures  # Python 3.2+标准库，无需安装
+multiprocessing-logging==0.3.4
+
+# 序列化 Serialization
+orjson==3.9.10
+msgpack==1.0.7
+# pickle5==0.0.12  # 仅Python < 3.8需要
+
+# 环境管理 Environment Management
+virtualenv==20.25.0
+# pipenv==2023.11.15  # 开发工具，非运行时依赖
+# conda==23.10.0  # 包管理器，非运行时依赖
+
+# 容器化 Containerization
+docker==6.1.3
+# docker-compose==1.29.2  # CLI工具，非Python包
+
+# 监控告警 Monitoring & Alerting
+prometheus-client==0.19.0
+# grafana-api==1.0.3  # 可选依赖
+
+# 缓存 Caching
+cachetools==5.3.2
+diskcache==5.6.3
+
+# 工具库 Utility Libraries
+more-itertools==10.1.0
+toolz==0.12.0
+funcy==2.0
+click==8.1.7
+rich==13.7.0
+tqdm==4.66.1
+
+# 类型检查 Type Checking
+typing-extensions>=4.9.0
+mypy-extensions==1.0.0
+
+# 错误追踪 Error Tracking
+sentry-sdk[fastapi]==1.38.0
+rollbar==0.16.3
+
+# 配置验证 Configuration Validation
+voluptuous==0.14.1
+schema==0.7.5
+
+# 数学计算 Mathematical Computing
+sympy==1.12
+numba==0.58.1
+
+# 网络工具 Network Tools
+networkx==3.2.1
+requests-cache==1.1.1
+
+# 文件处理 File Processing
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+PyPDF2==3.0.1
+
+# 系统集成 System Integration
+psycopg2-binary==2.9.9  # PostgreSQL适配器（如需要）
+PyMySQL==1.1.0  # MySQL适配器（如需要）
+
+# 开发依赖 Development Dependencies
+pre-commit==3.6.0
+commitizen==3.13.0
+bump2version==1.0.1
+
+# 生产环境 Production
+gunicorn==21.2.0
+supervisor==4.2.5
+# nginx-python-module==1.25.3  # 不存在的包
+
+# 备注 Notes:
+# 1. 某些包可能需要系统级依赖，如TA-Lib需要先安装C库
+# 2. 在Windows环境下，某些包可能需要Visual C++编译器
+# 3. 建议使用虚拟环境安装依赖
+# 4. 生产环境可能需要固定版本号以确保稳定性
+# 5. 根据实际需求可以移除不必要的依赖包
+
+# 安装命令 Installation Commands:
+# pip install -r requirements.txt
+# 或者分组安装：
+# pip install -r requirements-core.txt
+# pip install -r requirements-dev.txt
+# pip install -r requirements-test.txt
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

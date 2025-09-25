@@ -1,0 +1,64 @@
+# TradeGuard模组独立测试配置
+version: '3.8'
+
+services:
+  # 05-07 TradeGuard - 交易执行铁三角统一服务
+  tradeguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: tradeguard
+    ports:
+      - "3000:3001"  # 主服务端口
+      - "5556:5556"  # ZMQ Trader端口
+      - "5557:5557"  # ZMQ Risk端口
+      - "5558:5558"  # ZMQ Finance端口
+    depends_on:
+      - redis
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - ZMQ_TRADER_PORT=5556
+      - ZMQ_RISK_PORT=5557
+      - ZMQ_FINANCE_PORT=5558
+      - LOG_LEVEL=info
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: tradeguard_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  trading_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local

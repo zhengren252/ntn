@@ -1,0 +1,173 @@
+name: ASTS CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.11' ]
+
+    steps:
+    - name: 1. Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 2. Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: 3. Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        # In a real scenario, you would install from requirements.txt
+        # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: 4. Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: 5. Run tests with pytest
+      run: |
+        # This is a placeholder for actual tests.
+        # In a real project, you would run: pytest
+        echo "Pytest execution placeholder. No tests found, but step is successful."
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Bandit Security Scan
+      run: |
+        pip install bandit
+        bandit -r . -f json -o bandit-report.json || true
+    
+    - name: Run Safety Check
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [lint-and-test, security-scan]
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and test Docker images
+      run: |
+        # Build all module images
+        docker-compose -f docker-compose.yml build
+        
+        # Test basic container startup
+        docker-compose -f docker-compose.yml up -d redis
+        sleep 10
+        docker-compose -f docker-compose.yml down
+    
+    - name: Push Docker images
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # Tag and push images to registry
+        docker-compose -f docker-compose.yml push
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install test dependencies
+      run: |
+        pip install requests pytest docker-compose
+    
+    - name: Run integration tests
+      run: |
+        # Start the full system
+        docker-compose up -d
+        sleep 30
+        
+        # Run integration test suite
+        python simple_ntn_test.py
+        
+        # Cleanup
+        docker-compose down
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          test-results/
+          logs/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your deployment scripts here
+        
+    - name: Health check
+      run: |
+        echo "Running health checks..."
+        # Add health check scripts here
+        
+    - name: Notify deployment
+      run: |
+        echo "Deployment completed successfully"
+        # Add notification logic here

@@ -1,0 +1,134 @@
+# 开发环境配置
+# 严格按照数据隔离和环境管理规范V1.0
+
+# 应用配置
+app:
+  name: "NeuroTrade Nexus - Master Control Module"
+  version: "1.0.0"
+  environment: "development"
+  debug: true
+  log_level: "DEBUG"
+
+# 数据库配置 - 开发环境隔离
+database:
+  type: "sqlite"
+  path: "./data/dev/master_control.db"
+  backup_path: "./data/dev/backups/"
+  auto_backup: true
+  backup_interval: 3600  # 1小时
+
+# Redis配置 - 开发环境隔离
+redis:
+  host: "localhost"
+  port: 6379
+  db: 2  # 开发环境使用DB2
+  password: null
+  max_connections: 10
+  connection_timeout: 5
+  key_prefix: "ntn:dev:"
+
+# ZeroMQ配置 - 开发环境端口隔离
+zeromq:
+  base_port: 5755  # 开发环境基础端口
+  pub_port: 5755
+  sub_port: 5756
+  router_port: 5757
+  dealer_port: 5758
+  
+  # 模组端口配置
+  modules:
+    master_control:
+      pub_port: 5755
+      sub_port: 5756
+      router_port: 5757
+      dealer_port: 5758
+    data_collection:
+      pub_port: 5765
+      sub_port: 5766
+      router_port: 5767
+      dealer_port: 5768
+    signal_generation:
+      pub_port: 5775
+      sub_port: 5776
+      router_port: 5777
+      dealer_port: 5778
+    execution_engine:
+      pub_port: 5785
+      sub_port: 5786
+      router_port: 5787
+      dealer_port: 5788
+    risk_management:
+      pub_port: 5795
+      sub_port: 5796
+      router_port: 5797
+      dealer_port: 5798
+    performance_analysis:
+      pub_port: 5805
+      sub_port: 5806
+      router_port: 5807
+      dealer_port: 5808
+    market_analysis:
+      pub_port: 5815
+      sub_port: 5816
+      router_port: 5817
+      dealer_port: 5818
+
+# API配置
+api:
+  host: "0.0.0.0"
+  port: 8000
+  prefix: "/api/v1"
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "http://127.0.0.1:3000"
+    - "http://127.0.0.1:5173"
+  cors_credentials: true
+  
+# 安全配置
+security:
+  secret_key: "dev-secret-key-change-in-production"
+  access_token_expire_minutes: 60
+  algorithm: "HS256"
+  
+# 日志配置
+logging:
+  level: "DEBUG"
+  file: "./logs/dev/master_control.log"
+  max_size: "10MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# 交易配置 - 开发环境使用模拟数据
+trading:
+  enabled: false
+  simulation_mode: true
+  paper_trading: true
+  
+# 风险管理配置
+risk:
+  max_drawdown: 0.05  # 5%
+  position_limit: 0.20  # 20%
+  daily_loss_limit: 0.03  # 3%
+  circuit_breaker_enabled: true
+  
+# 资金管理配置
+fund:
+  default_mode: "conservative"
+  initial_capital: 1000000.0
+  currency: "USD"
+  
+# 监控配置
+monitoring:
+  enabled: true
+  heartbeat_interval: 30  # 秒
+  health_check_interval: 60  # 秒
+  metrics_collection: true
+  
+# 开发工具配置
+development:
+  hot_reload: true
+  debug_toolbar: true
+  profiling: true
+  mock_data: true
+  test_mode: true

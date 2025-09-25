@@ -1,0 +1,173 @@
+﻿# Redis 鐢熶骇鐜閰嶇疆鏂囦欢
+# AI鏅鸿兘浣撻┍鍔ㄤ氦鏄撶郴缁烿1.2 - 鍏ㄥ眬闆嗘垚娴嬭瘯涓撶敤
+
+# 鍩虹閰嶇疆
+bind 127.0.0.1 0.0.0.0
+port 6379
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+
+# 閫氱敤閰嶇疆
+daemonize no
+supervised no
+pidfile /var/run/redis_6379.pid
+loglevel notice
+logfile ""
+databases 16
+
+# 蹇収閰嶇疆
+save 900 1
+save 300 10
+save 60 10000
+stop-writes-on-bgsave-error yes
+rdbcompression yes
+rdbchecksum yes
+dbfilename dump.rdb
+dir ./
+
+# 澶嶅埗閰嶇疆
+replica-serve-stale-data yes
+replica-read-only yes
+repl-diskless-sync no
+repl-diskless-sync-delay 5
+repl-ping-replica-period 10
+repl-timeout 60
+repl-disable-tcp-nodelay no
+repl-backlog-size 1mb
+repl-backlog-ttl 3600
+replica-priority 100
+min-replicas-to-write 0
+min-replicas-max-lag 10
+
+# 瀹夊叏閰嶇疆
+# requirepass foobared
+rename-command FLUSHDB ""
+rename-command FLUSHALL ""
+rename-command DEBUG ""
+rename-command CONFIG "CONFIG_9f2dd4f8b1c6a7e3d5a8b9c4e7f2a1b6"
+
+# 瀹㈡埛绔厤缃?
+maxclients 10000
+
+# 鍐呭瓨閰嶇疆
+maxmemory 2gb
+maxmemory-policy allkeys-lru
+maxmemory-samples 5
+
+# 鎯版€ч噴鏀?
+lazyfree-lazy-eviction no
+lazyfree-lazy-expire no
+lazyfree-lazy-server-del no
+replica-lazy-flush no
+
+# 杩藉姞妯″紡閰嶇疆
+appendonly yes
+appendfilename "appendonly.aof"
+appendfsync everysec
+no-appendfsync-on-rewrite no
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+aof-load-truncated yes
+aof-use-rdb-preamble yes
+
+# Lua鑴氭湰閰嶇疆
+lua-time-limit 5000
+
+# 鎱㈡棩蹇楅厤缃?
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+
+# 寤惰繜鐩戞帶閰嶇疆
+latency-monitor-threshold 0
+
+# 浜嬩欢閫氱煡閰嶇疆
+notify-keyspace-events ""
+
+# 楂樼骇閰嶇疆
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+list-max-ziplist-size -2
+list-compress-depth 0
+set-max-intset-entries 512
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+hll-sparse-max-bytes 3000
+stream-node-max-bytes 4096
+stream-node-max-entries 100
+
+# 娲昏穬閲嶆柊鍝堝笇
+activerehashing yes
+
+# 瀹㈡埛绔緭鍑虹紦鍐插尯闄愬埗
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit replica 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
+
+# 瀹㈡埛绔煡璇㈢紦鍐插尯闄愬埗
+client-query-buffer-limit 1gb
+
+# 鍗忚鏈€澶ф壒閲忚姹傚ぇ灏?
+proto-max-bulk-len 512mb
+
+# Hz棰戠巼
+hz 10
+
+# 鍔ㄦ€丠z
+dynamic-hz yes
+
+# AOF閲嶅啓澧為噺fsync
+aof-rewrite-incremental-fsync yes
+
+# RDB淇濆瓨澧為噺fsync
+rdb-save-incremental-fsync yes
+
+# LFU鍜孡RU閰嶇疆
+lfu-log-factor 10
+lfu-decay-time 1
+
+# 妯″潡閰嶇疆
+# loadmodule /path/to/my_module.so
+
+# 闆嗙兢閰嶇疆锛堝鏋滀娇鐢ㄩ泦缇ゆā寮忥級
+# cluster-enabled yes
+# cluster-config-file nodes-6379.conf
+# cluster-node-timeout 15000
+# cluster-announce-ip 192.168.1.100
+# cluster-announce-port 6379
+# cluster-announce-bus-port 16379
+
+# TLS閰嶇疆锛堝鏋滀娇鐢═LS锛?
+# port 0
+# tls-port 6380
+# tls-cert-file redis.crt
+# tls-key-file redis.key
+# tls-dh-params-file redis.dh
+# tls-ca-cert-file ca.crt
+# tls-ca-cert-dir /etc/ssl/certs
+# tls-protocols "TLSv1.2 TLSv1.3"
+# tls-ciphers "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS"
+# tls-ciphersuites "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
+# tls-prefer-server-ciphers yes
+# tls-session-caching no
+# tls-session-cache-size 5000
+# tls-session-cache-timeout 60
+
+# 鎬ц兘浼樺寲閰嶇疆
+# 閽堝AI浜ゆ槗绯荤粺鐨勭壒娈婁紭鍖?
+tcp-keepalive 60
+timeout 300
+
+# 鍐呭瓨浣跨敤浼樺寲
+maxmemory-policy volatile-lru
+
+# 鎸佷箙鍖栦紭鍖?
+save 300 10
+save 60 1000
+appendfsync everysec
+
+# 缃戠粶浼樺寲
+tcp-backlog 2048
+
+# 鏃ュ織绾у埆锛堢敓浜х幆澧冨缓璁娇鐢╪otice锛?
+loglevel notice

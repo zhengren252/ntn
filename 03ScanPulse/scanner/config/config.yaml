@@ -1,0 +1,165 @@
+# 扫描器模组基础配置文件
+# 通用配置，适用于所有环境
+
+# Redis配置
+redis:
+  host: localhost
+  port: 6379
+  database: 0
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  retry_on_timeout: true
+  health_check_interval: 30
+  default_ttl: 3600
+  ttl:
+    scan_result: 3600    # 扫描结果缓存1小时
+    market_data: 300     # 市场数据缓存5分钟
+    news_events: 1800    # 新闻事件缓存30分钟
+
+# ZeroMQ配置
+zmq:
+  publisher:
+    host: localhost
+    port: 5555
+    bind: true
+  subscriber:
+    host: localhost
+    port: 5556
+    topics:
+      - market_data
+      - news_events
+  request:
+    host: localhost
+    port: 5557
+    timeout: 5000
+  reply:
+    host: localhost
+    port: 5558
+    bind: true
+  heartbeat_interval: 30
+  max_retries: 3
+
+# 扫描器配置
+scanner:
+  rules:
+    three_high:
+      volatility_threshold: 0.05    # 5%波动率阈值
+      volume_threshold: 1000000     # 100万成交量阈值
+      correlation_threshold: 0.7    # 70%相关性阈值
+      enabled: true
+    black_horse:
+      price_change_threshold: 0.15  # 15%价格变化阈值
+      volume_spike_threshold: 3.0   # 3倍成交量激增阈值
+      news_sentiment_threshold: 0.6 # 60%新闻情绪阈值
+      enabled: true
+    potential_finder:
+      market_cap_threshold: 100000000  # 1亿市值阈值
+      price_threshold: 1.0             # 1美元价格阈值
+      volume_threshold: 50000          # 5万成交量阈值
+      enabled: true
+  scan_interval: 60      # 扫描间隔（秒）
+  batch_size: 100        # 批处理大小
+  max_workers: 4         # 最大工作线程数
+  timeout: 30            # 超时时间（秒）
+
+# Web服务器配置
+web:
+  host: 0.0.0.0
+  port: 8000
+  debug: false
+  cors:
+    enabled: true
+    origins: ["*"]
+  static_folder: static
+  template_folder: templates
+  secret_key: "scanner-web-secret-key-change-in-production"
+
+# 日志配置
+logging:
+  level: INFO
+  format: json
+  file:
+    enabled: true
+    path: logs/scanner.log
+    max_size: 10MB
+    backup_count: 5
+  console:
+    enabled: true
+    colorize: false
+
+# API配置
+api:
+  binance:
+    base_url: https://api.binance.com
+    timeout: 10
+    rate_limit: 1200
+  news:
+    sources:
+      - coindesk
+      - cointelegraph
+    timeout: 15
+    rate_limit: 100
+
+# 适配器配置
+adapters:
+  trading_agents:
+    type: trading_agents
+    enabled: true
+    timeout: 30
+    retry_count: 3
+    retry_delay: 1.0
+    mock_mode: false
+    config:
+      adapter:
+        version: "1.0.0"
+      scan:
+        popular_symbols:
+          - BTCUSDT
+          - ETHUSDT
+          - BNBUSDT
+          - ADAUSDT
+          - DOTUSDT
+      cache:
+        enabled: true
+        ttl: 300
+  
+  api_factory:
+    type: api_factory
+    enabled: true
+    timeout: 30
+    retry_count: 3
+    retry_delay: 1.0
+    mock_mode: false
+    config:
+      adapter:
+        version: "1.0.0"
+      api:
+        rate_limit: 100
+        timeout: 15
+  
+  tacore_service:
+    type: tacore_service
+    enabled: true
+    timeout: 30
+    retry_count: 3
+    retry_delay: 1.0
+    mock_mode: false
+    config:
+      adapter:
+        version: "1.0.0"
+        popular_symbols:
+          - BTCUSDT
+          - ETHUSDT
+          - BNBUSDT
+          - ADAUSDT
+          - DOTUSDT
+          - SOLUSDT
+          - XRPUSDT
+          - MATICUSDT
+          - AVAXUSDT
+          - LINKUSDT
+      tacore_service:
+        address: "tcp://localhost:5555"
+        timeout: 30000
+        health_check_interval: 60
+        reconnect_interval: 30

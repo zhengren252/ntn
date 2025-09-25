@@ -1,0 +1,26 @@
+# Ignore documentation files
+.trae/
+*.md
+
+# Ignore config files
+.prettierrc
+.prettierignore
+
+# Ignore build outputs
+dist/
+build/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore logs
+*.log
+
+# Ignore generated files
+*.d.ts
+!src/**/*.d.ts

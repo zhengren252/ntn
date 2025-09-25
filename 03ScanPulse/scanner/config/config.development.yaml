@@ -1,0 +1,65 @@
+# 开发环境配置
+# 覆盖基础配置中的开发环境特定设置
+
+# Redis配置 - 开发环境
+redis:
+  database: 1  # 使用数据库1避免与其他服务冲突
+  default_ttl: 1800  # 开发环境缓存时间较短
+  ttl:
+    scan_result: 1800    # 30分钟
+    market_data: 180     # 3分钟
+    news_events: 900     # 15分钟
+
+# ZeroMQ配置 - 开发环境
+zmq:
+  publisher:
+    port: 15555  # 开发环境端口
+  subscriber:
+    port: 15556
+  request:
+    port: 15557
+    timeout: 10000  # 开发环境超时时间更长
+  reply:
+    port: 15558
+  heartbeat_interval: 10  # 更频繁的心跳检测
+
+# 扫描器配置 - 开发环境
+scanner:
+  rules:
+    three_high:
+      volatility_threshold: 0.03    # 更敏感的阈值用于测试
+      volume_threshold: 500000
+      correlation_threshold: 0.6
+    black_horse:
+      price_change_threshold: 0.10
+      volume_spike_threshold: 2.0
+      news_sentiment_threshold: 0.5
+    potential_finder:
+      market_cap_threshold: 50000000   # 更低的阈值用于测试
+      price_threshold: 0.5
+      volume_threshold: 25000
+  scan_interval: 30      # 更频繁的扫描
+  batch_size: 50         # 较小的批处理
+  max_workers: 2         # 较少的工作线程
+  timeout: 60            # 更长的超时时间
+
+# 日志配置 - 开发环境
+logging:
+  level: DEBUG           # 详细日志
+  console:
+    enabled: true
+    colorize: true       # 彩色输出
+  file:
+    path: logs/scanner_dev.log
+    max_size: 5MB        # 较小的日志文件
+    backup_count: 3
+
+# API配置 - 开发环境
+api:
+  binance:
+    base_url: https://testnet.binance.vision  # 测试网
+    timeout: 15
+    rate_limit: 600      # 更保守的限制
+  news:
+    timeout: 20
+    rate_limit: 50

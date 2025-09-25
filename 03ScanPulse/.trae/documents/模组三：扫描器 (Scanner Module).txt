@@ -1,0 +1,146 @@
+模组三：扫描器 (Scanner Module)
+核心设计理念
+●口语化说明: 这份蓝图是我们整个项目的顶层设计。核心思想是“化整为零，分而治之”。我们把一个复杂的交易系统，拆分成8个可以独立开发、测试和升级的“积木块”（模组）。它们之间通过一个高效的“信使系统”（消息总线）来沟通，既能协同作战，又互不干扰。这种方式能大大加快开发速度，降低维护成本，而且对服务器要求不高，非常适合初期预算有限的团队。
+●技术选型:
+○模块间通信: ZeroMQ (PUB/SUB, REQ/REP模式)，实现低延迟、高吞吐量的异步消息传递。
+○数据序列化: JSON (易于调试) 或 Protocol Buffers (性能更优)，确保高效、规范的数据交换。
+○缓存与状态存储: Redis，用于存储实时状态、市场数据和作为轻量级消息队列。
+○持久化存储: SQLite，实现零配置、文件型数据库，满足轻量级部署需求。
+○部署: Docker & Docker Compose，实现一键部署和环境隔离。
+○核心AI集成: 深度融合 TradingAgents-CN v3.0 的能力，减少重复开发。
+全局规范
+1. 数据隔离与环境管理规范 (V1.0 新增)
+●口语化说明: 这是我们项目的数据“安全法”。为了防止开发时的测试数据污染了真实的生产环境，我们设立了三套独立的环境：development（开发）、staging（准生产/测试）、production（生产）。每套环境都有自己独立的数据库和配置，就像三个互不相通的房间，确保万无一失。
+规范项	具体内容	注释
+环境定义	系统必须包含三个环境：development, staging, production。	通过环境变量 APP_ENV 进行切换。
+配置管理	1. 严禁硬编码：任何密钥、密码、URL等敏感信息严禁写入代码。 <br> 2. 分环境配置：使用不同的配置文件，如 config/base.yaml, config/prod.yaml。程序根据 APP_ENV 加载相应配置。 <br> 3. 密钥注入：API Key等绝密信息通过Docker的环境变量 (-e 或 env_file) 注入容器。	这是隔离硬数据的核心手段。
+占位数据	1. 仅限开发环境：所有Mock数据、模拟API响应等占位数据，必须通过 if APP_ENV == 'development': 的逻辑判断进行加载。 <br> 2. 严禁入库：占位数据不允许被写入任何 staging 或 production 的数据库/缓存。	从源头上杜绝占位数据污染。
+开发数据	1. 独立数据库：每个环境使用独立的数据库文件（如 dev.db, prod.db）和Redis数据库实例。 <br> 2. 数据清理：development 和 staging 环境应有配套的数据清理脚本，方便一键重置到干净状态。 <br> 3. 数据同步：严禁将生产数据库直接拷贝到开发环境。如需测试，应对数据进行脱敏后方可使用。	隔离与生产无关的数据。
+日志规范	development 环境日志级别为 DEBUG；production 环境为 INFO，错误日志需额外输出到独立文件或日志服务。	避免生产环境产生大量无关日志。
+2. 系统级集成流程
+●口语化说明: 这是整个系统的工作流程图。从“雷达站”（扫描器）发现目标开始，信息会像流水线一样，依次流经“参谋部”（策略优化）、“前线指挥部”（交易员）、“政委”（风控）和“后勤部”（财务），最终由“总司令”（总控）进行全局把控。
+sequenceDiagram
+    participant S as 扫描器
+    participant O as 策略优化
+    participant T as 交易员
+    participant R as 风控
+    participant F as 财务
+    participant A as API工厂
+    participant M as 总控
+
+    M->>S: 命令: 开始扫描
+    S->>A: 请求: 市场行情
+    A-->>S: 响应: 行情数据
+    S-->>O: 推送: 发现潜在交易对 (ZMQ PUB/SUB)
+    O->>A: 请求: 历史K线
+    A-->>O: 响应: K线数据
+    O-->>T: 推送: 优化后的策略参数包 (ZMQ PUB/SUB)
+    T->>R: 请求: 交易风险评估 (ZMQ REQ/REP)
+    R-->>T: 响应: 风险评分(3.1)
+    T->>F: 请求: 预算申请(含风险分) (ZMQ REQ/REP)
+    F-->>T: 响应: 批准资金($48)
+    T->>A: 请求: 执行TWAP订单
+    A-->>T: 响应: 订单成功
+    loop 状态上报
+        T->>M: 上报: 持仓状态 (写入Redis)
+        R->>M: 上报: 风险指标 (写入Redis)
+        F->>M: 上报: 资金状况 (写入Redis)
+    end
+手册导读
+●致项目经理: 本手册是为分布式团队协作而设计的。请将 第一部分 分发给所有开发人员，并将 第二部分 中对应的“模组开发套件”分发给相应的开发团队。
+●致开发人员: 请首先仔细阅读 第一部分 以理解项目全局架构和通用规范。然后，深入研究您负责的模组在 第二部分 中的具体开发套件，它将是您日常开发工作的核心指南。
+通用开发者指南 (所有团队必读)
+1. 系统总体架构
+●核心理念: 系统采用微服务架构，由8个高内聚、低耦合的独立模组构成。各模组作为独立的Docker容器运行，通过一个名为ZeroMQ的轻量级消息总线进行异步通信。
+●架构图:
+●数据流:
+○扫描器发现机会，推送到“预备池”。
+○策略优化从“预备池”获取机会，进行回测，通过后生成“参数包”推送到“交易池”。
+○交易员从“交易池”获取“参数包”，依次向风控和财务申请评估与资金。
+○审批通过后，交易员通过API工厂执行交易。
+○所有模组的运行状态都实时上报至Redis，由总控进行全局监控和决策。
+2. 通信协议与接口规范
+●通信技术: ZeroMQ。它不是一个传统的队列，而是一个高性能的通信库。
+●通信模式:
+○发布/订阅 (PUB/SUB): 用于一对多的广播式通信。例如，扫描器（PUB）发布一个新机会，多个策略优化模组（SUB）都可以收到。
+○请求/响应 (REQ/REP): 用于一对一的服务调用。例如，交易员（REQ）向风控（REP）请求风险评分。
+●ZeroMQ主题 (Topics) 命名规范: [模组来源].[类别].[具体内容]，例如 scanner.pool.preliminary。
+●数据序列化格式: 全系统统一使用 JSON 格式进行数据交换，所有JSON消息必须包含schema_version字段，便于未来升级。
+3. 数据隔离与环境管理规范
+●核心要求: 所有模组的开发都必须严格遵守本规范，以确保开发、测试和生产环境的绝对隔离。
+●规范详情:
+规范项	具体内容	注释
+环境定义	系统必须包含三个环境：development, staging, production。	通过环境变量 APP_ENV 进行切换。
+配置管理	1. 严禁硬编码：任何密钥、密码、URL等敏感信息严禁写入代码。 <br> 2. 分环境配置：使用不同的配置文件，如 config/base.yaml, config/prod.yaml。程序根据 APP_ENV 加载相应配置。 <br> 3. 密钥注入：API Key等绝密信息通过Docker的环境变量 (-e 或 env_file) 注入容器。	这是隔离硬数据的核心手段。
+占位数据	1. 仅限开发环境：所有Mock数据、模拟API响应等占位数据，必须通过 if APP_ENV == 'development': 的逻辑判断进行加载。 <br> 2. 严禁入库：占位数据不允许被写入任何 staging 或 production 的数据库/缓存。	从源头上杜绝占位数据污染。
+开发数据	1. 独立数据库：每个环境使用独立的数据库文件（如 dev.db, prod.db）和Redis数据库实例。 <br> 2. 数据清理：development 和 staging 环境应有配套的数据清理脚本，方便一键重置到干净状态。 <br> 3. 数据同步：严禁将生产数据库直接拷贝到开发环境。如需测试，应对数据进行脱敏后方可使用。	隔离与生产无关的数据。
+日志规范	development 环境日志级别为 DEBUG；production 环境为 INFO，错误日志需额外输出到独立文件或日志服务。	避免生产环境产生大量无关日志。
+4. 部署与集成规范
+●容器化: 每个模组都必须提供一个 Dockerfile，用于构建其独立的运行镜像。
+●集成编排: 项目根目录提供一个 docker-compose.yml 文件，用于一键启动和编排所有模组服务。
+●docker-compose.yml 结构示例:
+version: '3.8'
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  zmq_broker: # 如果需要一个中心化的代理
+    # ...
+
+  api_factory:
+    build: ./api_factory
+    env_file: .env.prod # 通过env文件注入密钥
+    environment:
+      - APP_ENV=production
+    ports:
+      - "8000:8000"
+
+  scanner:
+    build: ./scanner
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+      - api_factory
+  # ... 其他模组
+
+各模组独立开发套件
+●3.1 模组概述: 您是系统的“雷达站”。您的职责是7x24小时不间断地扫描市场，根据预设规则（三高、黑马等）和外部信息，发现潜在的交易机会，并将其投入“预备池”。
+●3.2 接口契约 (Interaction Contracts)
+○调用的服务 (Services Consumed):
+■服务: API统一管理工厂。
+■目的: 调用 GET /exchange/.../tickers 等接口获取全市场实时行情数据。
+○订阅的通知 (Notifications Subscribed):
+■通信方式: ZeroMQ (SUB)。
+■主题: crawler.news。
+■目的: 实时接收爬虫模组发现的突发新闻（如上币公告），触发“黑马监测器”。
+○发布的通知 (Notifications Published):
+■通信方式: ZeroMQ (PUB)。
+■主题: scanner.pool.preliminary。
+■消息内容: 将所有发现的、符合初步筛选规则的交易机会发布出去。
+■数据结构: {"symbol": "RNDR/USDT", "source": "scanner", "type": "black_horse", "score": 92, "details": {"reason": "Coinbase listing announcement"}, "schema_version": "1.1"}
+3.3 需求书、实施计划、搭建规范:
+●口语化说明: 这是系统的“雷达站”，7x24小时扫描整个市场，寻找潜在的交易机会。它不仅会执行我们预设的“三高”（高波动、高流动、高相关）规则，还有一个“黑马监测器”专门捕捉像新币上架这样的突发新闻，是所有交易的发起点。
+1. 需求书 (Requirements Document)
+字段	值	说明
+ID	scanner-module	模块唯一标识
+Version	1.1	版本号
+Description	全市场扫描，识别并筛选符合预设规则的交易对，输出到预备池。	模块核心职责
+Features	[{"id":"feat-01", "name":"常规扫描", "desc":"基于三高规则（高波动/流动/相关）进行周期性扫描。"}, {"id":"feat-02", "name":"黑马监测器", "desc":"结合交易所公告和社群热度，实时发现突发机会。"}, {"id":"feat-03", "name":"潜力挖掘", "desc":"挖掘低单价/市值/关注度的潜力币。"}, {"id":"feat-04", "name":"TradingAgents-CN集成", "desc":"复用其市场扫描引擎，作为核心数据源之一。"}]	核心功能列表 (JSON格式)
+Dependencies	["api-factory-module", "info-crawler-module"]	依赖API工厂获取行情，依赖爬虫获取新闻
+2. 实施计划 (Implementation Plan)
+阶段	任务	预估工时	产出物
+第一周	集成TradingAgents-CN扫描引擎	20小时	能够获取基础市场数据的扫描器原型
+第二周	实现三高、三低扫描规则引擎	20小时	规则引擎和筛选逻辑
+第三周	开发黑马监测器，对接新闻源	25小时	能够响应突发事件的扫描逻辑
+第四周	联调、测试与部署	15小时	稳定运行的扫描器模块
+3. 搭建规范 (Construction Specification)
+规范项	具体内容	注释
+语言/框架	Python	与TradingAgents-CN生态保持一致
+代码结构	scanner/ <br> ├── main.py <br> ├── rules/ <br> ├── adapters/ <br> │ └── ta_cn_adapter.py <br> └── config/	适配器模式，方便未来切换或增加扫描引擎
+通信协议	ZeroMQ (PUSH)	将筛选出的交易对推送到 scanner.pool.preliminary 主题
+数据结构	{"symbol": "RNDR/USDT", "source": "scanner", "type": "black_horse", "score": 92, "details": {"reason": "Coinbase listing announcement"}}	增加details字段提供更多上下文
+数据存储	Redis (HASH)	preliminary_pool:RNDR/USDT -> JSON_STRING，并用ZSET按分数排序preliminary_pool_scores
+核心逻辑	def run_scan_cycle(): <br> raw_data = ta_cn_adapter.scan() <br> filtered = rules.apply(raw_data) <br> push_to_redis_and_zmq(filtered)	清晰的扫描-过滤-推送流程

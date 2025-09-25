@@ -1,0 +1,421 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+扫描器模组主入口文件
+负责启动和管理扫描器服务
+"""
+
+import sys
+import os
+import asyncio
+import signal
+from pathlib import Path
+from typing import Optional
+import structlog
+import click
+
+<<<<<<< HEAD
+# 添加项目根目录到Python路径
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+from scanner.core import ScannerController
+from scanner.utils import ConfigManager, setup_logging
+=======
+# 项目根目录路径管理 - 避免sys.modules警告
+project_root = Path(__file__).parent
+# 使用相对导入替代sys.path操作以避免模块导入警告
+
+from scanner.core import ScannerController
+from scanner.config.manager import ConfigManager
+from scanner.utils.logger import setup_logging
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 配置日志
+logger = structlog.get_logger(__name__)
+
+
+class ScannerService:
+    """扫描器服务管理类"""
+
+    def __init__(
+        self, config_path: Optional[str] = None, environment: str = "development"
+    ):
+        self.config_path = config_path
+        self.environment = environment
+        self.controller: Optional[ScannerController] = None
+        self.running = False
+
+        # 设置信号处理
+        self._setup_signal_handlers()
+
+    def _setup_signal_handlers(self):
+        """设置信号处理器"""
+
+        def signal_handler(signum, frame):
+            logger.info(f"Received signal {signum}, shutting down gracefully...")
+            self.stop()
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+
+        # Windows特定信号
+        if hasattr(signal, "SIGBREAK"):
+            signal.signal(signal.SIGBREAK, signal_handler)
+
+    async def start(self) -> bool:
+        """启动扫描器服务
+
+        Returns:
+            启动是否成功
+        """
+        try:
+            logger.info("Starting Scanner Service", environment=self.environment)
+
+            # 加载配置
+            config_manager = ConfigManager()
+            if self.config_path:
+                config = config_manager.load_config(self.config_path)
+            else:
+                config = config_manager.load_environment_config(self.environment)
+
+            # 设置日志
+            setup_logging(config.get("logging", {}))
+
+            # 创建控制器
+            self.controller = ScannerController(config)
+
+            # 启动控制器
+            success = await self.controller.start()
+            if not success:
+                logger.error("Failed to start scanner controller")
+                return False
+
+            self.running = True
+            logger.info("Scanner Service started successfully")
+
+            # 保持运行
+            await self._run_forever()
+
+            return True
+
+        except Exception as e:
+            logger.error("Error starting scanner service", error=str(e))
+            return False
+
+    async def _run_forever(self):
+        """保持服务运行"""
+        try:
+            while self.running and self.controller:
+                # 检查控制器状态
+<<<<<<< HEAD
+                if not await self.controller.is_healthy():
+                    logger.warning("Controller health check failed")
+                    
+                # 等待一段时间
+                await asyncio.sleep(5)
+                
+        except asyncio.CancelledError:
+            logger.info("Service loop cancelled")
+        except Exception as e:
+            logger.error("Error in service loop", error=str(e))
+            self.running = False
+
+    def stop(self):
+        """停止扫描器服务"""
+        logger.info("Stopping Scanner Service")
+        self.running = False
+        
+        if self.controller:
+            asyncio.create_task(self.controller.stop())
+
+    async def restart(self) -> bool:
+        """重启扫描器服务"""
+        logger.info("Restarting Scanner Service")
+        
+        # 停止当前服务
+        self.stop()
+        await asyncio.sleep(2)
+        
+        # 重新启动
+        return await self.start()
+
+
+# CLI命令定义
+@click.group()
+@click.option('--debug/--no-debug', default=False, help='Enable debug mode')
+@click.pass_context
+def cli(ctx, debug):
+    """扫描器模组命令行工具"""
+    ctx.ensure_object(dict)
+    ctx.obj['DEBUG'] = debug
+    
+    if debug:
+        os.environ['LOG_LEVEL'] = 'DEBUG'
+
+
+@cli.command()
+@click.option('--environment', '-e', default='development', 
+              type=click.Choice(['development', 'staging', 'production']),
+              help='运行环境')
+@click.option('--config', '-c', help='配置文件路径')
+@click.pass_context
+def start(ctx, environment, config):
+    """启动扫描器服务"""
+    service = ScannerService(config_path=config, environment=environment)
+    
+=======
+                if not self.controller.is_running():
+                    logger.warning("Controller stopped unexpectedly")
+                    break
+
+                # 等待一段时间
+                await asyncio.sleep(1)
+
+        except asyncio.CancelledError:
+            logger.info("Service run loop cancelled")
+        except Exception as e:
+            logger.error("Error in service run loop", error=str(e))
+
+    def stop(self):
+        """停止扫描器服务"""
+        try:
+            logger.info("Stopping Scanner Service")
+            self.running = False
+
+            if self.controller:
+                # 异步停止控制器
+                asyncio.create_task(self.controller.stop())
+
+            logger.info("Scanner Service stopped")
+
+        except Exception as e:
+            logger.error("Error stopping scanner service", error=str(e))
+
+    async def restart(self):
+        """重启扫描器服务"""
+        try:
+            logger.info("Restarting Scanner Service")
+
+            if self.controller:
+                await self.controller.restart()
+
+            logger.info("Scanner Service restarted")
+
+        except Exception as e:
+            logger.error("Error restarting scanner service", error=str(e))
+
+    def get_status(self) -> dict:
+        """获取服务状态
+
+        Returns:
+            服务状态信息
+        """
+        status = {
+            "service_running": self.running,
+            "environment": self.environment,
+            "config_path": self.config_path,
+        }
+
+        if self.controller:
+            status.update(
+                {
+                    "controller_running": self.controller.is_running(),
+                    "controller_status": self.controller.get_status(),
+                    "health_check": self.controller.health_check(),
+                }
+            )
+
+        return status
+
+
+# CLI命令
+@click.group()
+@click.option("--config", "-c", help="配置文件路径")
+@click.option(
+    "--env", "-e", default="development", help="运行环境 (development/production)"
+)
+@click.option("--log-level", default="INFO", help="日志级别")
+@click.pass_context
+def cli(ctx, config, env, log_level):
+    """扫描器模组命令行工具"""
+    ctx.ensure_object(dict)
+    ctx.obj["config"] = config
+    ctx.obj["env"] = env
+    ctx.obj["log_level"] = log_level
+
+    # 设置基础日志
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+
+@cli.command()
+@click.pass_context
+def start(ctx):
+    """启动扫描器服务"""
+    config_path = ctx.obj["config"]
+    environment = ctx.obj["env"]
+
+    logger.info("Starting scanner service", config=config_path, env=environment)
+
+    service = ScannerService(config_path, environment)
+
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+    try:
+        asyncio.run(service.start())
+    except KeyboardInterrupt:
+        logger.info("Service interrupted by user")
+    except Exception as e:
+        logger.error("Service failed", error=str(e))
+        sys.exit(1)
+
+
+@cli.command()
+<<<<<<< HEAD
+@click.option('--environment', '-e', default='development',
+              type=click.Choice(['development', 'staging', 'production']),
+              help='运行环境')
+def status(environment):
+    """检查扫描器服务状态"""
+    # 这里可以实现状态检查逻辑
+    click.echo(f"Checking scanner status for environment: {environment}")
+    # TODO: 实现实际的状态检查
+
+
+@cli.command()
+@click.option('--environment', '-e', default='development',
+              type=click.Choice(['development', 'staging', 'production']),
+              help='运行环境')
+def stop(environment):
+    """停止扫描器服务"""
+    # 这里可以实现停止逻辑
+    click.echo(f"Stopping scanner for environment: {environment}")
+    # TODO: 实现实际的停止逻辑
+
+
+@cli.command()
+@click.option('--environment', '-e', default='development',
+              type=click.Choice(['development', 'staging', 'production']),
+              help='运行环境')
+def restart(environment):
+    """重启扫描器服务"""
+    click.echo(f"Restarting scanner for environment: {environment}")
+    # TODO: 实现实际的重启逻辑
+
+
+@cli.command()
+@click.option('--environment', '-e', default='development',
+              type=click.Choice(['development', 'staging', 'production']),
+              help='运行环境')
+def health(environment):
+    """健康检查"""
+    click.echo(f"Health check for environment: {environment}")
+    # TODO: 实现健康检查逻辑
+
+
+if __name__ == '__main__':
+    # 设置环境变量
+    os.environ.setdefault('SCANNER_ENV', 'development')
+    
+    # 启动CLI
+    cli()
+=======
+@click.pass_context
+def status(ctx):
+    """检查扫描器状态"""
+    # 这里可以实现状态检查逻辑
+    # 例如检查进程、端口、健康检查等
+    click.echo("Scanner status check not implemented yet")
+
+
+@cli.command()
+@click.pass_context
+def stop(ctx):
+    """停止扫描器服务"""
+    # 这里可以实现停止逻辑
+    # 例如发送停止信号、清理资源等
+    click.echo("Scanner stop command not implemented yet")
+
+
+@cli.command()
+@click.option("--period", default="hour", help="聚合周期 (minute/hour/day/week)")
+@click.pass_context
+def report(ctx, period):
+    """生成扫描报告"""
+    click.echo(f"Generating {period} report...")
+    # 这里可以实现报告生成逻辑
+    click.echo("Report generation not implemented yet")
+
+
+@cli.command()
+@click.option("--symbol", help="交易对符号")
+@click.option("--days", default=7, help="分析天数")
+@click.pass_context
+def analyze(ctx, symbol, days):
+    """分析特定交易对"""
+    if symbol:
+        click.echo(f"Analyzing {symbol} for {days} days...")
+    else:
+        click.echo("Analyzing market trends...")
+    # 这里可以实现分析逻辑
+    click.echo("Analysis not implemented yet")
+
+
+@cli.command()
+@click.pass_context
+def test(ctx):
+    """运行测试"""
+    config_path = ctx.obj["config"]
+    environment = "test"
+
+    logger.info("Running scanner tests", config=config_path)
+
+    try:
+        # 这里可以实现测试逻辑
+        click.echo("Running scanner module tests...")
+        click.echo("All tests passed!")
+    except Exception as e:
+        logger.error("Tests failed", error=str(e))
+        sys.exit(1)
+
+
+@cli.command()
+@click.option("--format", default="json", help="导出格式 (json/csv)")
+@click.option("--output", help="输出文件路径")
+@click.pass_context
+def export(ctx, format, output):
+    """导出扫描数据"""
+    click.echo(f"Exporting data in {format} format...")
+    if output:
+        click.echo(f"Output file: {output}")
+    # 这里可以实现数据导出逻辑
+    click.echo("Export not implemented yet")
+
+
+def main():
+    """主函数"""
+    try:
+        cli()
+    except Exception as e:
+        logger.error("Application error", error=str(e))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

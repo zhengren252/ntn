@@ -1,0 +1,360 @@
+# Alertmanager 配置文件
+# 用于信息源爬虫模组的告警管理
+
+global:
+  # SMTP配置
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@neurotrade-nexus.com'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+  
+  # 默认接收者
+  smtp_hello: 'alertmanager'
+  
+  # 解析超时
+  resolve_timeout: 5m
+  
+  # HTTP配置
+  http_config:
+    tls_config:
+      insecure_skip_verify: false
+
+# 模板配置
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# 路由配置
+route:
+  # 默认接收者
+  receiver: 'default-receiver'
+  
+  # 分组配置
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  
+  # 子路由
+  routes:
+    # 系统级严重告警
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      group_interval: 5s
+      repeat_interval: 30m
+      continue: true
+    
+    # 应用服务告警
+    - match:
+        service: info-crawler
+      receiver: 'app-alerts'
+      group_by: ['alertname', 'instance']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+    
+    # Redis告警
+    - match:
+        service: redis
+      receiver: 'redis-alerts'
+      group_by: ['alertname', 'instance']
+      group_wait: 30s
+      group_interval: 10m
+      repeat_interval: 4h
+    
+    # 爬虫任务告警
+    - match:
+        service: crawler
+      receiver: 'crawler-alerts'
+      group_by: ['alertname', 'source']
+      group_wait: 1m
+      group_interval: 15m
+      repeat_interval: 6h
+    
+    # ZeroMQ告警
+    - match:
+        service: zmq
+      receiver: 'zmq-alerts'
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+    
+    # Telegram告警
+    - match:
+        service: telegram
+      receiver: 'telegram-alerts'
+      group_by: ['alertname']
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 4h
+    
+    # 数据质量告警
+    - match:
+        service: data-quality
+      receiver: 'data-quality-alerts'
+      group_by: ['alertname']
+      group_wait: 2m
+      group_interval: 30m
+      repeat_interval: 12h
+    
+    # 网络和SSL告警
+    - match_re:
+        service: network|ssl
+      receiver: 'network-alerts'
+      group_by: ['alertname', 'instance']
+      group_wait: 1m
+      group_interval: 15m
+      repeat_interval: 8h
+    
+    # 容器告警
+    - match:
+        service: container
+      receiver: 'container-alerts'
+      group_by: ['alertname', 'container']
+      group_wait: 30s
+      group_interval: 10m
+      repeat_interval: 4h
+
+# 抑制规则
+inhibit_rules:
+  # 服务下线时抑制其他告警
+  - source_match:
+      alertname: ServiceDown
+    target_match_re:
+      alertname: HighAPIResponseTime|HighAPIErrorRate
+    equal: ['instance']
+  
+  # Redis下线时抑制相关告警
+  - source_match:
+      alertname: RedisDown
+    target_match_re:
+      alertname: RedisHighMemoryUsage|RedisHighConnections
+    equal: ['instance']
+  
+  # 系统资源告警抑制
+  - source_match:
+      alertname: HighCPUUsage
+    target_match:
+      alertname: HighMemoryUsage
+    equal: ['instance']
+
+# 接收者配置
+receivers:
+  # 默认接收者
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'admin@neurotrade-nexus.com'
+        subject: '[NTN-爬虫模组] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ if .EndsAt }}结束时间: {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+          
+          标签信息:
+          {{ range .Labels.SortedPairs }}- {{ .Name }}: {{ .Value }}
+          {{ end }}
+          {{ end }}
+        headers:
+          Subject: '[NTN-爬虫模组] {{ .GroupLabels.alertname }}'
+  
+  # 严重告警接收者
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@neurotrade-nexus.com,ops@neurotrade-nexus.com'
+        subject: '[紧急告警] {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 紧急告警通知 🚨
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          请立即处理此告警！
+          {{ end }}
+        headers:
+          Priority: 'high'
+    # 可选：添加短信通知
+    # webhook_configs:
+    #   - url: 'http://sms-gateway:8080/send'
+    #     send_resolved: true
+  
+  # 应用服务告警
+  - name: 'app-alerts'
+    email_configs:
+      - to: 'dev@neurotrade-nexus.com'
+        subject: '[应用告警] {{ .GroupLabels.alertname }}'
+        body: |
+          应用服务告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          监控面板: http://grafana:3000/d/info-crawler
+          日志查看: http://grafana:3000/explore
+          {{ end }}
+  
+  # Redis告警
+  - name: 'redis-alerts'
+    email_configs:
+      - to: 'dba@neurotrade-nexus.com'
+        subject: '[Redis告警] {{ .GroupLabels.alertname }}'
+        body: |
+          Redis服务告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          Redis监控: http://grafana:3000/d/redis-dashboard
+          {{ end }}
+  
+  # 爬虫任务告警
+  - name: 'crawler-alerts'
+    email_configs:
+      - to: 'crawler-team@neurotrade-nexus.com'
+        subject: '[爬虫告警] {{ .GroupLabels.alertname }}'
+        body: |
+          爬虫任务告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          数据源: {{ .Labels.source }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          爬虫监控: http://grafana:3000/d/crawler-dashboard
+          任务管理: http://localhost:3000/crawler/tasks
+          {{ end }}
+  
+  # ZeroMQ告警
+  - name: 'zmq-alerts'
+    email_configs:
+      - to: 'dev@neurotrade-nexus.com'
+        subject: '[ZeroMQ告警] {{ .GroupLabels.alertname }}'
+        body: |
+          ZeroMQ消息队列告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          消息队列监控: http://grafana:3000/d/zmq-dashboard
+          {{ end }}
+  
+  # Telegram告警
+  - name: 'telegram-alerts'
+    email_configs:
+      - to: 'telegram-team@neurotrade-nexus.com'
+        subject: '[Telegram告警] {{ .GroupLabels.alertname }}'
+        body: |
+          Telegram监听器告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          Telegram监控: http://grafana:3000/d/telegram-dashboard
+          连接管理: http://localhost:3000/telegram/status
+          {{ end }}
+  
+  # 数据质量告警
+  - name: 'data-quality-alerts'
+    email_configs:
+      - to: 'data-team@neurotrade-nexus.com'
+        subject: '[数据质量告警] {{ .GroupLabels.alertname }}'
+        body: |
+          数据质量告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          数据质量监控: http://grafana:3000/d/data-quality-dashboard
+          数据验证报告: http://localhost:3000/data/quality
+          {{ end }}
+  
+  # 网络告警
+  - name: 'network-alerts'
+    email_configs:
+      - to: 'network@neurotrade-nexus.com'
+        subject: '[网络告警] {{ .GroupLabels.alertname }}'
+        body: |
+          网络服务告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          目标地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          网络监控: http://grafana:3000/d/network-dashboard
+          {{ end }}
+  
+  # 容器告警
+  - name: 'container-alerts'
+    email_configs:
+      - to: 'ops@neurotrade-nexus.com'
+        subject: '[容器告警] {{ .GroupLabels.alertname }}'
+        body: |
+          Docker容器告警通知
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          容器名称: {{ .Labels.container }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          容器监控: http://grafana:3000/d/container-dashboard
+          Docker状态: docker ps -a
+          {{ end }}
+
+# 时间窗口配置
+time_intervals:
+  - name: 'business-hours'
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+            end_time: '18:00'
+        weekdays: ['monday:friday']
+        location: 'Asia/Shanghai'
+  
+  - name: 'off-hours'
+    time_intervals:
+      - times:
+          - start_time: '18:01'
+            end_time: '08:59'
+        weekdays: ['monday:friday']
+        location: 'Asia/Shanghai'
+      - weekdays: ['saturday', 'sunday']
+        location: 'Asia/Shanghai'
+
+# 静默规则（可选）
+# silences:
+#   - matchers:
+#       - name: alertname
+#         value: MaintenanceMode
+#     starts_at: '2024-01-01T00:00:00Z'
+#     ends_at: '2024-01-01T06:00:00Z'
+#     created_by: 'admin@neurotrade-nexus.com'
+#     comment: '系统维护窗口'

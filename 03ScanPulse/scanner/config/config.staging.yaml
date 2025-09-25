@@ -1,0 +1,75 @@
+# 测试环境配置
+# 覆盖基础配置中的测试环境特定设置
+# 介于开发环境和生产环境之间的配置
+
+# Redis配置 - 测试环境
+redis:
+  database: 2  # 使用数据库2避免与开发和生产环境冲突
+  socket_timeout: 4
+  socket_connect_timeout: 4
+  health_check_interval: 45
+  default_ttl: 3600  # 中等缓存时间
+  ttl:
+    scan_result: 3600    # 1小时
+    market_data: 300     # 5分钟
+    news_events: 1800    # 30分钟
+
+# ZeroMQ配置 - 测试环境
+zmq:
+  publisher:
+    port: 25555  # 测试环境端口
+  subscriber:
+    port: 25556
+  request:
+    port: 25557
+    timeout: 5000  # 中等超时时间
+  reply:
+    port: 25558
+  heartbeat_interval: 30  # 标准心跳间隔
+  max_retries: 4
+
+# 扫描器配置 - 测试环境
+scanner:
+  rules:
+    three_high:
+      volatility_threshold: 0.04    # 介于开发和生产之间
+      volume_threshold: 1500000
+      correlation_threshold: 0.7
+    black_horse:
+      price_change_threshold: 0.15
+      volume_spike_threshold: 3.0
+      news_sentiment_threshold: 0.6
+    potential_finder:
+      market_cap_threshold: 150000000  # 中等市值要求
+      price_threshold: 1.5
+      volume_threshold: 75000
+  scan_interval: 90      # 中等扫描间隔
+  batch_size: 150        # 中等批处理大小
+  max_workers: 6         # 中等工作线程数
+  timeout: 25            # 中等超时时间
+
+# 日志配置 - 测试环境
+logging:
+  level: INFO            # 标准日志级别
+  console:
+    enabled: true        # 测试环境保留控制台输出
+    colorize: false      # 不使用彩色输出
+  file:
+    enabled: true
+    path: logs/scanner_staging.log
+    max_size: 20MB       # 中等日志文件大小
+    backup_count: 7
+
+# API配置 - 测试环境
+api:
+  binance:
+    base_url: https://testnet.binance.vision  # 使用测试网
+    timeout: 8
+    rate_limit: 1000     # 中等限制
+  news:
+    timeout: 12
+    rate_limit: 100
+
+# 测试环境特定配置
+testing:
+  mock_data: false       # 不使用模拟

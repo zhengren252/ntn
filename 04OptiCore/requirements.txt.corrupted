@@ -1,0 +1,254 @@
+# NeuroTrade Nexus (NTN) - 绛栫暐浼樺寲妯＄粍渚濊禆�?
+# Strategy Optimization Module Dependencies
+
+# 鏍稿績妗嗘灦 Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 寮傛鏀寔 Async Support
+aiofiles==23.2.1
+aioredis==2.0.1
+aiosqlite==0.19.0
+
+# 鏁版嵁澶勭悊 Data Processing
+pandas==2.1.4
+numpy==1.25.2
+scipy==1.11.4
+
+# 閲戣瀺鏁版嵁鍒嗘�?Financial Data Analysis
+vectorbt==0.28.0
+# TA-Lib==0.4.28  # 涓存椂娉ㄩ噴锛屾瀯寤洪棶�?
+yfinance==0.2.28
+ccxt==4.1.64
+
+# 鏈哄櫒瀛︿�?Machine Learning
+scikit-learn==1.3.2
+deap==1.4.1
+
+# AI鍔犻�?AI Acceleration
+groq==0.4.1
+
+# 鏁版嵁搴?Database
+# sqlite3  # Python标准库，无需通过pip安装�?
+redis==5.0.1
+
+# 娑堟伅闃熷垪 Message Queue
+pyzmq==25.1.2
+
+# 閰嶇疆绠＄悊 Configuration Management
+python-dotenv==1.0.0
+PyYAML==6.0.1
+toml==0.10.2
+
+# 鏃ュ織璁板綍 Logging
+loguru==0.7.2
+structlog==23.2.0
+
+# 缃戠粶璇锋眰 HTTP Requests
+httpx==0.25.2
+requests==2.31.0
+
+# 鏃堕棿澶勭悊 Time Handling
+python-dateutil==2.8.2
+pytz==2023.3
+
+# 鏁版嵁楠岃瘉 Data Validation
+jsonschema==4.20.0
+cerberus==1.3.5
+
+# 鏁版嵁搴忓垪�?Data Serialization
+orjson==3.9.10
+msgpack==1.0.7
+
+# 鎬ц兘鐩戞�?Performance Monitoring
+psutil==5.9.6
+prometheus-client==0.19.0
+
+# 鏁板璁＄畻 Mathematical Computing
+sympy==1.12
+numba==0.58.1
+
+# 鍥捐〃缁樺埗 Plotting
+matplotlib==3.8.2
+plotly==5.17.0
+
+# 鏁版嵁瀛樺�?Data Storage
+h5py==3.10.0
+pyarrow==14.0.1
+
+# 缃戠粶閫氫俊 Network Communication
+websockets==12.0
+aiohttp==3.9.1
+
+# 鍔犲瘑瀹夊�?Cryptography
+cryptography==41.0.7
+bcrypt==4.1.2
+
+# 宸ュ叿搴?Utilities
+click==8.1.7
+rich==13.7.0
+tqdm==4.66.1
+
+# 娴嬭瘯妗嗘灦 Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# 浠ｇ爜璐ㄩ噺 Code Quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pylint==3.0.3
+
+# 寮€鍙戝伐鍏?Development Tools
+ipython==8.18.1
+jupyter==1.0.0
+
+# 鐜绠＄悊 Environment Management
+python-decouple==3.8
+
+# 缂撳�?Caching
+diskcache==5.6.3
+
+# 浠诲姟璋冨害 Task Scheduling
+celery==5.3.4
+
+# 鏂囨。鐢熸垚 Documentation
+sphinx==7.2.6
+
+# 閰嶇疆鏂囦欢瑙ｆ�?Configuration Parsing
+configparser==6.0.0
+
+# 鏁版嵁搴撹繛�?Database Connectivity
+sqlalchemy==2.0.23
+alembic==1.13.1
+
+# 内存数据�?In-Memory Database
+# sqlite3  # Python标准库，无需通过pip安装
+
+# 鍒嗗竷寮忚�?Distributed Computing
+dask==2023.11.0
+
+# 鏈哄櫒瀛︿範鎵╁睍 ML Extensions
+xgboost==2.0.2
+lightgbm==4.1.0
+
+# 娣卞害瀛︿�?Deep Learning
+torch==2.1.1
+tensorflow==2.15.0
+
+# 鑷劧璇█澶勭�?NLP
+nltk==3.8.1
+spacy==3.7.2
+
+# 鍥惧儚澶勭悊 Image Processing
+Pillow==10.1.0
+opencv-python==4.8.1.78
+
+# 闊抽澶勭悊 Audio Processing
+librosa==0.10.1
+
+# 鍦扮悊淇℃伅 Geospatial
+geopandas==0.14.1
+
+# 鏃堕棿搴忓垪 Time Series
+statsmodels==0.14.0
+
+# 浼樺寲绠楁硶 Optimization
+scipy==1.11.4
+
+# 骞惰璁＄畻 Parallel Computing
+joblib==1.3.2
+
+# 鏁版嵁鍙�?Data Visualization
+seaborn==0.13.0
+bokeh==3.3.2
+
+# 鏂囦欢澶勭悊 File Processing
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# 鍘嬬缉瑙ｅ帇 Compression
+zstandard==0.22.0
+
+# 绯荤粺鐩戞帶 System Monitoring
+psutil==5.9.6
+
+# 鍐呭瓨鍒嗘�?Memory Profiling
+memory-profiler==0.61.0
+
+# 鎬ц兘鍒嗘�?Performance Profiling
+line-profiler==4.1.1
+
+# 浠ｇ爜瑕嗙洊�?Code Coverage
+coverage==7.3.2
+
+# 闈欐€佸垎鏋?Static Analysis
+bandit==1.7.5
+
+# 渚濊禆绠＄悊 Dependency Management
+pipdeptree==2.13.1
+
+# 鐗堟湰鎺у�?Version Control
+gitpython==3.1.40
+
+# 瀹瑰櫒鍖?Containerization
+docker==6.1.3
+
+# 浜戞湇鍔?Cloud Services
+boto3==1.34.0
+
+# 鐩戞帶鍛婅 Monitoring & Alerting
+slack-sdk==3.26.1
+
+# 閭欢鍙戦€?Email
+sendgrid==6.10.0
+
+# 鐭俊鍙戦€?SMS
+twilio==8.11.0
+
+# 鎺ㄩ€侀€氱�?Push Notifications
+pushbullet.py==0.12.0
+
+# 绀句氦濯掍�?Social Media
+tweepy==4.14.0
+
+# 鍖哄潡閾?Blockchain
+web3==6.13.0
+
+# 量化交易 Quantitative Trading
+# zipline 已完全移除（与pandas版本不兼容）
+backtrader==1.9.78.123
+
+# 椋庨櫓绠＄悊 Risk Management
+riskfolio-lib==7.0.1
+
+# 鎶曡祫缁勫悎浼樺�?Portfolio Optimization
+pyportfolioopt==1.5.5
+
+# 鏈熸潈瀹氫�?Options Pricing
+QuantLib==1.32
+
+# 鎶€鏈寚鏍?Technical Indicators
+# TA-Lib需要在Dockerfile中特殊处�?
+# talib==0.4.28  # 位置注释：TA-Lib库通过Dockerfile安装
+
+# 甯傚満鏁版�?Market Data
+alpha-vantage==2.3.1
+quandl==3.7.0
+
+# 缁忔祹鏁版嵁 Economic Data
+fredapi==0.4.3
+
+# 鏂伴椈鏁版嵁 News Data
+newsapi-python==0.2.7
+
+# 绀句氦鎯呮�?Social Sentiment
+vaderSentiment==3.3.2
+
+# 鏂囨湰鍒嗘�?Text Analysis
+textblob==0.17.1
+cvxpy==1.5.2

@@ -1,0 +1,17 @@
+# 最小化 Dockerfile 用于测试 sqlite3 修复
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 复制最小依赖文件
+COPY requirements_minimal.txt .
+COPY test_sqlite3.py .
+
+# 安装最小依赖
+RUN pip install --no-cache-dir -r requirements_minimal.txt
+
+# 测试 sqlite3 模块
+RUN python test_sqlite3.py
+
+# 设置启动命令
+CMD ["python", "test_sqlite3.py"]

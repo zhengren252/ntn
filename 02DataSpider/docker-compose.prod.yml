@@ -1,0 +1,287 @@
+# 生产环境 Docker Compose 配置
+# 用于生产部署，包含高可用和监控配置
+
+version: '3.8'
+
+services:
+  # Redis 缓存服务 - 主节点
+  redis-prod:
+    image: redis:7-alpine
+    container_name: ntn-redis-prod
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_prod_data:/data
+      - ./config/redis-prod.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - ntn-prod-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  # 信息源爬虫主服务
+  info-crawler-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: ntn-crawler-prod
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=sqlite:///data/prod.db
+      - REDIS_URL=redis://redis-prod:6379/2
+      - ZMQ_PUBLISHER_PORT=5555
+      - ZMQ_SUBSCRIBER_PORT=5556
+      - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
+      - WORKERS=4
+    env_file:
+      - .env.prod
+    ports:
+      - "5002:5000"  # Flask API
+      - "5559:5555"  # ZeroMQ Publisher
+      - "5560:5556"  # ZeroMQ Subscriber
+    volumes:
+      - prod_data:/app/data
+      - prod_logs:/app/logs
+      - prod_temp:/app/temp
+    depends_on:
+      redis-prod:
+        condition: service_healthy
+    networks:
+      - ntn-prod-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "10"
+
+  # 前端服务
+  frontend-prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: ntn-frontend-prod
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:5002
+      - REACT_APP_WS_URL=ws://localhost:5560
+    ports:
+      - "3002:3000"
+    depends_on:
+      - info-crawler-prod
+    networks:
+      - ntn-prod-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # Nginx 反向代理
+  nginx-prod:
+    image: nginx:alpine
+    container_name: ntn-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - info-crawler-prod
+      - frontend-prod
+    networks:
+      - ntn-prod-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # 监控服务 - Prometheus
+  prometheus-prod:
+    image: prom/prometheus:latest
+    container_name: ntn-prometheus-prod
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./config/prometheus-prod.yml:/etc/prometheus/prometheus.yml
+      - prometheus_prod_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - ntn-prod-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # 监控可视化 - Grafana
+  grafana-prod:
+    image: grafana/grafana:latest
+    container_name: ntn-grafana-prod
+    ports:
+      - "3003:3000"
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus-prod
+    networks:
+      - ntn-prod-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # 日志聚合服务
+  log-aggregator-prod:
+    image: fluent/fluent-bit:latest
+    container_name: ntn-logs-prod
+    volumes:
+      - ./config/fluent-bit-prod.conf:/fluent-bit/etc/fluent-bit.conf
+      - prod_logs:/var/log/app
+      - nginx_logs:/var/log/nginx
+    networks:
+      - ntn-prod-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # 数据备份服务
+  backup-service:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.backup
+    container_name: ntn-backup-prod
+    volumes:
+      - prod_data:/backup/data
+      - prod_logs:/backup/logs
+      - backup_storage:/backup/storage
+    environment:
+      - BACKUP_SCHEDULE=0 2 * * *  # 每天凌晨2点备份
+      - RETENTION_DAYS=30
+    networks:
+      - ntn-prod-network
+    restart: always
+    profiles:
+      - backup
+
+volumes:
+  redis_prod_data:
+    driver: local
+  prod_data:
+    driver: local
+  prod_logs:
+    driver: local
+  prod_temp:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_prod_data:
+    driver: local
+  grafana_prod_data:
+    driver: local
+  backup_storage:
+    driver: local
+
+networks:
+  ntn-prod-network:
+    driver: bridge
+
+# 生产环境扩展配置
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "200m"
+    max-file: "10"
+
+x-deploy: &default-deploy
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+    window: 120s

@@ -1,0 +1,92 @@
+# 生产环境配置文件
+# 严格的安全和性能配置
+
+# 应用配置
+app:
+  debug: false
+  mock_data: false
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 4
+
+# ZeroMQ配置 (生产环境端口)
+zeromq:
+  publisher:
+    port: 5555
+  subscriber:
+    port: 5556
+  security:
+    encryption: true
+    auth_required: true
+
+# Redis配置 (生产环境)
+redis:
+  db: 0
+  key_prefix: "prod_master_control:"
+  password: "${REDIS_PASSWORD}"
+  ssl: true
+  connection_pool_size: 50
+
+# 数据库配置 (生产环境)
+database:
+  filename: "prod_master_control.db"
+  echo: false
+  backup_enabled: true
+  backup_interval: 1800  # 30分钟备份一次
+  encryption: true
+  wal_mode: true  # Write-Ahead Logging
+
+# 日志配置 (生产环境)
+logging:
+  level: "INFO"
+  console: false
+  file: "logs/prod_master_control.log"
+  remote_logging: true
+  log_server: "${LOG_SERVER_URL}"
+  error_notification: true
+  alert_webhook: "${ALERT_WEBHOOK_URL}"
+
+# 监控配置 (生产环境)
+monitoring:
+  health_check_interval: 30
+  status_update_interval: 5
+  metrics_export: true
+  prometheus_port: 9090
+  grafana_dashboard: true
+  alerting: true
+
+# 安全配置
+security:
+  api_key_required: true
+  jwt_secret: "${JWT_SECRET}"
+  rate_limiting: true
+  max_requests_per_minute: 500
+  cors_strict: true
+  https_only: true
+  csrf_protection: true
+
+# 性能配置
+performance:
+  connection_pool_size: 100
+  query_timeout: 10
+  cache_ttl: 600
+  compression: true
+  keep_alive: true
+
+# 高可用配置
+high_availability:
+  failover_enabled: true
+  backup_nodes: 2
+  health_check_timeout: 5
+  auto_recovery: true
+
+# 灾难恢复配置
+disaster_recovery:
+  backup_retention_days: 30
+  offsite_backup: true
+  recovery_point_objective: 300  # 5分钟
+  recovery_time_objective: 900   # 15分钟

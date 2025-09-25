@@ -1,0 +1,633 @@
+# 交易执行铁三角项目监控配置
+# 定义系统监控指标、告警规则和通知设置
+
+# 监控配置
+monitoring:
+  # 监控间隔设置
+  intervals:
+    metrics_collection: 30s      # 指标收集间隔
+    health_check: 10s            # 健康检查间隔
+    alert_evaluation: 60s        # 告警评估间隔
+    log_rotation: 24h            # 日志轮转间隔
+  
+  # 数据保留策略
+  retention:
+    metrics: 30d                 # 指标数据保留30天
+    logs: 7d                     # 日志保留7天
+    alerts: 90d                  # 告警记录保留90天
+    traces: 3d                   # 链路追踪保留3天
+
+# 系统性能指标
+performance_metrics:
+  # CPU使用率
+  cpu:
+    - name: cpu_usage_percent
+      description: "CPU使用率百分比"
+      type: gauge
+      unit: percent
+      labels: ["module", "environment"]
+      thresholds:
+        warning: 70
+        critical: 85
+    
+    - name: cpu_load_average
+      description: "系统负载平均值"
+      type: gauge
+      unit: count
+      labels: ["period", "environment"]
+      thresholds:
+        warning: 2.0
+        critical: 4.0
+  
+  # 内存使用
+  memory:
+    - name: memory_usage_bytes
+      description: "内存使用量（字节）"
+      type: gauge
+      unit: bytes
+      labels: ["module", "environment"]
+      thresholds:
+        warning: 1073741824  # 1GB
+        critical: 2147483648 # 2GB
+    
+    - name: memory_usage_percent
+      description: "内存使用率百分比"
+      type: gauge
+      unit: percent
+      labels: ["module", "environment"]
+      thresholds:
+        warning: 80
+        critical: 90
+  
+  # 磁盘使用
+  disk:
+    - name: disk_usage_bytes
+      description: "磁盘使用量（字节）"
+      type: gauge
+      unit: bytes
+      labels: ["mount_point", "environment"]
+      thresholds:
+        warning: 85  # 85%
+        critical: 95 # 95%
+    
+    - name: disk_io_operations
+      description: "磁盘IO操作次数"
+      type: counter
+      unit: operations
+      labels: ["operation", "device", "environment"]
+  
+  # 网络指标
+  network:
+    - name: network_bytes_sent
+      description: "网络发送字节数"
+      type: counter
+      unit: bytes
+      labels: ["interface", "environment"]
+    
+    - name: network_bytes_received
+      description: "网络接收字节数"
+      type: counter
+      unit: bytes
+      labels: ["interface", "environment"]
+    
+    - name: network_connections
+      description: "网络连接数"
+      type: gauge
+      unit: count
+      labels: ["state", "environment"]
+      thresholds:
+        warning: 1000
+        critical: 2000
+
+# 应用业务指标
+business_metrics:
+  # 交易相关指标
+  trading:
+    - name: orders_total
+      description: "订单总数"
+      type: counter
+      unit: count
+      labels: ["status", "symbol", "side", "environment"]
+    
+    - name: orders_per_second
+      description: "每秒订单数"
+      type: gauge
+      unit: ops
+      labels: ["environment"]
+      thresholds:
+        warning: 100
+        critical: 200
+    
+    - name: order_execution_time
+      description: "订单执行时间"
+      type: histogram
+      unit: milliseconds
+      labels: ["order_type", "environment"]
+      buckets: [10, 50, 100, 500, 1000, 5000]
+      thresholds:
+        warning: 1000  # 1秒
+        critical: 5000 # 5秒
+    
+    - name: trade_volume
+      description: "交易量"
+      type: gauge
+      unit: currency
+      labels: ["symbol", "currency", "environment"]
+    
+    - name: position_value
+      description: "持仓价值"
+      type: gauge
+      unit: currency
+      labels: ["symbol", "currency", "environment"]
+      thresholds:
+        warning: 1000000   # 100万
+        critical: 10000000 # 1000万
+  
+  # 风控相关指标
+  risk:
+    - name: risk_assessments_total
+      description: "风险评估总数"
+      type: counter
+      unit: count
+      labels: ["risk_level", "status", "environment"]
+    
+    - name: risk_assessment_time
+      description: "风险评估耗时"
+      type: histogram
+      unit: milliseconds
+      labels: ["assessment_type", "environment"]
+      buckets: [100, 500, 1000, 2000, 5000]
+      thresholds:
+        warning: 2000  # 2秒
+        critical: 5000 # 5秒
+    
+    - name: risk_alerts_total
+      description: "风险告警总数"
+      type: counter
+      unit: count
+      labels: ["severity", "type", "environment"]
+    
+    - name: risk_score
+      description: "风险评分"
+      type: gauge
+      unit: score
+      labels: ["strategy", "symbol", "environment"]
+      thresholds:
+        warning: 70
+        critical: 85
+    
+    - name: drawdown_percent
+      description: "回撤百分比"
+      type: gauge
+      unit: percent
+      labels: ["strategy", "environment"]
+      thresholds:
+        warning: 5   # 5%
+        critical: 10 # 10%
+  
+  # 财务相关指标
+  finance:
+    - name: budget_requests_total
+      description: "预算申请总数"
+      type: counter
+      unit: count
+      labels: ["status", "currency", "environment"]
+    
+    - name: budget_approval_time
+      description: "预算审批耗时"
+      type: histogram
+      unit: milliseconds
+      labels: ["request_type", "environment"]
+      buckets: [3600000, 7200000, 14400000, 28800000, 86400000] # 1h, 2h, 4h, 8h, 24h
+    
+    - name: fund_allocation_amount
+      description: "资金分配金额"
+      type: gauge
+      unit: currency
+      labels: ["allocation_type", "currency", "environment"]
+    
+    - name: account_balance
+      description: "账户余额"
+      type: gauge
+      unit: currency
+      labels: ["account_type", "currency", "environment"]
+      thresholds:
+        warning: 100000   # 10万
+        critical: 50000   # 5万
+
+# 技术指标
+technical_metrics:
+  # API性能
+  api:
+    - name: http_requests_total
+      description: "HTTP请求总数"
+      type: counter
+      unit: count
+      labels: ["method", "endpoint", "status_code", "environment"]
+    
+    - name: http_request_duration
+      description: "HTTP请求耗时"
+      type: histogram
+      unit: milliseconds
+      labels: ["method", "endpoint", "environment"]
+      buckets: [10, 50, 100, 500, 1000, 5000]
+      thresholds:
+        warning: 1000  # 1秒
+        critical: 5000 # 5秒
+    
+    - name: http_request_size_bytes
+      description: "HTTP请求大小"
+      type: histogram
+      unit: bytes
+      labels: ["method", "endpoint", "environment"]
+      buckets: [1024, 4096, 16384, 65536, 262144] # 1KB, 4KB, 16KB, 64KB, 256KB
+    
+    - name: http_response_size_bytes
+      description: "HTTP响应大小"
+      type: histogram
+      unit: bytes
+      labels: ["method", "endpoint", "environment"]
+      buckets: [1024, 4096, 16384, 65536, 262144]
+  
+  # 数据库性能
+  database:
+    - name: db_connections_active
+      description: "活跃数据库连接数"
+      type: gauge
+      unit: count
+      labels: ["database", "environment"]
+      thresholds:
+        warning: 80
+        critical: 95
+    
+    - name: db_query_duration
+      description: "数据库查询耗时"
+      type: histogram
+      unit: milliseconds
+      labels: ["operation", "table", "environment"]
+      buckets: [1, 10, 50, 100, 500, 1000]
+      thresholds:
+        warning: 500   # 500ms
+        critical: 1000 # 1秒
+    
+    - name: db_operations_total
+      description: "数据库操作总数"
+      type: counter
+      unit: count
+      labels: ["operation", "table", "environment"]
+    
+    - name: db_size_bytes
+      description: "数据库大小"
+      type: gauge
+      unit: bytes
+      labels: ["database", "environment"]
+  
+  # 缓存性能
+  cache:
+    - name: cache_operations_total
+      description: "缓存操作总数"
+      type: counter
+      unit: count
+      labels: ["operation", "cache_type", "environment"]
+    
+    - name: cache_hit_ratio
+      description: "缓存命中率"
+      type: gauge
+      unit: percent
+      labels: ["cache_type", "environment"]
+      thresholds:
+        warning: 80  # 低于80%告警
+        critical: 60 # 低于60%严重告警
+    
+    - name: cache_memory_usage
+      description: "缓存内存使用量"
+      type: gauge
+      unit: bytes
+      labels: ["cache_type", "environment"]
+  
+  # 消息队列
+  messaging:
+    - name: zmq_messages_sent
+      description: "ZeroMQ发送消息数"
+      type: counter
+      unit: count
+      labels: ["socket_type", "endpoint", "environment"]
+    
+    - name: zmq_messages_received
+      description: "ZeroMQ接收消息数"
+      type: counter
+      unit: count
+      labels: ["socket_type", "endpoint", "environment"]
+    
+    - name: zmq_message_processing_time
+      description: "ZeroMQ消息处理时间"
+      type: histogram
+      unit: milliseconds
+      labels: ["message_type", "environment"]
+      buckets: [1, 10, 50, 100, 500, 1000]
+    
+    - name: zmq_queue_size
+      description: "ZeroMQ队列大小"
+      type: gauge
+      unit: count
+      labels: ["queue_type", "environment"]
+      thresholds:
+        warning: 1000
+        critical: 5000
+
+# 告警规则
+alert_rules:
+  # 系统级告警
+  system:
+    - name: high_cpu_usage
+      description: "CPU使用率过高"
+      condition: "cpu_usage_percent > 85"
+      severity: critical
+      duration: 5m
+      labels:
+        category: system
+        impact: performance
+    
+    - name: high_memory_usage
+      description: "内存使用率过高"
+      condition: "memory_usage_percent > 90"
+      severity: critical
+      duration: 3m
+      labels:
+        category: system
+        impact: performance
+    
+    - name: disk_space_low
+      description: "磁盘空间不足"
+      condition: "disk_usage_bytes > 95"
+      severity: warning
+      duration: 1m
+      labels:
+        category: system
+        impact: storage
+    
+    - name: service_down
+      description: "服务不可用"
+      condition: "up == 0"
+      severity: critical
+      duration: 30s
+      labels:
+        category: availability
+        impact: service
+  
+  # 业务级告警
+  business:
+    - name: high_order_latency
+      description: "订单执行延迟过高"
+      condition: "order_execution_time > 5000"
+      severity: warning
+      duration: 2m
+      labels:
+        category: business
+        impact: trading
+    
+    - name: risk_score_high
+      description: "风险评分过高"
+      condition: "risk_score > 85"
+      severity: critical
+      duration: 1m
+      labels:
+        category: risk
+        impact: trading
+    
+    - name: large_drawdown
+      description: "回撤过大"
+      condition: "drawdown_percent > 10"
+      severity: critical
+      duration: 30s
+      labels:
+        category: risk
+        impact: portfolio
+    
+    - name: low_account_balance
+      description: "账户余额不足"
+      condition: "account_balance < 50000"
+      severity: warning
+      duration: 5m
+      labels:
+        category: finance
+        impact: liquidity
+    
+    - name: api_error_rate_high
+      description: "API错误率过高"
+      condition: "rate(http_requests_total{status_code=~'5..'}[5m]) / rate(http_requests_total[5m]) > 0.05"
+      severity: warning
+      duration: 3m
+      labels:
+        category: technical
+        impact: api
+    
+    - name: cache_hit_rate_low
+      description: "缓存命中率过低"
+      condition: "cache_hit_ratio < 60"
+      severity: warning
+      duration: 10m
+      labels:
+        category: technical
+        impact: performance
+
+# 通知配置
+notifications:
+  # 通知渠道
+  channels:
+    - name: email
+      type: email
+      config:
+        smtp_server: "smtp.company.com"
+        smtp_port: 587
+        username: "alerts@company.com"
+        password: "${SMTP_PASSWORD}"
+        from: "TradeGuard Alerts <alerts@company.com>"
+        to:
+          - "admin@company.com"
+          - "devops@company.com"
+    
+    - name: slack
+      type: slack
+      config:
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#tradeguard-alerts"
+        username: "TradeGuard Bot"
+    
+    - name: webhook
+      type: webhook
+      config:
+        url: "${ALERT_WEBHOOK_URL}"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Bearer ${WEBHOOK_TOKEN}"
+  
+  # 通知路由
+  routing:
+    - match:
+        severity: critical
+      channels: ["email", "slack", "webhook"]
+      repeat_interval: 5m
+    
+    - match:
+        severity: warning
+      channels: ["slack"]
+      repeat_interval: 30m
+    
+    - match:
+        category: system
+      channels: ["email", "slack"]
+      repeat_interval: 15m
+    
+    - match:
+        category: business
+        impact: trading
+      channels: ["email", "slack", "webhook"]
+      repeat_interval: 1m
+  
+  # 静默规则
+  silences:
+    - name: maintenance_window
+      description: "维护窗口期间静默告警"
+      matchers:
+        - name: "category"
+          value: "system"
+      schedule:
+        - start: "02:00"
+          end: "04:00"
+          timezone: "UTC"
+          days: ["sunday"]
+    
+    - name: development_environment
+      description: "开发环境静默非关键告警"
+      matchers:
+        - name: "environment"
+          value: "development"
+        - name: "severity"
+          value: "warning"
+
+# 仪表板配置
+dashboards:
+  - name: system_overview
+    description: "系统概览仪表板"
+    panels:
+      - title: "CPU使用率"
+        type: graph
+        metrics: ["cpu_usage_percent"]
+        time_range: "1h"
+      
+      - title: "内存使用率"
+        type: graph
+        metrics: ["memory_usage_percent"]
+        time_range: "1h"
+      
+      - title: "磁盘使用率"
+        type: graph
+        metrics: ["disk_usage_bytes"]
+        time_range: "1h"
+      
+      - title: "网络流量"
+        type: graph
+        metrics: ["network_bytes_sent", "network_bytes_received"]
+        time_range: "1h"
+  
+  - name: trading_performance
+    description: "交易性能仪表板"
+    panels:
+      - title: "订单执行时间"
+        type: histogram
+        metrics: ["order_execution_time"]
+        time_range: "4h"
+      
+      - title: "每秒订单数"
+        type: graph
+        metrics: ["orders_per_second"]
+        time_range: "4h"
+      
+      - title: "交易量"
+        type: graph
+        metrics: ["trade_volume"]
+        time_range: "24h"
+      
+      - title: "持仓价值"
+        type: graph
+        metrics: ["position_value"]
+        time_range: "24h"
+  
+  - name: risk_monitoring
+    description: "风险监控仪表板"
+    panels:
+      - title: "风险评分"
+        type: gauge
+        metrics: ["risk_score"]
+        time_range: "1h"
+      
+      - title: "回撤百分比"
+        type: graph
+        metrics: ["drawdown_percent"]
+        time_range: "24h"
+      
+      - title: "风险告警"
+        type: table
+        metrics: ["risk_alerts_total"]
+        time_range: "24h"
+      
+      - title: "风险评估耗时"
+        type: histogram
+        metrics: ["risk_assessment_time"]
+        time_range: "4h"
+
+# 日志配置
+logging:
+  # 日志级别
+  level: info
+  
+  # 日志格式
+  format: json
+  
+  # 日志输出
+  outputs:
+    - type: file
+      path: "./logs/monitoring.log"
+      max_size: 100MB
+      max_files: 10
+    
+    - type: console
+      format: text
+  
+  # 结构化日志字段
+  fields:
+    service: tradeguard
+    version: "${APP_VERSION}"
+    environment: "${NODE_ENV}"
+    instance_id: "${INSTANCE_ID}"
+
+# 健康检查配置
+health_checks:
+  endpoints:
+    - name: api_health
+      url: "http://localhost:3001/health"
+      interval: 30s
+      timeout: 5s
+      expected_status: 200
+    
+    - name: redis_health
+      type: redis
+      host: "localhost"
+      port: 6379
+      interval: 30s
+      timeout: 3s
+    
+    - name: database_health
+      type: sqlite
+      path: "./data/development.db"
+      interval: 60s
+      timeout: 5s
+    
+    - name: zmq_broker_health
+      type: tcp
+      host: "localhost"
+      port: 5555
+      interval: 30s
+      timeout: 3s

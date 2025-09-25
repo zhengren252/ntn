@@ -1,0 +1,73 @@
+{
+  "report_info": {
+    "title": "TACoreService 验收测试报告",
+    "version": "1.0.0",
+    "generated_at": "2025-08-08T11:54:34.989101",
+    "plan_id": "ACCEPTANCE-TEST-PLAN-M12-TACORESVC-V1.0"
+  },
+  "summary": {
+    "timestamp": "2025-08-08 11:54:34",
+    "total_tests": 2,
+    "passed_tests": 1,
+    "failed_tests": 1,
+    "success_rate": 50.0,
+    "total_duration": 3.801
+  },
+  "test_results": [
+    {
+      "case_id": "DEMO-001",
+      "title": "API基础功能测试",
+      "suite_id": "DEMO_SUITE",
+      "suite_name": "演示测试套件",
+      "status": "PASS",
+      "duration": 1.234,
+      "start_time": "2025-08-08T11:54:34.958033",
+      "end_time": "2025-08-08T11:54:34.958033",
+      "verification_results": [
+        {
+          "description": "API响应时间检查",
+          "passed": true,
+          "details": "响应时间: 45ms",
+          "expected": "< 100ms",
+          "actual": "45ms"
+        },
+        {
+          "description": "数据格式验证",
+          "passed": true,
+          "details": "JSON格式正确",
+          "expected": null,
+          "actual": null
+        }
+      ],
+      "metadata": {
+        "priority": "high",
+        "category": "functional"
+      }
+    },
+    {
+      "case_id": "DEMO-002",
+      "title": "连接稳定性测试",
+      "suite_id": "DEMO_SUITE",
+      "suite_name": "演示测试套件",
+      "status": "FAIL",
+      "duration": 2.567,
+      "start_time": "2025-08-08T11:54:34.958033",
+      "end_time": "2025-08-08T11:54:34.958033",
+      "error_message": "连接超时",
+      "error_type": "ConnectionError",
+      "verification_results": [
+        {
+          "description": "连接稳定性测试",
+          "passed": false,
+          "details": "连接在第3次尝试时失败",
+          "expected": "连接成功",
+          "actual": "连接超时"
+        }
+      ],
+      "metadata": {
+        "priority": "medium",
+        "category": "stability"
+      }
+    }
+  ]
+}

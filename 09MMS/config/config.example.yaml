@@ -1,0 +1,295 @@
+# 市场微结构仿真引擎 (MMS) 配置文件示例
+# NeuroTrade Nexus 开发团队
+# 版本: 1.0.0
+# 创建时间: 2024-12-01
+
+# 应用基础配置
+app:
+  name: "Market Microstructure Simulation Engine"
+  version: "1.0.0"
+  description: "NeuroTrade Nexus 市场微结构仿真引擎"
+  debug: false
+  environment: "production"  # development, testing, production
+  timezone: "UTC"
+  
+# Web服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+  access_log: true
+  
+# 数据库配置
+database:
+  # SQLite数据库路径
+  db_path: "data/mms.db"
+  # 连接池大小
+  pool_size: 10
+  # 连接超时（秒）
+  timeout: 30
+  # 事务隔离级别
+  isolation_level: "IMMEDIATE"
+  # 是否启用WAL模式
+  wal_mode: true
+  # 数据库备份配置
+  backup:
+    enabled: true
+    interval: 3600  # 备份间隔（秒）
+    retention: 7    # 保留天数
+    path: "data/backups"
+
+# Redis缓存配置
+redis:
+  # Redis服务器地址
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null
+  # 连接池配置
+  max_connections: 20
+  retry_on_timeout: true
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  # 集群配置（可选）
+  cluster:
+    enabled: false
+    nodes:
+      - host: "localhost"
+        port: 7000
+      - host: "localhost"
+        port: 7001
+  # 缓存TTL配置（秒）
+  ttl:
+    simulation_results: 3600    # 仿真结果缓存1小时
+    market_data: 1800          # 市场数据缓存30分钟
+    calibration_params: 7200   # 校准参数缓存2小时
+    task_status: 300           # 任务状态缓存5分钟
+
+# ZeroMQ配置
+zmq:
+  # 前端端口（客户端连接）
+  frontend_port: 5555
+  # 后端端口（工作进程连接）
+  backend_port: 5556
+  # 工作进程数量
+  worker_count: 4
+  # 心跳间隔（秒）
+  heartbeat_interval: 5
+  # 工作进程超时（秒）
+  worker_timeout: 30
+  # 任务超时（秒）
+  task_timeout: 300
+  # 高水位标记
+  high_water_mark: 1000
+  # 连接重试配置
+  retry:
+    max_attempts: 3
+    delay: 1
+    backoff: 2
+
+# 仿真引擎配置
+simulation:
+  # 最大并发任务数
+  max_concurrent_tasks: 10
+  # 默认任务超时（秒）
+  default_timeout: 300
+  # 结果缓存TTL（秒）
+  result_cache_ttl: 3600
+  # 市场数据源
+  data_sources:
+    primary: "yfinance"
+    fallback: "quandl"
+  # 默认仿真参数
+  defaults:
+    market_depth: 10
+    time_window: ["09:30:00", "16:00:00"]
+    mm_strategy: "adaptive"
+    arb_strategy: "statistical"
+  # 性能优化
+  optimization:
+    enable_vectorization: true
+    use_numba: false
+    parallel_processing: true
+    chunk_size: 1000
+
+# 日志配置
+logging:
+  # 日志级别
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # 日志格式
+  format: "json"  # standard, json, colored
+  # 日志目录
+  log_dir: "logs"
+  # 文件大小限制（MB）
+  max_file_size: 100
+  # 备份文件数量
+  backup_count: 5
+  # 日志文件配置
+  files:
+    app: "app.log"
+    debug: "debug.log"
+    error: "error.log"
+    performance: "performance.log"
+    audit: "audit.log"
+  # 第三方库日志级别
+  third_party_level: "WARNING"
+
+# 指标收集配置
+metrics:
+  # 是否启用指标收集
+  enabled: true
+  # 指标收集间隔（秒）
+  collection_interval: 60
+  # 指标保留时间（秒）
+  retention_period: 86400  # 24小时
+  # Prometheus配置
+  prometheus:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+  # 系统指标
+  system_metrics:
+    cpu: true
+    memory: true
+    disk: true
+    network: true
+  # 业务指标
+  business_metrics:
+    simulation_count: true
+    execution_time: true
+    error_rate: true
+    cache_hit_rate: true
+
+# 安全配置
+security:
+  # API密钥配置
+  api_keys:
+    enabled: false
+    header_name: "X-API-Key"
+    keys: []
+  # CORS配置
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE"]
+    allow_headers: ["*"]
+    allow_credentials: false
+  # 限流配置
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    burst_size: 10
+  # SSL/TLS配置
+  ssl:
+    enabled: false
+    cert_file: "certs/server.crt"
+    key_file: "certs/server.key"
+
+# 监控和健康检查
+monitoring:
+  # 健康检查配置
+  health_check:
+    enabled: true
+    interval: 30  # 检查间隔（秒）
+    timeout: 5    # 检查超时（秒）
+    endpoints:
+      database: true
+      redis: true
+      zmq: true
+  # 告警配置
+  alerts:
+    enabled: false
+    email:
+      smtp_server: "smtp.example.com"
+      smtp_port: 587
+      username: "alerts@example.com"
+      password: "password"
+      recipients: ["admin@example.com"]
+    webhook:
+      url: "https://hooks.slack.com/services/..."
+      timeout: 10
+
+# 外部服务配置
+external_services:
+  # 市场数据API
+  market_data:
+    yfinance:
+      enabled: true
+      timeout: 30
+      retry_attempts: 3
+    quandl:
+      enabled: false
+      api_key: "your_quandl_api_key"
+      timeout: 30
+    alpaca:
+      enabled: false
+      api_key: "your_alpaca_api_key"
+      secret_key: "your_alpaca_secret_key"
+      base_url: "https://paper-api.alpaca.markets"
+  
+  # 通知服务
+  notifications:
+    email:
+      enabled: false
+      provider: "smtp"
+    slack:
+      enabled: false
+      webhook_url: "https://hooks.slack.com/services/..."
+    discord:
+      enabled: false
+      webhook_url: "https://discord.com/api/webhooks/..."
+
+# 开发环境配置
+development:
+  # 是否启用调试模式
+  debug: true
+  # 是否启用热重载
+  reload: true
+  # 是否启用详细日志
+  verbose_logging: true
+  # 测试数据配置
+  test_data:
+    enabled: true
+    sample_size: 100
+    mock_external_apis: true
+  # 性能分析
+  profiling:
+    enabled: false
+    output_dir: "profiling"
+
+# 生产环境配置
+production:
+  # 性能优化
+  optimization:
+    enable_gzip: true
+    enable_caching: true
+    connection_pooling: true
+  # 安全加固
+  security:
+    hide_server_header: true
+    enable_hsts: true
+    content_security_policy: true
+  # 监控增强
+  monitoring:
+    detailed_metrics: true
+    error_tracking: true
+    performance_monitoring: true
+
+# 实验性功能
+experimental:
+  # 机器学习增强
+  ml_features:
+    enabled: false
+    model_path: "models/"
+    auto_retrain: false
+  # 高级缓存策略
+  advanced_caching:
+    enabled: false
+    cache_warming: false
+    predictive_caching: false
+  # 分布式计算
+  distributed_computing:
+    enabled: false
+    cluster_nodes: []
+    load_balancing_strategy: "round_robin"

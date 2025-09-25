@@ -1,0 +1,364 @@
+{
+  "report_info": {
+    "title": "TACoreService 验收测试报告",
+    "version": "1.0.0",
+    "generated_at": "2025-08-08T17:02:36.380708",
+    "plan_id": "ACCEPTANCE-TEST-PLAN-M12-TACORESVC-V1.0"
+  },
+  "summary": {
+    "timestamp": "2025-08-08 17:02:36",
+    "total_tests": 16,
+    "passed_tests": 2,
+    "failed_tests": 14,
+    "success_rate": 12.5,
+    "total_duration": 23.641077280044556
+  },
+  "test_results": [
+    {
+      "case_id": "ZMQ-API-01",
+      "title": "scan.market - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.09478044509887695,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'success'",
+          "passed": false,
+          "details": "实际状态: error"
+        },
+        {
+          "description": "验证响应中的 request_id 与请求的ID匹配",
+          "passed": true,
+          "details": "请求ID: test_20250808_170212_3319b264, 响应ID: test_20250808_170212_3319b264"
+        },
+        {
+          "description": "验证响应中的 opportunities 字段是一个数组",
+          "passed": false,
+          "details": "opportunities类型: NoneType, 长度: N/A"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-02",
+      "title": "execute.order - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.0076503753662109375,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'success'",
+          "passed": false,
+          "details": "实际状态: error"
+        },
+        {
+          "description": "验证响应中的 order_id 字段是一个非空字符串",
+          "passed": false,
+          "details": "order_id: None, 类型: NoneType"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-03",
+      "title": "evaluate.risk - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.010515451431274414,
+      "verification_results": [
+        {
+          "description": "验证响应中的 risk_score 是一个数字",
+          "passed": false,
+          "details": "risk_score: None, 类型: NoneType"
+        },
+        {
+          "description": "验证响应中的 risk_level 是 'low', 'medium', 'high' 之一",
+          "passed": false,
+          "details": "risk_level: None, 有效值: ['low', 'medium', 'high']"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-04",
+      "title": "无效方法测试",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.007989883422851562,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'error'",
+          "passed": true,
+          "details": "实际状态: error"
+        }
+      ],
+      "error_message": "'str' object has no attribute 'get'"
+    },
+    {
+      "case_id": "HTTP-API-01",
+      "title": "GET /status - 服务状态接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "PASS",
+      "duration": 0.014553546905517578,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": true,
+          "details": "实际状态码: 200"
+        },
+        {
+          "description": "验证响应JSON体中包含关键字段",
+          "passed": true,
+          "details": "所有必需字段都存在"
+        },
+        {
+          "description": "验证字段类型和值的合理性",
+          "passed": true,
+          "details": "service_name: TACoreService (字符串); status: running (字符串); uptime: 111.14170980453491 (有效)"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HTTP-API-02",
+      "title": "GET /workers - 工作进程列表接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 0.010417699813842773,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": false,
+          "details": "实际状态码: 500"
+        },
+        {
+          "description": "验证响应JSON体是一个数组",
+          "passed": false,
+          "details": "响应类型: dict, 长度: N/A"
+        },
+        {
+          "description": "验证数组中每个对象的结构都符合规格",
+          "passed": true,
+          "details": "工作进程列表为空"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HTTP-API-03",
+      "title": "GET /logs - 日志获取接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "PASS",
+      "duration": 0.009194612503051758,
+      "verification_results": [
+        {
+          "description": "验证HTTP状态码为 200 OK",
+          "passed": true,
+          "details": "实际状态码: 200"
+        },
+        {
+          "description": "验证返回的日志条数不超过50条",
+          "passed": true,
+          "details": "实际日志条数: 0"
+        },
+        {
+          "description": "验证返回的日志级别均为INFO或更高级别",
+          "passed": true,
+          "details": "无日志数据"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "LB-01",
+      "title": "请求分发验证",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 0.2557690143585205,
+      "verification_results": [
+        {
+          "description": "验证大部分请求成功 (成功率 >= 80%)",
+          "passed": false,
+          "details": "成功率: 0.0% (0/20)"
+        },
+        {
+          "description": "验证响应时间分布合理 (表明负载均衡有效)",
+          "passed": false,
+          "details": "没有成功的请求，无法分析响应时间"
+        },
+        {
+          "description": "验证请求ID唯一性 (无重复处理)",
+          "passed": true,
+          "details": "唯一ID数: 0, 总响应数: 0"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "SCALE-01",
+      "title": "水平扩展能力验证",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 15.016761779785156,
+      "verification_results": [
+        {
+          "description": "验证系统能够处理持续负载",
+          "passed": false,
+          "details": "成功处理 0/455 个请求"
+        },
+        {
+          "description": "验证吞吐量合理 (>= 1.0 req/s)",
+          "passed": false,
+          "details": "实际吞吐量: 0.00 req/s"
+        },
+        {
+          "description": "验证成功率合理 (>= 70%)",
+          "passed": false,
+          "details": "成功率: 0.0%"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "PERF-01",
+      "title": "负载下的性能表现",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 0.20024704933166504,
+      "verification_results": [
+        {
+          "description": "验证所有测试场景的成功率 (>= 70%)",
+          "passed": false,
+          "details": "轻量级请求 (scan.market): 0.0%; 中等复杂度请求 (evaluate.risk): 0.0%"
+        },
+        {
+          "description": "验证平均响应时间合理 (< 10s)",
+          "passed": true,
+          "details": "轻量级请求 (scan.market): 0.000s; 中等复杂度请求 (evaluate.risk): 0.000s"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HA-01",
+      "title": "工作进程故障转移",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 0.20305991172790527,
+      "verification_results": [
+        {
+          "description": "验证服务初始状态健康",
+          "passed": false,
+          "details": "HTTP: False, ZMQ: True"
+        }
+      ],
+      "error_message": "服务初始状态不健康，无法进行故障转移测试"
+    },
+    {
+      "case_id": "HA-02",
+      "title": "客户端自动重试 (Lazy Pirate)",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 0.034467458724975586,
+      "verification_results": [
+        {
+          "description": "验证服务初始状态健康",
+          "passed": false,
+          "details": "HTTP: False, ZMQ: True"
+        }
+      ],
+      "error_message": "服务初始状态不健康，无法进行重试测试"
+    },
+    {
+      "case_id": "HA-03",
+      "title": "服务恢复能力测试",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 2.0946872234344482,
+      "verification_results": [
+        {
+          "description": "验证HTTP监控API恢复正常",
+          "passed": false,
+          "details": "HTTP API状态: False"
+        },
+        {
+          "description": "验证ZMQ业务API恢复正常",
+          "passed": true,
+          "details": "ZMQ API状态: True"
+        },
+        {
+          "description": "验证服务整体恢复健康",
+          "passed": false,
+          "details": "整体健康状态: False"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "DATA-03",
+      "title": "数据库连接性验证",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 0.04555320739746094,
+      "verification_results": [
+        {
+          "description": "验证SQLite数据库连接和表结构",
+          "passed": false,
+          "details": "连接: True, request_logs表存在: False"
+        },
+        {
+          "description": "验证Redis缓存连接和基本操作",
+          "passed": true,
+          "details": "连接: True, 基本操作: True"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "DATA-01",
+      "title": "SQLite 请求日志持久化",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 0.019648313522338867,
+      "verification_results": [
+        {
+          "description": "验证execute.order请求成功",
+          "passed": false,
+          "details": "响应状态: error"
+        }
+      ],
+      "error_message": "execute.order请求失败，无法验证日志持久化"
+    },
+    {
+      "case_id": "DATA-02",
+      "title": "Redis 缓存机制验证",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 0.04239034652709961,
+      "verification_results": [
+        {
+          "description": "验证第一个evaluate.risk请求成功",
+          "passed": false,
+          "details": "响应状态: error, 耗时: 0.015s"
+        }
+      ],
+      "error_message": "第一个evaluate.risk请求失败"
+    }
+  ]
+}

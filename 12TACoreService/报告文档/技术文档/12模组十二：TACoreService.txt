@@ -1,0 +1,193 @@
+12模组十二：TACoreService 
+## 手册导读
+
+**致项目经理:** 本手册是为分布式团队协作而设计的。请将本模板作为“第一部分”分发给所有新模组的开发人员，并将“第二部分”（即各模组独立的详细开发套件）分发给相应的开发团队。
+
+**致开发人员:** 请首先仔细阅读本模板以理解项目最新的全局架构和通用规范。然后，再深入研究您负责的模组在“第二部分”中的具体开发套件，那将是您日常开发工作的核心指南。
+
+---
+
+## 1. 核心设计理念 (V1.1版)
+
+**口语化说明:** 这份蓝图是我们整个项目的顶层设计。核心思想是“化整为零，分而治之”。我们把一个复杂的交易系统，拆分成12个（未来将扩展至14个）可以独立开发、测试和升级的“积木块”（模组）。它们之间通过一个高效的“信使系统”（ZeroMQ消息总线）来沟通，既能协同作战，又互不干扰。
+
+**核心架构升级:** 与项目初期不同，系统的核心AI能力（如市场扫描、订单执行）已被统一封装在模组十二：TACoreService中。所有业务模组不再直接依赖`TradingAgents-CN`库，而是通过网络请求调用这个中央服务。这种服务化的方式极大地提升了系统的稳定性、可维护性和扩展性。
+
+---
+
+## 2. 统一技术选型 (V1.1版)
+
+以下是项目当前阶段的最终技术选型，所有新模组的开发都必须遵循此标准：
+
+| 分类 | 技术/格式 | 模式/规范 | 用途描述 |
+| :--- | :--- | :--- | :--- |
+| **模块间通信** | ZeroMQ | `PUB/SUB`, `REQ/REP` | 用于模组间的低延迟、高吞吐量异步消息传递。 |
+| **数据序列化** | JSON | 消息体必须包含 `schema_version` 字段 | 确保高效、规范的数据交换，易于调试。 |
+| **缓存与状态存储**| Redis | - | 用于存储实时状态、市场数据缓存、轻量级消息队列。 |
+| **持久化存储** | SQLite | - | 零配置、文件型数据库，用于存储交易记录、回测报告等。 |
+| **部署与运维** | Docker & Docker Compose | - | 实现一键式、跨环境的部署和隔离。 |
+| **核心AI库集成**| TradingAgents-CN v3.0 | 服务化封装 | 所有功能被封装在独立的`TACoreService`模组中，对外提供统一服务。 |
+| **前端技术栈** | React (Next.js) | Shadcn/UI, Zustand, TanStack Query | 用于构建现代化、高性能的前端管理界面。 |
+
+---
+
+## 3. 全局规范与流程 (V1.1版)
+
+### 3.1 系统核心工作流
+
+随着`TACoreService`和人工审核(ReviewGuard)模组的加入，系统标准的端到端交易流程已更新如下：
+
+```mermaid
+sequenceDiagram
+    participant S as 扫描器
+    participant TA as TACoreService
+    participant O as 策略优化
+    participant RG as 人工审核
+    participant T as 交易员
+    participant X as 风控/财务
+    participant AF as API工厂
+    S->>TA: req: scan.market
+    TA-->>S: resp: opportunities
+    S->>O: pub: new opportunity
+    O->>RG: pub: strategy_package
+    RG-->>T: pub: approved_trade
+    T->>X: req: evaluate & apply_budget
+    X-->>T: resp: approved
+    T->>TA: req: execute.order
+    TA-->>AF: call: place_order
+    AF-->>TA: return: success
+    TA-->>T: resp: success
+```
+
+### 3.2 数据隔离与环境管理规范
+
+此规范保持不变，是所有开发活动必须严格遵守的基础准则。
+
+* **环境定义:** 系统必须包含三个环境：`development`, `staging`, `production`，通过环境变量`APP_ENV`进行切换。
+* **配置管理:** 严禁硬编码敏感信息；使用分环境配置文件；通过Docker环境变量注入密钥。
+* **数据管理:** 占位数据严禁入库到生产或测试环境；各环境使用独立的数据库；严禁将生产数据库直接拷贝到开发环境。
+
+### 3.3 开发与运维核心准则
+
+所有模组的开发、维护和升级，都必须遵循以下核心准则：
+
+* **版本控制:** 严格遵循Git Flow分支模型。所有向`develop`或`master`分支的合并都必须通过Pull Request，并经过代码审查(Code Review)。
+* **向后兼容性:** **[最高优先级]** 对模组间接口（ZeroMQ消息格式、HTTP API）的任何修改，都**必须**保持向后兼容。
+* **自动化测试:** 所有新增的核心业务逻辑，都必须有相应的单元测试，代码覆盖率需达标（>80%）。
+* **自动化部署:** 严禁手动登录生产服务器进行部署操作，所有部署必须通过CI/CD流水线完成。
+
+---
+
+## 4. 通用开发者指南 (V1.1版)
+
+### 4.1 系统总体架构
+
+系统采用微服务架构，由12个（未来14个）高内聚、低耦合的独立模组构成。各模组作为独立的Docker容器运行，通过ZeroMQ消息总线进行异步通信。所有原先分散的AI交易功能，现已全部统一到`TACoreService`中，各业务模组通过客户端请求该服务来完成任务。
+
+### 4.2 部署与集成规范 (升级后)
+
+项目根目录的`docker-compose.yml`文件是集成所有模组的关键。一个适用于当前架构的示例如下，它展示了如何编排`TACoreService`的多个工作进程以及其他依赖模组：
+
+```yaml
+version: '3.8'
+
+services:
+  # 基础服务
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  # 核心AI服务 (一个代理 + 多个工作进程)
+  tacore_service:
+    build: ./12TACoreService
+    container_name: tacore_service
+    command: python main.py  # 启动负载均衡代理
+    ports:
+      - "5555:5555" # 对其他模组暴露的前端端口
+    networks:
+      - app_net
+
+  tacore_worker:
+    build: ./12TACoreService
+    command: python worker.py # 启动工作进程
+    depends_on:
+      - tacore_service
+    networks:
+      - app_net
+    deploy:
+      replicas: 4 # 轻松扩展工作进程数量
+
+  # 业务模组示例 (以扫描器为例)
+  scanner:
+    build: ./03Scanner  # 假设模组文件夹为03Scanner
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+      - tacore_service # 明确依赖核心服务
+    networks:
+      - app_net
+
+  # 新业务模组示例 (以人工审核为例)
+  review_guard:
+    build: ./10ReviewGuard
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+    networks:
+      - app_net
+    # ... 其他配置，如端口映射 ...
+
+  # ... 其他所有模组的定义 ...
+
+networks:
+  app_net:
+```
+
+**注意:** 所有需要调用`TACoreService`的模组，都必须在其`docker-compose.yml`的服务定义中添加`depends_on: [tacore_service]`，以确保核心服务先于客户端启动。
+# 模组十二：TACoreService 高性能核心服务开发蓝图
+
+## **重要提示：前置阅读**
+    
+在开始阅读本模组的详细设计前，请确保您已仔细阅读并理解项目根目录下的 **`PROJECT_GUIDE.md`**。该文档包含了项目全局的架构、技术选型、通信协议和开发规范，是所有模组开发工作的基础。
+
+---
+
+### **蓝图导读**
+
+* **致项目经理/开发团队:** 本蓝图是模组十二：TradingAgents-CN核心服务 (TACoreService)的最终、唯一的开发指南。它将指导您直接构建一个具备负载均衡和水平扩展能力的高性能服务，以支撑整个AI交易系统在高并发场景下的稳定运行。
+* **核心目标:** 从一开始就构建一个生产级的、可扩展的服务集群，避免未来的架构重构。
+
+### **一、需求书 (Requirements Document)**
+
+**口语化说明:** 我们要打造的TACoreService，不仅仅是一个功能的“转接器”，更是一个能同时处理多项任务、并且可以随时增派人手的“服务大厅”。
+
+| 字段 | 值 | 说明 |
+| :--- | :--- | :--- |
+| **ID** | `tacore-service-module` | 模块唯一标识 |
+| **Version** | `1.0` | 版本号 |
+| **Description** | 作为系统中TradingAgents-CN功能的唯一、统一的服务化封装，通过高性能的负载均衡架构，为其他所有模组提供稳定、可扩展的AI交易能力。 | 模块核心职责 |
+| **Features**| `[{"id":"feat-01", "name":"统一功能接口", "desc":"对外提供标准化的服务接口，如市场扫描、订单执行、风险评估等。"}, {"id":"feat-02", "name":"多工作进程处理", "desc":"服务能够启动多个并行的工作进程，每个进程都能独立处理一个完整的业务请求。"}, {"id":"feat-03", "name":"自动负载均衡", "desc":"所有来自客户端的请求，能被自动、公平地分发到当前空闲的工作进程上。"}, {"id":"feat-04", "name":"水平扩展能力", "desc":"支持通过简单地增加服务容器（worker）的数量，来线性地提升整个服务的处理能力。"}, {"id":"feat-05", "name":"高可用性", "desc":"单个工作进程的崩溃或重启，不应影响整个服务的可用性。"}]` | 核心功能列表 (JSON格式) |
+
+### **二、实施计划 (Implementation Plan)**
+
+**口语化说明:** 整个开发工程分三步走。第一步，把实际干活的“接待员”（工作进程）给培训好；第二步，搭建“服务大厅”的入口，并雇佣一个聪明的“任务分发员”（负载均衡代理）；第三步，进行一次严格的“压力测试”，看看我们的“服务大厅”究竟能同时接待多少客人。
+
+| 阶段 | 核心任务 | 预估工时 | 关键产出物 |
+| :--- | :--- | :--- | :--- |
+| **1. 工作进程开发** | 将核心逻辑封装为Worker: 编写一个`worker.py`脚本，使其能够连接到消息总线，接收任务，调用TradingAgents-CN的相应功能，处理完毕后返回结果。并为其编写单元测试。 | 2个工作日 | 一个功能完整、经过测试的`worker.py`。 |
+| **2. 负载均衡代理开发** | 构建ZeroMQ代理服务: 编写一个`main.py`脚本，使用ZeroMQ的`ROUTER/DEALER`模式创建一个负载均衡代理，负责在客户端和工作进程之间转发消息。 | 2个工作日 | 一个作为“任务分发员”的`main.py`。 |
+| **3. 部署与压力测试** | 1. 编写部署配置: 编写Dockerfile和`docker-compose.yml`。<br>2. 编写并执行压力测试脚本。 | 1个工作日 | 1. 完整的部署配置文件。<br>2. 一份详细的压力测试报告。 |
+
+### **三、搭建规范 (Construction Specification)**
+
+**口语化说明:** 这是本次开发的“施工图纸”，详细说明了我们如何用代码来实现这个强大的“服务大厅”。
+
+| 规范项 | 具体内容 | 注释 |
+| :--- | :--- | :--- |
+| **核心架构模式** | ZeroMQ Lazy Pirate Pattern (`ROUTER/DEALER`) | 这是ZeroMQ中用于构建可靠的、可扩展的请求-响应服务的经典模式。 |
+| **架构图** | ```mermaid<br>graph TD<br>subgraph 客户端模组 (无需改动)<br>C1[扫描器]<br>C2[交易员]<br>C3[...]<br>end<br>subgraph TACoreService 代理 (1个容器)<br>Proxy["负载均衡代理 (main.py)<br>ROUTER/DEALER"]<br>end<br>subgraph TACoreService Worker集群 (可多个容器)<br>W1["工作进程1 (worker.py)"]<br>W2["工作进程2 (worker.py)"]<br>W3["工作进程3 (worker.py)"]<br>end<br>C1 & C2 & C3 -- REQ请求 --> Proxy;<br>Proxy -- 自动分发任务 --> W1;<br>Proxy -- 自动分发任务 --> W2;<br>Proxy -- 自动分发任务 --> W3;<br>W1 -- REP响应 --> Proxy;<br>W2 -- REP响应 --> Proxy;<br>W3 -- REP响应 --> Proxy;<br>Proxy -- 返回最终结果 --> C1 & C2 & C3;<br>``` | 客户端无需任何改动，负载均衡和并行处理对它们是完全透明的。 |
+| **代码实现示例** | **`main.py` (代理服务):**<br>```python<br># main.py - Load Balancing Proxy<br>import zmq<br><br>def main():<br>    context = zmq.Context()<br>    frontend = context.socket(zmq.ROUTER)<br>    frontend.bind("tcp://*:5555")<br>    backend = context.socket(zmq.DEALER)<br>    backend.bind("tcp://*:5556")<br>    print("Load balancing proxy started...")<br>    try:<br>        zmq.proxy(frontend, backend)<br>    finally:<br>        frontend.close()<br>        backend.close()<br>        context.term()<br><br>if __name__ == "__main__":<br>    main()<br>```<br>**`worker.py` (工作进程):**<br>```python<br># worker.py - The actual worker process<br>import zmq<br>import json<br>import time<br># from trading_agents_cn import your_functions<br><br>def process_request(request):<br>    method = request.get('method')<br>    # ... 业务逻辑 ...<br>    time.sleep(1) # 模拟处理<br>    result = {"status": "success", "data": f"Processed {method}"}<br>    return result<br><br>def main():<br>    context = zmq.Context()<br>    socket = context.socket(zmq.REP)<br>    socket.connect("tcp://tacore_service:5556")<br>    print("Worker started, waiting for tasks...")<br>    while True:<br>        try:<br>            message = socket.recv_string()<br>            request = json.loads(message)<br>            response_data = process_request(request)<br>            response_data['request_id'] = request.get('request_id')<br>            socket.send_string(json.dumps(response_data))<br>        except Exception as e:<br>            # ... 错误处理 ...<br>            socket.send_string(json.dumps(error_response))<br><br>if __name__ == "__main__":<br>    main()<br>``` | 代理服务非常简洁，核心功能由`zmq.proxy`完成。工作进程则专注于业务逻辑，并且是无状态的，便于扩展。 |
+| **部署规范** | **项目总`docker-compose.yml`中的配置:**<br>```yaml<br>services:<br>  # ... other services ...<br>  tacore_service:<br>    build: ./12TACoreService<br>    container_name: tacore_service<br>    command: python main.py<br>  tacore_worker:<br>    build: ./12TACoreService<br>    command: python worker.py<br>    depends_on: [tacore_service]<br>    deploy:<br>      replicas: 4 # 在此轻松扩展worker数量<br>``` | 通过`deploy.replicas`配置，我们可以非常轻松地启动任意数量的工作进程，实现弹性扩容。 |

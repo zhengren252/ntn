@@ -1,0 +1,147 @@
+# TradeGuard模组集成测试环境
+# 测试计划: TEST-PLAN-M0507-TRADEGUARD-V1 阶段3
+
+services:
+  # Redis缓存服务 - 用于状态存储和消息队列
+  redis:
+    image: redis:7-alpine
+    container_name: tradeguard_test_redis
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --protected-mode no
+    volumes:
+      - redis_test_data:/data
+    networks:
+      - test_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # TACoreService - 核心交易执行服务
+  tacore_service:
+    build:
+      context: ./12TACoreService
+      dockerfile: Dockerfile
+    container_name: tradeguard_test_tacore
+    ports:
+      - "5555:5555"
+      - "5557:5557"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=DEBUG
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - test_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import zmq; ctx=zmq.Context(); sock=ctx.socket(zmq.REQ); sock.setsockopt(zmq.RCVTIMEO, 5000); sock.connect('tcp://localhost:5557'); sock.send_json({'method':'system.health','id':1}); resp=sock.recv_json(); sock.close(); ctx.term(); exit(0 if resp.get('result',{}).get('status')=='healthy' else 1)"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  # TradeGuard - 05-07交易执行铁三角模组
+  tradeguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tradeguard_test_app
+    ports:
+      - "3000:3000"
+      - "3001:3001"  # API端口
+    environment:
+      - NODE_ENV=test
+      - LOG_LEVEL=debug
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - ZMQ_SUBSCRIBER_PORT=5556
+      - ZMQ_PUBLISHER_PORT=5557
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - test_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      tacore_service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.setTimeout(3000, () => { req.destroy(); process.exit(1); });"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 模拟ReviewGuard - 发布策略包消息的测试服务
+  mock_reviewguard:
+    image: node:18-alpine
+    container_name: tradeguard_test_reviewguard
+    working_dir: /app
+    volumes:
+      - ./tests/integration/mock-reviewguard:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ZMQ_PUBLISHER_PORT=5558
+    networks:
+      - test_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "npm install && node mock-reviewguard.js"
+    restart: unless-stopped
+
+  # 集成测试运行器
+  integration_tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: tradeguard_integration_tests
+    environment:
+      - NODE_ENV=test
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TRADEGUARD_URL=http://tradeguard:3001
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - MOCK_REVIEWGUARD_URL=http://mock_reviewguard:3002
+    volumes:
+      - ./tests:/app/tests
+      - ./logs:/app/logs
+    networks:
+      - test_network
+    depends_on:
+      tradeguard:
+        condition: service_healthy
+      tacore_service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - test
+    command: npm run test:integration
+
+networks:
+  test_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  redis_test_data:
+    driver: local
+  test_logs:
+    driver: local

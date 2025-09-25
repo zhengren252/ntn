@@ -1,0 +1,206 @@
+# 扫描器模组基础配置
+# 严格遵循全局规范：数据隔离与环境管理规范
+
+# 扫描器核心配置
+scanner:
+  scan_interval: 30  # 扫描间隔(秒)
+  max_opportunities: 100  # 最大机会数量
+  batch_size: 50  # 批处理大小
+  timeout: 10  # 请求超时时间(秒)
+  
+# 规则引擎配置
+rules:
+  # 三高规则：高波动、高流动性、高相关性
+  three_high:
+    volatility_threshold: 0.05  # 波动率阈值 (5%)
+    volume_threshold: 1000000   # 成交量阈值 (100万USDT)
+    correlation_threshold: 0.8  # 相关性阈值
+    weight_volatility: 0.4      # 波动率权重
+    weight_volume: 0.3          # 成交量权重
+    weight_correlation: 0.3     # 相关性权重
+    min_score: 60               # 最低分数阈值
+    
+  # 黑马监测器：突发新闻和公告
+  black_horse:
+    keywords: 
+      - "listing"
+      - "partnership" 
+      - "upgrade"
+      - "mainnet"
+      - "airdrop"
+      - "burn"
+      - "staking"
+    score_multiplier: 1.5       # 分数倍数
+    news_timeout: 3600          # 新闻有效期(秒)
+    min_confidence: 0.7         # 最低置信度
+    
+  # 潜力挖掘器：低市值潜力币
+  potential_gems:
+    max_market_cap: 100000000   # 最大市值 (1亿USD)
+    max_price: 1.0              # 最大价格 (1USD)
+    min_volume: 50000           # 最小成交量 (5万USDT)
+    min_age_days: 30            # 最小上市天数
+    max_supply_ratio: 0.8       # 最大流通比例
+    
+# ZeroMQ通信配置
+zmq:
+  publisher_port: 5555        # 发布端口
+  subscriber_port: 5556       # 订阅端口
+  context_io_threads: 1       # IO线程数
+  socket_linger: 1000         # 套接字延迟关闭时间(ms)
+  high_water_mark: 1000       # 高水位标记
+  
+  # 主题配置
+  topics:
+    publish: "scanner.pool.preliminary"  # 发布主题
+    subscribe: "crawler.news"            # 订阅主题
+    
+# Redis缓存配置
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: null
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  socket_keepalive: true
+  socket_keepalive_options: {}
+  connection_pool_max_connections: 10
+  
+  # 键名配置
+  keys:
+    preliminary_pool: "preliminary_pool"          # 预备池前缀
+    pool_scores: "preliminary_pool_scores"        # 分数排序
+    scanner_status: "scanner_status"              # 扫描器状态
+    rule_config: "rule_config"                    # 规则配置缓存
+    market_data: "market_data"                    # 市场数据缓存
+    news_event: "news_event"                      # 新闻事件缓存
+    
+  # TTL配置(秒)
+  ttl:
+    market_data: 60           # 市场数据缓存时间
+    news_event: 3600          # 新闻事件缓存时间
+    scan_result: 86400        # 扫描结果缓存时间
+    
+# API工厂配置
+api_factory:
+  url: "http://localhost:8000"
+  timeout: 10
+  retry_times: 3
+  retry_delay: 1
+  
+  # API端点
+  endpoints:
+    tickers: "/exchange/{exchange}/tickers"
+    klines: "/exchange/{exchange}/klines"
+    orderbook: "/exchange/{exchange}/orderbook"
+    
+# TACoreService集成配置
+tacore_service:
+  enabled: true
+  server_address: "tcp://localhost:5555"
+  timeout: 15000  # 15秒超时
+  mock_mode: false
+  retry_attempts: 3
+  retry_delay: 1000  # 1秒重试延迟
+  connection_pool_size: 5
+  
+  # 服务方法配置
+  methods:
+    scan_market: "scan.market"
+    analyze_symbol: "analyze.symbol"
+    get_market_data: "get.market_data"
+    get_news_events: "get.news_events"
+    health_check: "health.check"
+  
+# 日志配置
+logging:
+  name: "scanner"
+  level: INFO
+  format: "json"  # json | console
+  
+  # 控制台输出配置
+  console:
+    enabled: true
+    colorize: false
+    level: INFO
+    
+  # 文件日志配置
+  file:
+    enabled: true
+    path: "./logs/scanner.log"
+    level: INFO
+    max_size: "10MB"
+    backup_count: 5
+    rotation: "time"  # size | time
+    
+  # 结构化日志配置
+  structured:
+    enabled: true
+    format: "json"
+    include_caller: true
+    include_timestamp: true
+    
+  # 错误处理配置
+  error_handling:
+    enabled: true
+    capture_exceptions: true
+    capture_warnings: true
+    max_error_count: 1000
+    error_stats_interval: 300
+    
+  # 性能日志配置
+  performance:
+    enabled: true
+    log_slow_operations: true
+    slow_threshold_seconds: 5.0
+    log_memory_usage: true
+    memory_check_interval: 60
+    
+  # 审计日志配置
+  audit:
+    enabled: true
+    log_api_calls: true
+    log_data_access: true
+    log_config_changes: true
+    
+  # 日志过滤配置
+  filters:
+    # 排除的日志记录器
+    exclude_loggers:
+      - "urllib3.connectionpool"
+      - "requests.packages.urllib3"
+    # 排除的消息模式
+    exclude_patterns:
+      - ".*heartbeat.*"
+      - ".*keepalive.*"
+    # 敏感信息过滤
+    sensitive_fields:
+      - "password"
+      - "token"
+      - "api_key"
+      - "secret"
+    
+# 性能监控配置
+monitoring:
+  enabled: true
+  metrics_interval: 60      # 指标收集间隔(秒)
+  health_check_interval: 30 # 健康检查间隔(秒)
+  
+  # 性能阈值
+  thresholds:
+    max_memory_mb: 512      # 最大内存使用(MB)
+    max_cpu_percent: 80     # 最大CPU使用率(%)
+    max_scan_time: 30       # 最大扫描时间(秒)
+    
+# 数据质量配置
+data_quality:
+  validation:
+    enabled: true
+    strict_mode: false      # 严格模式：数据验证失败时停止处理
+    
+  # 数据清理配置
+  cleanup:
+    enabled: true
+    cleanup_interval: 3600  # 清理间隔(秒)
+    max_age_hours: 24       # 数据最大保存时间(小时)

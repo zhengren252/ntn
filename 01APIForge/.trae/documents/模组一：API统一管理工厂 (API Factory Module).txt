@@ -1,0 +1,48 @@
+模组一：API统一管理工厂 (API Factory Module)
+
+**重要提醒**：开发前请务必先阅读《核心设计理念与全局规范.md》文档，了解项目整体架构和开发规范。
+
+## 模组概述
+
+您是系统的"外交与安保部"。所有需要与外界（交易所、AI模型、数据网站）打交道的请求，都必须通过您来完成。您的核心职责是安全、稳定、高效地管理所有外部第三方API调用。
+
+**重要说明**：APIForge专门负责管理对外部第三方API的调用，不作为内部API网关。各业务模组独立提供HTTP API服务，前端应用直接调用各模组API。
+
+## 接口契约 (Interaction Contracts)
+○提供的服务 (Services Provided):
+■服务类型: HTTP/HTTPS RESTful API。
+■服务地址: 在容器网络中为 http://api_factory:8000。
+■核心端点 (Endpoints):
+■POST /exchange/{exchange_name}/order: 执行交易订单。
+■GET /exchange/{exchange_name}/klines: 获取K线数据。
+■POST /llm/{model_name}/chat: 调用大语言模型。
+■其他端点详见详细API文档...
+○发布的通知 (Notifications Published):
+■通信方式: ZeroMQ (PUB)。
+■主题: api_factory.events.status。
+■消息内容: 当某个API（如Binance）连接失败或恢复时，发布状态变更通知。
+■数据结构: {"source": "api_factory", "type": "status_change", "api_name": "binance", "status": "down", "reason": "Connection Timeout", "timestamp": ...}
+1.3 需求书、实施计划、搭建规范: 
+●口语化说明: 这个模组是整个系统的“外交部”和“安保部”。所有对外的请求，比如连接交易所、调用大模型AI、获取数据等，都必须通过它。这样做的好处是统一管理密钥、控制访问频率、方便切换服务商，并能有效隔离风险。
+1. 需求书 (Requirements Document)
+字段	值	说明
+ID	api-factory-module	模块唯一标识
+Version	1.1	版本号
+Description	统一管理所有第三方API的请求、认证、路由和配额，提供稳定、安全的接口服务。	模块核心职责
+Features	[{"id":"feat-01", "name":"API网关", "desc":"作为系统唯一入口，路由请求到不同集群。"}, {"id":"feat-02", "name":"认证中心", "desc":"管理API Key/Secret，实现OAuth2.0等认证。"}, {"id":"feat-03", "name":"配额与熔断", "desc":"控制API调用频率，防止超限；在API失效时快速熔断切换。"}, {"id":"feat-04", "name":"集群管理", "desc":"管理交易所、大模型、数据源等不同API集群。"}]	核心功能列表 (JSON格式)
+Dependencies	[]	无内部模块依赖，是系统的基础
+2. 实施计划 (Implementation Plan)
+阶段	任务	预估工时	产出物
+第一周	基础网关与路由功能开发	20小时	基础的请求转发服务
+第二周	认证中心与密钥管理	20小时	API Key管理模块
+第三周	交易所API集群接入 (Binance, OKX)	30小时	可靠的交易所连接器
+第四周	大模型与数据源API接入，完成测试	30小时	完整的API工厂模块
+3. 搭建规范 (Construction Specification)
+规范项	具体内容	注释
+语言/框架	Python (FastAPI) 或 Node.js (Express)	推荐FastAPI，性能优异且适合Python生态
+代码结构	api_factory/ <br> ├── main.py <br> ├── routers/ <br> │ ├── exchange.py <br> │ └── llm.py <br> ├── security.py <br> └── config/	严格分层，路由、安全逻辑分离
+通信协议	HTTP/HTTPS (对内提供服务) / ZeroMQ (对外通知)	模块内部各组件通过HTTP调用此模块，其状态变更通过ZMQ广播
+接口契约	请求: POST /exchange/binance/order <br> Body: {"symbol": "BTCUSDT", "side": "BUY", ...} <br> 响应: {"status": "ok", "orderId": "..."}	定义清晰的RESTful API
+部署	Dockerfile	容器化部署，端口映射 8000
+配置示例	config/prod.yaml: <br> binance: <br> api_key: ${BINANCE_API_KEY} <br> api_secret: ${BINANCE_API_SECRET}	使用 ${VAR} 语法引用环境变量
+测试	pytest / jest	对每个API路由进行单元测试和集成测试，覆盖成功和失败场景

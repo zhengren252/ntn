@@ -1,0 +1,60 @@
+# 开发环境配置文件
+# 继承base.yaml并覆盖特定配置
+
+# 应用配置
+app:
+  debug: true
+  mock_data: true
+
+# 服务器配置
+server:
+  host: "localhost"
+  port: 8001
+  reload: true
+
+# ZeroMQ配置 (开发环境端口)
+zeromq:
+  publisher:
+    port: 5557
+  subscriber:
+    port: 5558
+
+# Redis配置 (开发环境数据库)
+redis:
+  db: 1
+  key_prefix: "dev_master_control:"
+
+# 数据库配置 (开发环境)
+database:
+  filename: "dev_master_control.db"
+  echo: true  # 显示SQL语句
+
+# 日志配置 (开发环境)
+logging:
+  level: "DEBUG"
+  console: true
+  file: "logs/dev_master_control.log"
+
+# 监控配置 (开发环境)
+monitoring:
+  health_check_interval: 10  # 更频繁的检查
+  status_update_interval: 2
+
+# Mock数据配置
+mock_data:
+  enabled: true
+  scenarios:
+    - "normal_market"
+    - "volatile_market"
+    - "crash_simulation"
+  market_data:
+    bull_bear_index: 0.6
+    volatility: 0.15
+    volume: 1000000
+
+# 开发工具配置
+dev_tools:
+  hot_reload: true
+  debug_mode: true
+  profiling: false
+  test_mode: false

@@ -1,0 +1,260 @@
+{
+  "report_info": {
+    "title": "TACoreService 验收测试报告",
+    "version": "1.0.0",
+    "generated_at": "2025-08-08T12:26:05.034365",
+    "plan_id": "ACCEPTANCE-TEST-PLAN-M12-TACORESVC-V1.0"
+  },
+  "summary": {
+    "timestamp": "2025-08-08 12:26:05",
+    "total_tests": 16,
+    "passed_tests": 0,
+    "failed_tests": 16,
+    "success_rate": 0.0,
+    "total_duration": 154.94053316116333
+  },
+  "test_results": [
+    {
+      "case_id": "ZMQ-API-01",
+      "title": "scan.market - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 17.06819462776184,
+      "verification_results": [],
+      "error_message": "请求超时或连接失败"
+    },
+    {
+      "case_id": "ZMQ-API-02",
+      "title": "execute.order - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 17.082651376724243,
+      "verification_results": [],
+      "error_message": "请求超时或连接失败"
+    },
+    {
+      "case_id": "ZMQ-API-03",
+      "title": "evaluate.risk - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 17.04729175567627,
+      "verification_results": [],
+      "error_message": "请求超时或连接失败"
+    },
+    {
+      "case_id": "ZMQ-API-04",
+      "title": "无效方法测试",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 17.035348892211914,
+      "verification_results": [],
+      "error_message": "请求超时或连接失败"
+    },
+    {
+      "case_id": "HTTP-API-01",
+      "title": "GET /status - 服务状态接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 4.063838720321655,
+      "verification_results": [],
+      "error_message": "HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /status (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7B33D0>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))"
+    },
+    {
+      "case_id": "HTTP-API-02",
+      "title": "GET /workers - 工作进程列表接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 4.066538572311401,
+      "verification_results": [],
+      "error_message": "HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /workers (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7BCA10>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))"
+    },
+    {
+      "case_id": "HTTP-API-03",
+      "title": "GET /logs - 日志获取接口",
+      "suite_id": "API-HTTP-MONITORING",
+      "suite_name": "监控管理API测试 (HTTP)",
+      "status": "FAIL",
+      "duration": 4.06515908241272,
+      "verification_results": [],
+      "error_message": "HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /logs?limit=50&level=INFO (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7BE210>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))"
+    },
+    {
+      "case_id": "LB-01",
+      "title": "请求分发验证",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 10.14950704574585,
+      "verification_results": [
+        {
+          "description": "验证大部分请求成功 (成功率 >= 80%)",
+          "passed": false,
+          "details": "成功率: 0.0% (0/20)"
+        },
+        {
+          "description": "验证响应时间分布合理 (表明负载均衡有效)",
+          "passed": false,
+          "details": "没有成功的请求，无法分析响应时间"
+        },
+        {
+          "description": "验证请求ID唯一性 (无重复处理)",
+          "passed": true,
+          "details": "唯一ID数: 0, 总响应数: 0"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "SCALE-01",
+      "title": "水平扩展能力验证",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 15.436918020248413,
+      "verification_results": [
+        {
+          "description": "验证系统能够处理持续负载",
+          "passed": false,
+          "details": "成功处理 0/15 个请求"
+        },
+        {
+          "description": "验证吞吐量合理 (>= 1.0 req/s)",
+          "passed": false,
+          "details": "实际吞吐量: 0.00 req/s"
+        },
+        {
+          "description": "验证成功率合理 (>= 70%)",
+          "passed": false,
+          "details": "成功率: 0.0%"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "PERF-01",
+      "title": "负载下的性能表现",
+      "suite_id": "PERF-LOAD-BALANCING",
+      "suite_name": "负载均衡与可扩展性测试",
+      "status": "FAIL",
+      "duration": 10.153341293334961,
+      "verification_results": [
+        {
+          "description": "验证所有测试场景的成功率 (>= 70%)",
+          "passed": false,
+          "details": "轻量级请求 (scan.market): 0.0%; 中等复杂度请求 (evaluate.risk): 0.0%"
+        },
+        {
+          "description": "验证平均响应时间合理 (< 10s)",
+          "passed": true,
+          "details": "轻量级请求 (scan.market): 0.000s; 中等复杂度请求 (evaluate.risk): 0.000s"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "HA-01",
+      "title": "工作进程故障转移",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 0.17647314071655273,
+      "verification_results": [],
+      "error_message": "未找到工作进程容器"
+    },
+    {
+      "case_id": "HA-02",
+      "title": "客户端自动重试 (Lazy Pirate)",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 4.07867431640625,
+      "verification_results": [
+        {
+          "description": "验证服务初始状态健康",
+          "passed": false,
+          "details": "HTTP: False, ZMQ: False"
+        }
+      ],
+      "error_message": "服务初始状态不健康，无法进行重试测试"
+    },
+    {
+      "case_id": "HA-03",
+      "title": "服务恢复能力测试",
+      "suite_id": "SYS-HIGH-AVAILABILITY",
+      "suite_name": "高可用与弹性测试",
+      "status": "FAIL",
+      "duration": 10.099802255630493,
+      "verification_results": [
+        {
+          "description": "验证HTTP监控API恢复正常",
+          "passed": false,
+          "details": "HTTP API状态: False"
+        },
+        {
+          "description": "验证ZMQ业务API恢复正常",
+          "passed": false,
+          "details": "ZMQ API状态: False"
+        },
+        {
+          "description": "验证服务整体恢复健康",
+          "passed": false,
+          "details": "整体健康状态: False"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "DATA-03",
+      "title": "数据库连接性验证",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 4.100196361541748,
+      "verification_results": [
+        {
+          "description": "验证SQLite数据库连接和表结构",
+          "passed": false,
+          "details": "连接: True, request_logs表存在: False"
+        },
+        {
+          "description": "验证Redis缓存连接和基本操作",
+          "passed": false,
+          "details": "连接: False, 基本操作: False"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "DATA-01",
+      "title": "SQLite 请求日志持久化",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 11.035288333892822,
+      "verification_results": [
+        {
+          "description": "验证execute.order请求成功",
+          "passed": false,
+          "details": "响应状态: None"
+        }
+      ],
+      "error_message": "execute.order请求失败，无法验证日志持久化"
+    },
+    {
+      "case_id": "DATA-02",
+      "title": "Redis 缓存机制验证",
+      "suite_id": "DATA-PERSISTENCE",
+      "suite_name": "数据层集成测试",
+      "status": "FAIL",
+      "duration": 4.066824913024902,
+      "verification_results": [],
+      "error_message": "无法连接Redis缓存"
+    }
+  ]
+}

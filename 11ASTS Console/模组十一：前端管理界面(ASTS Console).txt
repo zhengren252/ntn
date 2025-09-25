@@ -1,0 +1,218 @@
+模组十一：前端管理界面(ASTS Console)
+
+## 手册导读
+
+**致项目经理:** 本手册是为分布式团队协作而设计的。请将本模板作为“第一部分”分发给所有新模组的开发人员，并将“第二部分”（即各模组独立的详细开发套件）分发给相应的开发团队。
+
+**致开发人员:** 请首先仔细阅读本模板以理解项目最新的全局架构和通用规范。然后，再深入研究您负责的模组在“第二部分”中的具体开发套件，那将是您日常开发工作的核心指南。
+
+---
+
+## 1. 核心设计理念 (V1.1版)
+
+**口语化说明:** 这份蓝图是我们整个项目的顶层设计。核心思想是“化整为零，分而治之”。我们把一个复杂的交易系统，拆分成12个（未来将扩展至14个）可以独立开发、测试和升级的“积木块”（模组）。它们之间通过一个高效的“信使系统”（ZeroMQ消息总线）来沟通，既能协同作战，又互不干扰。
+
+**核心架构升级:** 与项目初期不同，系统的核心AI能力（如市场扫描、订单执行）已被统一封装在模组十二：TACoreService中。所有业务模组不再直接依赖`TradingAgents-CN`库，而是通过网络请求调用这个中央服务。这种服务化的方式极大地提升了系统的稳定性、可维护性和扩展性。
+
+---
+
+## 2. 统一技术选型 (V1.1版)
+
+以下是项目当前阶段的最终技术选型，所有新模组的开发都必须遵循此标准：
+
+| 分类 | 技术/格式 | 模式/规范 | 用途描述 |
+| :--- | :--- | :--- | :--- |
+| **模块间通信** | ZeroMQ | `PUB/SUB`, `REQ/REP` | 用于模组间的低延迟、高吞吐量异步消息传递。 |
+| **数据序列化** | JSON | 消息体必须包含 `schema_version` 字段 | 确保高效、规范的数据交换，易于调试。 |
+| **缓存与状态存储**| Redis | - | 用于存储实时状态、市场数据缓存、轻量级消息队列。 |
+| **持久化存储** | SQLite | - | 零配置、文件型数据库，用于存储交易记录、回测报告等。 |
+| **部署与运维** | Docker & Docker Compose | - | 实现一键式、跨环境的部署和隔离。 |
+| **核心AI库集成**| TradingAgents-CN v3.0 | 服务化封装 | 所有功能被封装在独立的`TACoreService`模组中，对外提供统一服务。 |
+| **前端技术栈** | React (Next.js) | Shadcn/UI, Zustand, TanStack Query | 用于构建现代化、高性能的前端管理界面。 |
+
+---
+
+## 3. 全局规范与流程 (V1.1版)
+
+### 3.1 系统核心工作流
+
+随着`TACoreService`和人工审核(ReviewGuard)模组的加入，系统标准的端到端交易流程已更新如下：
+
+```mermaid
+sequenceDiagram
+    participant S as 扫描器
+    participant TA as TACoreService
+    participant O as 策略优化
+    participant RG as 人工审核
+    participant T as 交易员
+    participant X as 风控/财务
+    participant AF as API工厂
+    S->>TA: req: scan.market
+    TA-->>S: resp: opportunities
+    S->>O: pub: new opportunity
+    O->>RG: pub: strategy_package
+    RG-->>T: pub: approved_trade
+    T->>X: req: evaluate & apply_budget
+    X-->>T: resp: approved
+    T->>TA: req: execute.order
+    TA-->>AF: call: place_order
+    AF-->>TA: return: success
+    TA-->>T: resp: success
+```
+
+### 3.2 数据隔离与环境管理规范
+
+此规范保持不变，是所有开发活动必须严格遵守的基础准则。
+
+* **环境定义:** 系统必须包含三个环境：`development`, `staging`, `production`，通过环境变量`APP_ENV`进行切换。
+* **配置管理:** 严禁硬编码敏感信息；使用分环境配置文件；通过Docker环境变量注入密钥。
+* **数据管理:** 占位数据严禁入库到生产或测试环境；各环境使用独立的数据库；严禁将生产数据库直接拷贝到开发环境。
+
+### 3.3 开发与运维核心准则
+
+所有模组的开发、维护和升级，都必须遵循以下核心准则：
+
+* **版本控制:** 严格遵循Git Flow分支模型。所有向`develop`或`master`分支的合并都必须通过Pull Request，并经过代码审查(Code Review)。
+* **向后兼容性:** **[最高优先级]** 对模组间接口（ZeroMQ消息格式、HTTP API）的任何修改，都**必须**保持向后兼容。
+* **自动化测试:** 所有新增的核心业务逻辑，都必须有相应的单元测试，代码覆盖率需达标（>80%）。
+* **自动化部署:** 严禁手动登录生产服务器进行部署操作，所有部署必须通过CI/CD流水线完成。
+
+---
+
+## 4. 通用开发者指南 (V1.1版)
+
+### 4.1 系统总体架构
+
+系统采用微服务架构，由12个（未来14个）高内聚、低耦合的独立模组构成。各模组作为独立的Docker容器运行，通过ZeroMQ消息总线进行异步通信。所有原先分散的AI交易功能，现已全部统一到`TACoreService`中，各业务模组通过客户端请求该服务来完成任务。
+
+### 4.2 部署与集成规范 (升级后)
+
+项目根目录的`docker-compose.yml`文件是集成所有模组的关键。一个适用于当前架构的示例如下，它展示了如何编排`TACoreService`的多个工作进程以及其他依赖模组：
+
+```yaml
+version: '3.8'
+
+services:
+  # 基础服务
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  # 核心AI服务 (一个代理 + 多个工作进程)
+  tacore_service:
+    build: ./12TACoreService
+    container_name: tacore_service
+    command: python main.py  # 启动负载均衡代理
+    ports:
+      - "5555:5555" # 对其他模组暴露的前端端口
+    networks:
+      - app_net
+
+  tacore_worker:
+    build: ./12TACoreService
+    command: python worker.py # 启动工作进程
+    depends_on:
+      - tacore_service
+    networks:
+      - app_net
+    deploy:
+      replicas: 4 # 轻松扩展工作进程数量
+
+  # 业务模组示例 (以扫描器为例)
+  scanner:
+    build: ./03Scanner  # 假设模组文件夹为03Scanner
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+      - tacore_service # 明确依赖核心服务
+    networks:
+      - app_net
+
+  # 新业务模组示例 (以人工审核为例)
+  review_guard:
+    build: ./10ReviewGuard
+    environment:
+      - APP_ENV=production
+    depends_on:
+      - redis
+    networks:
+      - app_net
+    # ... 其他配置，如端口映射 ...
+
+  # ... 其他所有模组的定义 ...
+
+networks:
+  app_net:
+```
+
+**注意:** 所有需要调用`TACoreService`的模组，都必须在其`docker-compose.yml`的服务定义中添加`depends_on: [tacore_service]`，以确保核心服务先于客户端启动。
+
+
+●# 模组十一：前端管理界面 (ASTS Console) 开发套件
+
+## **重要提示：前置阅读**
+
+在开始阅读本模组的详细设计前，请确保您已仔细阅读并理解项目根目录下的 **`PROJECT_GUIDE.md`**。该文档包含了项目全局的架构、技术选型、通信协议和开发规范，是所有模组开发工作的基础。
+
+---
+
+### **蓝图导读**
+
+* **致项目经理/前端负责人:** 本蓝图是【模组十一：前端管理界面(ASTS Console)】的最终、唯一的开发指南。它整合了所有历史版本的设计思想和V2.0的升级目标，旨在指导团队直接构建一个功能全面、技术先进、用户体验卓越的生产级前端应用。
+* **核心目标:** 从一开始就构建一个能够完美承载和展示系统所有后台能力的智能化指挥中心，避免后续的架构重构和功能迭代。
+
+### **一、需求书 (Requirements Document)**
+
+**口语化说明:** 这一部分明确了我们最终要“做出一个什么样的前端”。简单来说，它是一个集“实时战情室”、“AI参谋部”、“策略实验室”和“总指挥台”于一体的综合性平台。
+
+| 字段 | 值 | 说明 |
+| :--- | :--- | :--- |
+| **ID** | `frontend-final-blueprint` | 模组唯一标识 |
+| **Version** | `2.0` | 直接开发的目标版本 |
+| **Description** | 构建一个集成了AI交互、深度分析、实时监控和高级运维工具的智能化、响应式的前端指挥中心。 | 模组核心职责 |
+| **Features** | 1. **全局核心组件:**<br>   - 全局模式切换器<br>   - 全局紧急暂停按钮<br>2. **核心功能页面:**<br>   - 仪表盘 (Dashboard)<br>   - 人工审核中心 (Review Center)<br>   - AI策略实验室 (AI Strategy Lab)<br>   - 高级交易复盘 (Trading Replay)<br>   - 系统监控中心 (Monitoring Center)<br>   - 风控演习中心 (Risk Rehearsal)<br>   - API成本中心 (API Cost Center)<br>   - 模块管理页面 | 核心功能列表 |
+| **Dependencies**| `["13. AI策略研究助理", "14. 可观测性中心", "01. API工厂", "08. 总控", "09. MMS", "10. 人工审核"]` | 依赖多个后台模组提供的数据接口。 |
+
+### **二、实施计划 (Implementation Plan)**
+
+**口语化说明:** 整个开发工程分为四个清晰的阶段：地基框架 -> 核心功能 -> 高级功能 -> 优化测试。
+
+```gantt
+    title 前端管理界面 V2.0 开发计划
+    dateFormat  YYYY-MM-DD
+    axisFormat %m-%d
+    
+    section 阶段一: 基础框架与核心UI (2周)
+    统一设计语言与组件库选型 :done, 2025-08-06, 3d
+    搭建Next.js项目框架 :active, 2025-08-09, 4d
+    构建API通信层与状态管理 :2025-08-13, 4d
+    开发全局导航与布局 :2025-08-17, 3d
+
+    section 阶段二: 核心功能开发 (3周)
+    仪表盘页面与数据可视化 :2025-08-20, 7d
+    人工审核中心UI与交互 :2025-08-27, 7d
+    模块管理页面(API工厂/扫描器) :2025-09-03, 7d
+
+    section 阶段三: 高级功能开发 (3周)
+    AI策略实验室与对话界面 :2025-09-10, 7d
+    高级交易复盘页面(集成TradingView) :2025-09-17, 7d
+    监控/演习/成本中心页面 :2025-09-24, 7d
+
+    section 阶段四: 优化与测试 (2周)
+    性能调优与响应式适配 :2025-10-01, 7d
+    全面的用户验收测试(UAT) :2025-10-08, 7d
+```
+
+### **三、搭建规范 (Construction Specification)**
+
+**口语化说明:** 这是本次开发的“施工图纸”，为前端开发团队提供了所有必要的技术选型、架构设计和开发标准。
+
+| 规范项 | 具体内容 | 注释 |
+| :--- | :--- | :--- |
+| **前端架构图** | ```mermaid<br>graph TD<br>subgraph 用户浏览器<br>A[React组件 (UI)]<br>end<br>subgraph 前端应用内部<br>A --> B[状态管理 (Zustand/Redux)];<br>B --> C[API请求层 (TanStack Query)];<br>end<br>subgraph 后端服务<br>D[WebSocket服务器]<br>E[HTTP API网关 (API工厂)]<br>end<br>C -- "常规数据" --> E;<br>B -- "实时数据" --> D;<br>``` | 清晰的前后端交互模式。 |
+| **技术栈选型**| **框架**: `React (Next.js)`<br>**UI库**: `Shadcn/UI` + `Tailwind CSS`<br>**状态管理**: `Zustand`<br>**数据请求**: `TanStack Query`<br>**可视化**: `ECharts` & `TradingView` | 这是一套业界领先的、高性能的前端技术组合。 |
+| **API通信规范**| 1. **实时数据**: 通过`WebSocket`由后端主动推送。<br>2. **常规数据**: 通过`TanStack Query`调用后端的HTTP API。 | 动静分离，确保界面的实时性和应用的性能。 |
+| **代码文件结构**| ```<br>/src<br>├── /app          # Next.js 路由<br>├── /components   # 可复用UI组件<br>├── /features     # 功能模块<br>├── /hooks        # 自定义Hooks<br>├── /lib          # 工具函数<br>└── /store        # Zustand 状态管理<br>``` | 清晰、可扩展的文件结构，便于团队协作。 |
+| **性能规范** | **核心Web指标**: LCP < 2.5秒, FID < 100毫秒, CLS < 0.1。<br>**打包体积**: 初始加载JS包 < 500KB。 | 设定明确的性能目标，确保

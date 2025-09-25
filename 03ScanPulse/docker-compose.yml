@@ -1,0 +1,84 @@
+# 扫描器模组 Docker Compose 配置
+# 支持多环境部署和服务编排
+
+version: '3.8'
+
+services:
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: scanner_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+      - ./docker/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - scanner_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 扫描器主服务
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scanner_main
+    restart: unless-stopped
+    ports:
+      - "8003:8000"  # Web (Host 8003 -> Container 8000) 避免与 APIForge 的 8001 冲突
+    volumes:
+      - ./logs:/app/logs
+      - ./scanner/config:/app/scanner/config
+    environment:
+      - SCANNER_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ZMQ_PUBLISHER_HOST=0.0.0.0
+      - ZMQ_REPLY_HOST=0.0.0.0
+      - SCAN_WEB_PORT=8000
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - scanner_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health').read(); sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  # 监控服务（可选）
+  monitor:
+    image: prom/prometheus:latest
+    container_name: scanner_monitor
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - scanner_network
+    profiles:
+      - monitoring
+
+networks:
+  scanner_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local

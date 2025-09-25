@@ -1,0 +1,211 @@
+# NeuroTrade Nexus - 信息源爬虫模组
+# 测试环境配置 (Staging Environment)
+
+# 环境标识
+environment: staging
+debug: false
+
+# ZeroMQ配置
+zmq:
+  publisher:
+    host: "staging-zmq.ntn.local"
+    port: 5555
+    topic: "crawler.news"
+  subscriber:
+    host: "staging-zmq.ntn.local"
+    port: 5556
+  timeout: 10000
+  high_water_mark: 5000
+
+# Redis配置
+redis:
+  host: "staging-redis.ntn.local"
+  port: 6379
+  db: 1
+  password: "${REDIS_PASSWORD}"
+  max_connections: 20
+  socket_timeout: 10
+
+# SQLite配置
+sqlite:
+  database_path: "data/crawler_staging.db"
+  timeout: 60
+  check_same_thread: false
+
+# Scrapy爬虫配置
+scrapy:
+  concurrent_requests: 32
+  download_delay: 0.5
+  randomize_download_delay: 0.3
+  user_agent: "NTN-Crawler/1.0 (+http://neurotrade.nexus)"
+  robotstxt_obey: true
+  cookies_enabled: true
+  retry_times: 5
+  retry_http_codes: [500, 502, 503, 504, 408, 429, 403]
+  
+  # 反爬虫策略
+  anti_spider:
+    rotate_user_agent: true
+    use_proxy: true
+    proxy_list:
+      - "http://proxy1.staging.ntn.local:8080"
+      - "http://proxy2.staging.ntn.local:8080"
+    request_fingerprinting: true
+    
+  # 中间件配置
+  middlewares:
+    - "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware"
+    - "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    - "scrapy.downloadermiddlewares.redirect.RedirectMiddleware"
+    - "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware"
+
+# Telegram配置
+telegram:
+  api_id: "${TELEGRAM_API_ID}"
+  api_hash: "${TELEGRAM_API_HASH}"
+  phone_number: "${TELEGRAM_PHONE}"
+  session_name: "ntn_crawler_staging"
+  
+  # 监听配置
+  channels:
+    - "@financial_news_test"
+    - "@crypto_signals_test"
+    - "@trading_alerts_test"
+  
+  # 关键词过滤
+  keywords:
+    - "bitcoin"
+    - "ethereum"
+    - "trading"
+    - "market"
+    - "price"
+    - "analysis"
+    - "forecast"
+    - "signal"
+  
+  # 消息处理
+  message_limit: 500
+  fetch_interval: 15
+  duplicate_check: true
+
+# API服务配置
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  threaded: true
+  
+  # CORS配置
+  cors:
+    origins: 
+      - "https://staging.ntn.local"
+      - "https://staging-admin.ntn.local"
+    methods: ["GET", "POST", "PUT", "DELETE"]
+    headers: ["Content-Type", "Authorization"]
+  
+  # 认证配置
+  auth:
+    enabled: true
+    secret_key: "${API_SECRET_KEY}"
+    token_expiry: 7200
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 文件日志
+  file:
+    enabled: true
+    path: "logs/crawler_staging.log"
+    max_size: "50MB"
+    backup_count: 10
+    rotation: "daily"
+  
+  # 控制台日志
+  console:
+    enabled: true
+    level: "WARNING"
+  
+  # 结构化日志
+  structured:
+    enabled: true
+    format: "json"
+
+# 数据处理配置
+data_processing:
+  # 数据清洗
+  cleaning:
+    remove_html: true
+    normalize_whitespace: true
+    remove_duplicates: true
+    min_content_length: 20
+    max_content_length: 50000
+  
+  # 数据验证
+  validation:
+    required_fields: ["title", "content", "source", "timestamp", "category"]
+    content_encoding: "utf-8"
+    timestamp_format: "ISO8601"
+  
+  # 数据格式化
+  formatting:
+    output_format: "json"
+    include_metadata: true
+    compress_output: true
+
+# 监控配置
+monitoring:
+  # 健康检查
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    interval: 30
+  
+  # 性能指标
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    prometheus_format: true
+  
+  # 告警配置
+  alerts:
+    enabled: true
+    webhook_url: "${ALERT_WEBHOOK_URL}"
+    error_threshold: 20
+    response_time_threshold: 3000
+
+# 存储配置
+storage:
+  # 本地存储
+  local:
+    data_dir: "data/"
+    backup_dir: "data/backup/"
+    temp_dir: "data/temp/"
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl: 1800
+    max_size: 5000
+
+# 安全配置
+security:
+  # 请求限制
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 120
+  
+  # IP白名单
+  ip_whitelist:
+    enabled: true
+    allowed_ips: 
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+  
+  # 数据加密
+  encryption:
+    enabled: true
+    algorithm: "AES-256"
+    key_rotation: false

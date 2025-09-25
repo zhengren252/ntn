@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="TACoreService Acceptance Tests" tests="16" failures="16" errors="0" time="154.94053316116333" timestamp="2025-08-08T12:26:05.036185">
+  <testsuite name="核心业务API测试 (ZeroMQ)" tests="4" failures="4" errors="0" time="68.23348665237427" package="tacoreservice.acceptance.API-ZMQ-BUSINESS">
+    <testcase name="scan.market - 成功路径" classname="tacoreservice.acceptance.API-ZMQ-BUSINESS.ZMQ-API-01" time="17.06819462776184">
+      <failure message="请求超时或连接失败" type="AssertionError">请求超时或连接失败</failure>
+    </testcase>
+    <testcase name="execute.order - 成功路径" classname="tacoreservice.acceptance.API-ZMQ-BUSINESS.ZMQ-API-02" time="17.082651376724243">
+      <failure message="请求超时或连接失败" type="AssertionError">请求超时或连接失败</failure>
+    </testcase>
+    <testcase name="evaluate.risk - 成功路径" classname="tacoreservice.acceptance.API-ZMQ-BUSINESS.ZMQ-API-03" time="17.04729175567627">
+      <failure message="请求超时或连接失败" type="AssertionError">请求超时或连接失败</failure>
+    </testcase>
+    <testcase name="无效方法测试" classname="tacoreservice.acceptance.API-ZMQ-BUSINESS.ZMQ-API-04" time="17.035348892211914">
+      <failure message="请求超时或连接失败" type="AssertionError">请求超时或连接失败</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="监控管理API测试 (HTTP)" tests="3" failures="3" errors="0" time="12.195536375045776" package="tacoreservice.acceptance.API-HTTP-MONITORING">
+    <testcase name="GET /status - 服务状态接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-01" time="4.063838720321655">
+      <failure message="HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /status (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7B33D0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))" type="AssertionError">HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /status (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7B33D0&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))</failure>
+    </testcase>
+    <testcase name="GET /workers - 工作进程列表接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-02" time="4.066538572311401">
+      <failure message="HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /workers (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7BCA10&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))" type="AssertionError">HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /workers (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7BCA10&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))</failure>
+    </testcase>
+    <testcase name="GET /logs - 日志获取接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-03" time="4.06515908241272">
+      <failure message="HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /logs?limit=50&amp;level=INFO (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7BE210&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))" type="AssertionError">HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /logs?limit=50&amp;level=INFO (Caused by NewConnectionError('&lt;urllib3.connection.HTTPConnection object at 0x0000024C5F7BE210&gt;: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="负载均衡与可扩展性测试" tests="3" failures="3" errors="0" time="35.739766359329224" package="tacoreservice.acceptance.PERF-LOAD-BALANCING">
+    <testcase name="请求分发验证" classname="tacoreservice.acceptance.PERF-LOAD-BALANCING.LB-01" time="10.14950704574585">
+      <failure

@@ -1,0 +1,49 @@
+模组四：策略优化 (Strategy Optimization Module) 开发套件
+
+**重要提醒**：开发前请务必先阅读《核心设计理念与全局规范.md》文档，了解项目整体架构和开发规范。
+
+## 模组概述
+
+您是系统的"军事参谋部"。您需要订阅"雷达站"发现的机会，利用历史数据进行严格的压力测试和回测。只有通过您审批的、稳健可靠的策略，才能进入下一环节。
+
+## 接口契约 (Interaction Contracts)
+○调用的服务 (Services Consumed):
+■服务: API统一管理工厂。
+■目的: 调用 GET /exchange/.../klines 获取回测所需的历史K线数据。也可能调用 /llm/... 服务加速某些计算。
+○订阅的通知 (Notifications Subscribed):
+■通信方式: ZeroMQ (SUB)。
+■主题: scanner.pool.preliminary。
+■目的: 获取所有待分析的潜在交易机会。
+○发布的通知 (Notifications Published):
+■通信方式: ZeroMQ (PUB)。
+■主题: optimizer.pool.trading。
+■消息内容: 发布经过回测验证、符合上线标准的“策略参数包”。
+■数据结构: {"symbol": "RNDR/USDT", "strategy_id": "grid_v1.2", "params": {"grid_num": 20, "profit_ratio": 0.015}, "metrics": {"max_drawdown": 0.04, "sharpe": 2.1}, "schema_version": "1.1"}
+
+
+4.3 需求书、实施计划、搭建规范:
+模组四：策略优化 (Strategy Optimization Module)
+●口语化说明: 这是系统的“军事参谋部”。它会接手“雷达站”发现的机会，然后利用一个叫“压力测试沙盒”的工具，在不花一分钱的情况下，模拟过去72小时的行情来反复推演各种交易策略。只有那些在极端行情下（比如大暴跌）表现依然稳健的策略，才会被打上“合格”标签，送往“交易员”手上。
+1. 需求书 (Requirements Document)
+字段	值	说明
+ID	strategy-optimizer-module	模块唯一标识
+Version	1.1	版本号
+Description	对预备池中的交易对进行策略回测和优化，筛选出高胜率、低回撤的策略参数包。	模块核心职责
+Features	[{"id":"feat-01", "name":"压力测试沙盒", "desc":"使用历史数据（特别是崩盘数据）对策略进行72小时模拟交易。"}, {"id":"feat-02", "name":"免下载回测", "desc":"直接调用API获取近期K线进行快速回测，提升效率。"}, {"id":"feat-03", "name":"参数优化", "desc":"使用遗传算法等方式自动寻找最优策略参数。"}, {"id":"feat-04", "name":"决策引擎", "desc":"根据最大回撤、滑点成本、夏普比率等指标自动审批策略。"}]	核心功能列表 (JSON格式)
+Dependencies	["api-factory-module"]	依赖API工厂获取历史数据和调用AI模型（如Groq）加速
+2. 实施计划 (Implementation Plan)
+阶段	任务	预估工时	产出物
+第一周	回测引擎框架搭建 (VectorBT/Backtrader)	25小时	能够执行简单策略回测的内核
+第二周	对接历史数据源与压力测试场景	20小时	历史事件库和压力测试脚本
+第三周	开发参数优化器与决策引擎	25小时	自动化调优和审批流程
+第四周	性能优化（集成Groq等）与部署	20小时	高速回测模块
+3. 搭建规范 (Construction Specification)
+规范项	具体内容	注释
+语言/框架	Python (VectorBT, Pandas)	VectorBT在处理大规模数据回测时性能极佳
+代码结构	optimizer/ <br> ├── main.py <br> ├── strategies/ <br> ├── backtester.py <br> ├── optimizer.py <br> └── config/	策略、回测器、优化器逻辑分离
+通信协议	ZeroMQ (SUB/PUSH)	订阅 scanner.pool.preliminary，推送结果到 optimizer.pool.trading
+数据结构	{"symbol": "...", "strategy_id": "grid_v1", "params": {...}, "metrics": {"max_drawdown": 0.04, "sharpe": 2.1}}	策略ID化，便于版本管理
+数据存储	SQLite	表backtest_reports: id, symbol, strategy_id, params_hash, metrics_json, created_at
+性能优化	优先使用Groq LPU或类似服务进行推理加速，将回测速度提升100倍	这是实现快速迭代的关键
+
+

@@ -1,0 +1,749 @@
+{% extends "base.html" %}
+
+{% block title %}规则配置 - ScanPulse{% endblock %}
+
+{% block page_title %}扫描规则配置{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 规则列表 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-list"></i> 扫描规则</h6>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="showAddRuleModal()">
+                        <i class="fas fa-plus"></i> 添加规则
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadRules()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="rules-list">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 规则统计 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-chart-pie"></i> 规则统计</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="rules-chart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-cogs"></i> 快速操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="enableAllRules()">
+                        <i class="fas fa-check-circle"></i> 启用所有规则
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="disableAllRules()">
+                        <i class="fas fa-times-circle"></i> 禁用所有规则
+                    </button>
+                    <button class="btn btn-outline-info" onclick="exportRules()">
+                        <i class="fas fa-download"></i> 导出配置
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="showImportModal()">
+                        <i class="fas fa-upload"></i> 导入配置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加/编辑规则模态框 -->
+<div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ruleModalTitle">添加规则</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ruleForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">规则名称 *</label>
+                            <input type="text" class="form-control" id="ruleName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">规则类型 *</label>
+                            <select class="form-select" id="ruleType" required>
+                                <option value="">请选择类型</option>
+                                <option value="three_high">三高规则</option>
+                                <option value="black_horse">黑马检测</option>
+                                <option value="potential_finder">潜力挖掘</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">优先级</label>
+                            <select class="form-select" id="rulePriority">
+                                <option value="low">低</option>
+                                <option value="medium" selected>中</option>
+                                <option value="high">高</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">状态</label>
+                            <select class="form-select" id="ruleStatus">
+                                <option value="enabled" selected>启用</option>
+                                <option value="disabled">禁用</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">规则描述</label>
+                        <textarea class="form-control" id="ruleDescription" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">规则参数 (JSON格式)</label>
+                        <textarea class="form-control" id="ruleParameters" rows="6" placeholder='{\n  "threshold": 0.8,\n  "timeframe": "1h",\n  "indicators": ["rsi", "macd"]\n}'></textarea>
+                        <div class="form-text">请输入有效的JSON格式参数</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">扫描间隔 (秒)</label>
+                            <input type="number" class="form-control" id="ruleScanInterval" value="60" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">最大结果数</label>
+                            <input type="number" class="form-control" id="ruleMaxResults" value="10" min="1">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveRule()">保存规则</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入配置模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导入规则配置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">选择配置文件</label>
+                    <input type="file" class="form-control" id="importFile" accept=".json">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">或粘贴JSON配置</label>
+                    <textarea class="form-control" id="importText" rows="8" placeholder="粘贴JSON配置内容..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="importRules()">导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let rulesChart;
+let currentRuleId = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadRules();
+    initializeRuleValidation();
+    setupAutoSave();
+});
+
+// 初始化图表
+function initializeCharts() {
+    const ctx = document.getElementById('rules-chart').getContext('2d');
+    rulesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['启用', '禁用'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// 加载规则列表
+function loadRules() {
+    showLoading('rules-list');
+    
+    fetch('/api/rules')
+        .then(response => response.json())
+        .then(data => {
+            updateRulesList(data.rules || []);
+            updateRulesChart(data.rules || []);
+        })
+        .catch(error => {
+            console.error('Error loading rules:', error);
+            showError('rules-list', '加载规则失败');
+        });
+}
+
+// 更新规则列表
+function updateRulesList(rules) {
+    const container = document.getElementById('rules-list');
+    
+    if (rules.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">暂无规则配置</div>';
+        return;
+    }
+    
+    const ruleTypeNames = {
+        'three_high': '三高规则',
+        'black_horse': '黑马检测',
+        'potential_finder': '潜力挖掘',
+        'custom': '自定义'
+    };
+    
+    const priorityColors = {
+        'high': 'danger',
+        'medium': 'warning',
+        'low': 'info'
+    };
+    
+    container.innerHTML = rules.map(rule => {
+        const statusClass = rule.enabled ? 'success' : 'secondary';
+        const statusText = rule.enabled ? '启用' : '禁用';
+        const priorityClass = priorityColors[rule.priority] || 'secondary';
+        const typeName = ruleTypeNames[rule.type] || rule.type;
+        
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <i class="fas fa-cog mr-2"></i>
+                                ${rule.name}
+                                <span class="badge bg-${statusClass} ms-2">${statusText}</span>
+                                <span class="badge bg-${priorityClass} ms-1">${rule.priority}</span>
+                            </h6>
+                            <p class="text-muted mb-2">${rule.description || '无描述'}</p>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <small class="text-muted">类型:</small><br>
+                                    <strong>${typeName}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">扫描间隔:</small><br>
+                                    <strong>${rule.scan_interval || 60}秒</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">最大结果:</small><br>
+                                    <strong>${rule.max_results || 10}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">最后更新:</small><br>
+                                    <strong>${formatTime(rule.updated_at || new Date().toISOString())}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editRule('${rule.id}')" title="编辑">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-${rule.enabled ? 'warning' : 'success'}" 
+                                    onclick="toggleRule('${rule.id}', ${!rule.enabled})" 
+                                    title="${rule.enabled ? '禁用' : '启用'}">
+                                <i class="fas fa-${rule.enabled ? 'pause' : 'play'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="testRule('${rule.id}')" title="测试">
+                                <i class="fas fa-play-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRule('${rule.id}')" title="删除">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${rule.parameters ? `
+                        <div class="mt-3">
+                            <small class="text-muted">参数配置:</small>
+                            <pre class="bg-light p-2 mt-1"><code>${JSON.stringify(rule.parameters, null, 2)}</code></pre>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新规则统计图表
+function updateRulesChart(rules) {
+    const enabled = rules.filter(r => r.enabled).length;
+    const disabled = rules.length - enabled;
+    
+    if (rulesChart) {
+        rulesChart.data.datasets[0].data = [enabled, disabled];
+        rulesChart.update();
+    }
+}
+
+// 显示添加规则模态框
+function showAddRuleModal() {
+    currentRuleId = null;
+    document.getElementById('ruleModalTitle').textContent = '添加规则';
+    document.getElementById('ruleForm').reset();
+    document.getElementById('ruleParameters').value = '{\n  "threshold": 0.8,\n  "timeframe": "1h"\n}';
+    new bootstrap.Modal(document.getElementById('ruleModal')).show();
+}
+
+// 编辑规则
+function editRule(ruleId) {
+    fetch(`/api/rules/${ruleId}`)
+        .then(response => response.json())
+        .then(rule => {
+            currentRuleId = ruleId;
+            document.getElementById('ruleModalTitle').textContent = '编辑规则';
+            document.getElementById('ruleName').value = rule.name || '';
+            document.getElementById('ruleType').value = rule.type || '';
+            document.getElementById('rulePriority').value = rule.priority || 'medium';
+            document.getElementById('ruleStatus').value = rule.enabled ? 'enabled' : 'disabled';
+            document.getElementById('ruleDescription').value = rule.description || '';
+            document.getElementById('ruleParameters').value = JSON.stringify(rule.parameters || {}, null, 2);
+            document.getElementById('ruleScanInterval').value = rule.scan_interval || 60;
+            document.getElementById('ruleMaxResults').value = rule.max_results || 10;
+            
+            new bootstrap.Modal(document.getElementById('ruleModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading rule:', error);
+            alert('加载规则失败');
+        });
+}
+
+// 保存规则
+function saveRule() {
+    const form = document.getElementById('ruleForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    let parameters;
+    try {
+        parameters = JSON.parse(document.getElementById('ruleParameters').value || '{}');
+    } catch (e) {
+        alert('规则参数JSON格式错误');
+        return;
+    }
+    
+    const ruleData = {
+        name: document.getElementById('ruleName').value,
+        type: document.getElementById('ruleType').value,
+        priority: document.getElementById('rulePriority').value,
+        enabled: document.getElementById('ruleStatus').value === 'enabled',
+        description: document.getElementById('ruleDescription').value,
+        parameters: parameters,
+        scan_interval: parseInt(document.getElementById('ruleScanInterval').value),
+        max_results: parseInt(document.getElementById('ruleMaxResults').value)
+    };
+    
+    const url = currentRuleId ? `/api/rules/${currentRuleId}` : '/api/rules';
+    const method = currentRuleId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(ruleData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('ruleModal')).hide();
+            loadRules();
+            alert(currentRuleId ? '规则更新成功' : '规则添加成功');
+        } else {
+            alert('保存失败: ' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('Error saving rule:', error);
+        alert('保存规则失败');
+    });
+}
+
+// 切换规则状态
+function toggleRule(ruleId, enabled) {
+    fetch(`/api/rules/${ruleId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ enabled: enabled })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            loadRules();
+        } else {
+            alert('操作失败: ' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling rule:', error);
+        alert('操作失败');
+    });
+}
+
+// 测试规则
+function testRule(ruleId) {
+    if (confirm('确定要测试这个规则吗？')) {
+        fetch(`/api/rules/${ruleId}/test`, { method: 'POST' })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('测试完成，结果: ' + JSON.stringify(result.result, null, 2));
+                } else {
+                    alert('测试失败: ' + (result.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error testing rule:', error);
+                alert('测试失败');
+            });
+    }
+}
+
+// 删除规则
+function deleteRule(ruleId) {
+    if (confirm('确定要删除这个规则吗？此操作不可撤销。')) {
+        fetch(`/api/rules/${ruleId}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    loadRules();
+                    alert('规则删除成功');
+                } else {
+                    alert('删除失败: ' + (result.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting rule:', error);
+                alert('删除失败');
+            });
+    }
+}
+
+// 启用所有规则
+function enableAllRules() {
+    if (confirm('确定要启用所有规则吗？')) {
+        fetch('/api/rules/batch', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'enable_all' })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                loadRules();
+                alert('所有规则已启用');
+            } else {
+                alert('操作失败: ' + (result.error || '未知错误'));
+            }
+        })
+        .catch(error => {
+            console.error('Error enabling all rules:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+// 禁用所有规则
+function disableAllRules() {
+    if (confirm('确定要禁用所有规则吗？')) {
+        fetch('/api/rules/batch', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: 'disable_all' })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                loadRules();
+                alert('所有规则已禁用');
+            } else {
+                alert('操作失败: ' + (result.error || '未知错误'));
+            }
+        })
+        .catch(error => {
+            console.error('Error disabling all rules:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+// 导出规则配置
+function exportRules() {
+    fetch('/api/rules')
+        .then(response => response.json())
+        .then(data => {
+            const blob = new Blob([JSON.stringify(data.rules, null, 2)], {
+                type: 'application/json'
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `scanpulse-rules-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error exporting rules:', error);
+            alert('导出失败');
+        });
+}
+
+// 显示导入模态框
+function showImportModal() {
+    document.getElementById('importFile').value = '';
+    document.getElementById('importText').value = '';
+    new bootstrap.Modal(document.getElementById('importModal')).show();
+}
+
+// 导入规则配置
+function importRules() {
+    const file = document.getElementById('importFile').files[0];
+    const text = document.getElementById('importText').value;
+    
+    if (!file && !text) {
+        alert('请选择文件或输入配置内容');
+        return;
+    }
+    
+    const processImport = (content) => {
+        try {
+            const rules = JSON.parse(content);
+            
+            if (validateImportedRules(rules)) {
+                fetch('/api/rules/import', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rules: rules })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+                        loadRules();
+                        alert(`导入成功，共导入 ${result.imported} 个规则`);
+                    } else {
+                        alert('导入失败: ' + (result.error || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error importing rules:', error);
+                    alert('导入失败');
+                });
+            } else {
+                alert('规则文件格式不符合要求');
+            }
+        } catch (e) {
+            alert('JSON格式错误');
+        }
+    };
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => processImport(e.target.result);
+        reader.readAsText(file);
+    } else {
+        processImport(text);
+    }
+}
+
+// 验证导入的规则
+function validateImportedRules(rules) {
+    if (!Array.isArray(rules)) return false;
+    
+    return rules.every(rule => {
+        return rule.name && 
+               rule.type && 
+               typeof rule.enabled === 'boolean' &&
+               rule.parameters &&
+               typeof rule.parameters === 'object';
+    });
+}
+
+// 初始化规则验证
+function initializeRuleValidation() {
+    // 为所有输入字段添加实时验证
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('.rule-parameter')) {
+            validateParameter(e.target);
+        }
+    });
+}
+
+// 验证参数
+function validateParameter(input) {
+    const value = input.value;
+    const type = input.dataset.type;
+    const min = parseFloat(input.dataset.min);
+    const max = parseFloat(input.dataset.max);
+    
+    let isValid = true;
+    let errorMessage = '';
+    
+    // 移除之前的错误样式
+    input.classList.remove('is-invalid');
+    const feedback = input.parentNode.querySelector('.invalid-feedback');
+    if (feedback) feedback.remove();
+    
+    if (type === 'number') {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) {
+            isValid = false;
+            errorMessage = '请输入有效的数字';
+        } else if (!isNaN(min) && numValue < min) {
+            isValid = false;
+            errorMessage = `值不能小于 ${min}`;
+        } else if (!isNaN(max) && numValue > max) {
+            isValid = false;
+            errorMessage = `值不能大于 ${max}`;
+        }
+    } else if (type === 'percentage') {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+            isValid = false;
+            errorMessage = '请输入0-100之间的百分比';
+        }
+    }
+    
+    if (!isValid) {
+        input.classList.add('is-invalid');
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'invalid-feedback';
+        feedbackDiv.textContent = errorMessage;
+        input.parentNode.appendChild(feedbackDiv);
+    }
+    
+    return isValid;
+}
+
+// 设置自动保存
+function setupAutoSave() {
+    let autoSaveTimer;
+    
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('.rule-parameter')) {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                const ruleId = e.target.closest('.rule-item').dataset.ruleId;
+                if (ruleId) {
+                    autoSaveRule(ruleId);
+                }
+            }, 2000); // 2秒后自动保存
+        }
+    });
+}
+
+// 自动保存规则
+function autoSaveRule(ruleId) {
+    const ruleItem = document.querySelector(`[data-rule-id="${ruleId}"]`);
+    if (!ruleItem) return;
+    
+    // 验证所有参数
+    const inputs = ruleItem.querySelectorAll('.rule-parameter');
+    let allValid = true;
+    
+    inputs.forEach(input => {
+        if (!validateParameter(input)) {
+            allValid = false;
+        }
+    });
+    
+    if (allValid) {
+        // 显示保存指示器
+        showSaveIndicator(ruleItem, 'saving');
+        
+        // 模拟保存延迟
+        setTimeout(() => {
+            showSaveIndicator(ruleItem, 'saved');
+            setTimeout(() => {
+                hideSaveIndicator(ruleItem);
+            }, 1000);
+        }, 500);
+    }
+}
+
+// 显示保存指示器
+function showSaveIndicator(ruleItem, status) {
+    let indicator = ruleItem.querySelector('.save-indicator');
+    if (!indicator) {
+        indicator = document.createElement('span');
+        indicator.className = 'save-indicator';
+        ruleItem.querySelector('.card-header').appendChild(indicator);
+    }
+    
+    if (status === 'saving') {
+        indicator.innerHTML = '<i class="fas fa-spinner fa-spin text-primary"></i> 保存中...';
+    } else if (status === 'saved') {
+        indicator.innerHTML = '<i class="fas fa-check text-success"></i> 已保存';
+    }
+    
+    indicator.style.display = 'inline-block';
+}
+
+// 隐藏保存指示器
+function hideSaveIndicator(ruleItem) {
+    const indicator = ruleItem.querySelector('.save-indicator');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

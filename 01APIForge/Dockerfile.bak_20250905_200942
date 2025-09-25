@@ -1,0 +1,121 @@
+<<<<<<< HEAD
+# 多阶段构建 Dockerfile for API Factory
+# Stage 1: 构建阶段
+=======
+# API Factory Module - 多阶段构建Dockerfile
+# 基于Python 3.11-slim，支持FastAPI + ZeroMQ + Redis + SQLite
+
+# 第一阶段：构建阶段
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+FROM python:3.11-slim as builder
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装系统依赖
+<<<<<<< HEAD
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+=======
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y --fix-missing -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
+    gcc \
+    g++ \
+    libzmq3-dev \
+    pkg-config \
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制依赖文件
+COPY requirements.txt .
+
+# 安装Python依赖
+<<<<<<< HEAD
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: 运行阶段
+FROM python:3.11-slim as runtime
+
+# 创建非root用户
+RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+
+=======
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 第二阶段：运行阶段
+FROM python:3.11-slim as runtime
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app \
+    APP_ENV=production
+
+# 创建非root用户
+RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+
+# 安装运行时依赖
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y \
+    libzmq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+# 设置工作目录
+WORKDIR /app
+
+# 从构建阶段复制Python包
+<<<<<<< HEAD
+COPY --from=builder /root/.local /home/apiuser/.local
+
+# 复制应用代码
+COPY api_factory/ ./api_factory/
+COPY config/ ./config/
+
+# 创建必要的目录
+RUN mkdir -p /app/data /app/logs && \
+=======
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# 复制应用代码
+COPY api_factory/ ./api_factory/
+COPY requirements.txt .
+
+# 创建必要的目录
+RUN mkdir -p /app/data /app/logs /app/config && \
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+    chown -R apiuser:apiuser /app
+
+# 切换到非root用户
+USER apiuser
+
+<<<<<<< HEAD
+# 设置环境变量
+ENV PATH=/home/apiuser/.local/bin:$PATH
+ENV PYTHONPATH=/app
+
+# 暴露端口
+EXPOSE 8000 5555 5556
+
+=======
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+<<<<<<< HEAD
+# 启动命令
+CMD ["python", "-m", "api_factory.main"]
+=======
+# 暴露端口
+EXPOSE 8000 5555 5556
+
+# 启动命令
+CMD ["uvicorn", "api_factory.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

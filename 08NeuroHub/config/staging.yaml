@@ -1,0 +1,67 @@
+# 准生产环境配置文件
+# 用于测试和验证
+
+# 应用配置
+app:
+  debug: false
+  mock_data: false
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8002
+  reload: false
+
+# ZeroMQ配置 (staging环境端口)
+zeromq:
+  publisher:
+    port: 5559
+  subscriber:
+    port: 5560
+
+# Redis配置 (staging环境数据库)
+redis:
+  db: 2
+  key_prefix: "staging_master_control:"
+  password: "${REDIS_PASSWORD}"  # 从环境变量获取
+
+# 数据库配置 (staging环境)
+database:
+  filename: "staging_master_control.db"
+  echo: false
+  backup_enabled: true
+  backup_interval: 3600  # 1小时备份一次
+
+# 日志配置 (staging环境)
+logging:
+  level: "INFO"
+  console: false
+  file: "logs/staging_master_control.log"
+  remote_logging: true
+  log_server: "${LOG_SERVER_URL}"
+
+# 监控配置 (staging环境)
+monitoring:
+  health_check_interval: 30
+  status_update_interval: 5
+  metrics_export: true
+  prometheus_port: 9090
+
+# 安全配置
+security:
+  api_key_required: true
+  rate_limiting: true
+  max_requests_per_minute: 1000
+  cors_strict: true
+
+# 性能配置
+performance:
+  connection_pool_size: 20
+  query_timeout: 30
+  cache_ttl: 300
+
+# 测试配置
+testing:
+  load_test_enabled: true
+  stress_test_enabled: true
+  integration_test_enabled: true

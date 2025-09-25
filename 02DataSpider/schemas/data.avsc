@@ -1,0 +1,78 @@
+{
+  "type": "record",
+  "name": "DataItem",
+  "namespace": "dataspider",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "content",
+      "type": "string"
+    },
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "string"
+    },
+    {
+      "name": "category",
+      "type": "string"
+    },
+    {
+      "name": "keywords",
+      "type": {
+        "type": "array",
+        "items": "string"
+      }
+    },
+    {
+      "name": "source",
+      "type": "string"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "map",
+        "values": "string"
+      }
+    },
+    {
+      "name": "metrics",
+      "type": {
+        "type": "record",
+        "name": "DataMetrics",
+        "fields": [
+          {
+            "name": "relevance_score",
+            "type": "double"
+          },
+          {
+            "name": "sentiment_score",
+            "type": "double"
+          },
+          {
+            "name": "word_count",
+            "type": "int"
+          },
+          {
+            "name": "view_count",
+            "type": "int"
+          },
+          {
+            "name": "share_count",
+            "type": "int"
+          }
+        ]
+      }
+    }
+  ]
+}

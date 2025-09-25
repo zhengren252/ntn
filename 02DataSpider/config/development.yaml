@@ -1,0 +1,79 @@
+# 开发环境配置
+# 严格遵循：仅限开发环境的占位数据和Mock配置
+
+# 继承基础配置
+base_config: "base.yaml"
+
+# 开发环境标识
+environment: "development"
+
+# Mock数据配置 - 仅限开发环境
+mock_data:
+  enabled: true
+  telegram_messages:
+    - {
+        "source": "telegram",
+        "channel": "test_channel",
+        "content": "[Mock] 新币种上线通知：TEST/USDT",
+        "timestamp": 1672531200,
+        "schema_version": "1.1"
+      }
+    - {
+        "source": "telegram",
+        "channel": "alerts_channel",
+        "content": "[Mock] 市场异动警报：BTC价格突破50000",
+        "timestamp": 1672531260,
+        "schema_version": "1.1"
+      }
+  
+  web_scraping:
+    sec_filings:
+      - {
+          "source": "sec_website",
+          "filing_type": "8-K",
+          "company": "Test Corp",
+          "content": "[Mock] 重大事件披露：公司完成区块链技术收购",
+          "timestamp": 1672531320,
+          "schema_version": "1.1"
+        }
+
+# 开发环境数据库配置
+database:
+  sqlite_file: "data/dev.db"
+  auto_create_tables: true
+  clear_on_startup: false  # 开发时保留数据便于调试
+
+# Redis开发配置
+redis:
+  db: 0  # 开发环境专用数据库
+  flush_on_startup: false  # 开发时保留缓存数据
+
+# 开发环境日志配置
+logging:
+  level: "DEBUG"
+  console_output: true
+  file_output: true
+  log_file: "logs/dev_crawler.log"
+
+# 开发环境爬虫配置
+scraper:
+  # 开发环境使用更短的延迟
+  request_delay:
+    min: 0.5
+    max: 1
+  # 开发环境允许更多重试
+  retry_times: 5
+  # 开发环境使用Mock代理
+  use_mock_proxy: true
+
+# Telegram开发配置
+telegram:
+  # 开发环境使用测试会话
+  session_name: "dev_crawler_session"
+  use_mock_client: true  # 开发环境使用Mock客户端
+
+# 数据清理脚本配置
+data_cleanup:
+  enabled: true
+  cleanup_script: "scripts/cleanup_dev_data.py"
+  auto_cleanup_interval: "1 hour"  # 开发环境自动清理

@@ -1,0 +1,42 @@
+# TradeGuard集成测试Dockerfile
+# 用于运行集成测试套件
+
+FROM node:20-alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装系统依赖
+RUN apk add --no-cache \
+    curl \
+    redis \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# 复制package文件
+COPY package*.json ./
+
+# 更新npm到最新版本并安装依赖
+RUN npm install -g npm@latest && npm install --verbose
+
+# 复制源代码
+COPY . .
+
+# 创建日志目录
+RUN mkdir -p /app/logs
+
+# 设置环境变量
+ENV NODE_ENV=test
+ENV LOG_LEVEL=debug
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+# 暴露端口
+EXPOSE 3000 3001
+
+# 默认命令
+CMD ["npm", "run", "test:integration"]

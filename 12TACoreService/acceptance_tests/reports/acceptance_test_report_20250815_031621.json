@@ -1,0 +1,107 @@
+{
+  "report_info": {
+    "title": "TACoreService 验收测试报告",
+    "version": "1.0.0",
+    "generated_at": "2025-08-15T03:16:21.574800",
+    "plan_id": "ACCEPTANCE-TEST-PLAN-M12-TACORESVC-V1.0"
+  },
+  "summary": {
+    "timestamp": "2025-08-15 03:16:21",
+    "total_tests": 4,
+    "passed_tests": 0,
+    "failed_tests": 4,
+    "success_rate": 0.0,
+    "total_duration": 1.1860289573669434
+  },
+  "test_results": [
+    {
+      "case_id": "ZMQ-API-01",
+      "title": "scan.market - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.13152027130126953,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'success'",
+          "passed": false,
+          "details": "实际状态: error"
+        },
+        {
+          "description": "验证响应中的 request_id 与请求的ID匹配",
+          "passed": true,
+          "details": "请求ID: test_20250815_031620_a3bf31a3, 响应ID: test_20250815_031620_a3bf31a3"
+        },
+        {
+          "description": "验证响应中的 opportunities 字段是一个数组",
+          "passed": false,
+          "details": "opportunities类型: NoneType, 长度: N/A"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-02",
+      "title": "execute.order - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.016604185104370117,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'success'",
+          "passed": false,
+          "details": "实际状态: error"
+        },
+        {
+          "description": "验证响应中的 order_id 字段是一个非空字符串",
+          "passed": false,
+          "details": "order_id: None, 类型: NoneType"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-03",
+      "title": "evaluate.risk - 成功路径",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.0,
+      "verification_results": [
+        {
+          "description": "验证响应中的 risk_score 是一个数字",
+          "passed": false,
+          "details": "risk_score: None, 类型: NoneType"
+        },
+        {
+          "description": "验证响应中的 risk_level 是 'low', 'medium', 'high' 之一",
+          "passed": false,
+          "details": "risk_level: None, 有效值: ['low', 'medium', 'high']"
+        }
+      ],
+      "error_message": null
+    },
+    {
+      "case_id": "ZMQ-API-04",
+      "title": "无效方法测试",
+      "suite_id": "API-ZMQ-BUSINESS",
+      "suite_name": "核心业务API测试 (ZeroMQ)",
+      "status": "FAIL",
+      "duration": 0.0,
+      "verification_results": [
+        {
+          "description": "验证响应中的 status 字段为 'error'",
+          "passed": true,
+          "details": "实际状态: error"
+        },
+        {
+          "description": "验证响应的错误信息中包含 'Unsupported method' 或类似错误码",
+          "passed": false,
+          "details": "错误信息: No workers available, 错误码: "
+        }
+      ],
+      "error_message": null
+    }
+  ]
+}

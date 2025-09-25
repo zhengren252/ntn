@@ -1,0 +1,423 @@
+services:
+  # 共享服务
+  redis:
+    image: redis:7-alpine
+    container_name: ntn-redis
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-ntn_redis_2024}
+    # 取消宿主机端口映射，避免与本地/其他Redis冲突
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" PING | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组01: API统一管理工厂
+  api_forge:
+    build:
+      context: ./01APIForge
+      dockerfile: Dockerfile
+    container_name: ntn-api-forge
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - ZMQ_PUBLISHER_PORT=5555
+      - ZMQ_SUBSCRIBER_PORT=5556
+      - ZMQ_CONNECT_ADDRESS=tcp://ntn-data-spider
+
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./01APIForge/data:/app/data
+      - ./01APIForge/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组02: 信息源爬虫
+  data_spider:
+    build:
+      context: ./02DataSpider
+      dockerfile: Dockerfile
+      target: production
+    container_name: ntn-data-spider
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - NTN_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - ZMQ_PUBLISHER_PORT=5556
+      - ZMQ_SUBSCRIBER_PORT=5555
+      - ZMQ_PUBLISHER_HOST=0.0.0.0
+      - ZMQ_SUBSCRIBER_HOST=ntn-api-forge
+      - TELEGRAM_ENABLED=false
+    ports:
+      - "5000:5000"
+      - "5557:5555"
+      - "5558:5556"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./02DataSpider/data:/app/data
+      - ./02DataSpider/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:5000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # 模组03: 扫描器
+  scan_pulse:
+    build:
+      context: ./03ScanPulse
+      dockerfile: Dockerfile
+      target: runtime
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    container_name: ntn-scan-pulse
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8001:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./03ScanPulse/data:/app/data
+      - ./03ScanPulse/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组11: ASTS Console（智能化指挥中心）
+  asts_console:
+    build:
+      context: ./11ASTS Console
+      dockerfile: Dockerfile
+    container_name: ntn-asts-console
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    depends_on:
+      api_forge:
+        condition: service_healthy
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "rid=$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $rid\" -H \"Accept: application/json\" --max-time 10 http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 模组04: 优化核心引擎
+  opticore:
+    build:
+      context: ./04OptiCore
+      dockerfile: Dockerfile
+    container_name: ntn-opticore
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8002:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./04OptiCore/data:/app/data
+      - ./04OptiCore/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组05-07: 交易防护系统
+  tradeguard:
+    build:
+      context: ./05-07TradeGuard
+      dockerfile: Dockerfile
+    container_name: ntn-tradeguard
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8003:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./05-07TradeGuard/data:/app/data
+      - ./05-07TradeGuard/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "rid=$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 模组08: 神经网络中枢
+  neurohub:
+    build:
+      context: ./08NeuroHub
+      dockerfile: Dockerfile
+    container_name: ntn-neurohub
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8004:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./08NeuroHub/data:/app/data
+      - ./08NeuroHub/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "rid=$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 模组09: 多市场监控系统
+  mms:
+    build:
+      context: ./09MMS
+      dockerfile: Dockerfile
+    container_name: ntn-mms
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8005:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./09MMS/data:/app/data
+      - ./09MMS/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组10: 审查防护系统
+  reviewguard:
+    build:
+      context: ./10ReviewGuard
+      dockerfile: Dockerfile
+    container_name: ntn-reviewguard
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8006:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./10ReviewGuard/data:/app/data
+      - ./10ReviewGuard/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "rid=$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 模组12: 交易算法核心服务
+  tacore_service:
+    build:
+      context: ./12TACoreService
+      dockerfile: Dockerfile
+    container_name: ntn-tacore-service
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8007:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./12TACoreService/data:/app/data
+      - ./12TACoreService/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组13: AI策略助手
+  ai_strategy_assistant:
+    build:
+      context: ./13AIStrategyAssistant
+      dockerfile: Dockerfile
+    container_name: ntn-ai-strategy-assistant
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+    ports:
+      - "8008:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      tacore_service:
+        condition: service_healthy
+    volumes:
+      - ./13AIStrategyAssistant/data:/app/data
+      - ./13AIStrategyAssistant/logs:/app/logs
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 模组14: 可观测性中心
+  observability_center:
+    build:
+      context: "./14ObservabilityCenter"
+    
+      dockerfile: Dockerfile
+    container_name: ntn-observability-center
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+    ports:
+      - "5010:3000" # API
+      - "3005:3000" # Dashboard
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ntn_network
+    healthcheck:
+      test: ["CMD-SHELL", "python /app/health_check.py http://localhost:3000/health 10 3 1.0 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # 监控：Prometheus (暂时注释，缺少 test_framework 配置文件)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: ntn-prometheus
+  #   restart: unless-stopped
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #     - "--storage.tsdb.retention.time=7d"
+  #     - "--storage.tsdb.retention.size=10GB"
+  #     - "--storage.tsdb.wal-compression"
+  #   volumes:
+  #     - ./test_framework/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - ntn_network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
+
+  # 监控：Grafana (暂时注释，缺少 test_framework 配置文件)
+  # grafana:
+  #   image: grafana/grafana:10.4.3
+  #   container_name: ntn-grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+  #   volumes:
+  #     - ./test_framework/monitoring/grafana/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+  #   ports:
+  #     - "3006:3000"
+  #   depends_on:
+  #     prometheus:
+  #       condition: service_started
+  #   networks:
+  #     - ntn_network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+
+networks:
+  ntn_network:
+    driver: bridge
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local

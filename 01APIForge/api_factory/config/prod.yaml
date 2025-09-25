@@ -1,0 +1,11 @@
+# 标准配置文件 V1.1
+binance:
+  api_key: ${BINANCE_API_KEY}
+  api_secret: ${BINANCE_API_SECRET}
+
+okx:
+  api_key: ${OKX_API_KEY}
+  api_secret: ${OKX_API_SECRET}
+
+deepseek_llm:
+  api_key: ${DEEPSEEK_API_KEY}

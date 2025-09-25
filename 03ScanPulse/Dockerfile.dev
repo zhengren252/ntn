@@ -1,0 +1,51 @@
+# 扫描器模组开发环境 Docker 配置
+# 支持调试、热重载和开发工具
+
+FROM python:3.11-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV SCANNER_ENV=development
+ENV DEBUG=true
+
+# 安装系统依赖和开发工具
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libzmq3-dev \
+    pkg-config \
+    git \
+    curl \
+    vim \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制依赖文件
+COPY requirements.txt requirements-dev.txt ./
+
+# 安装Python依赖和开发工具
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements-dev.txt && \
+    pip cache purge
+
+# 创建日志目录
+RUN mkdir -p /app/logs
+
+# 创建开发用户（保持root权限便于开发）
+RUN groupadd -r scanner && useradd -r -g scanner -s /bin/bash scanner
+
+# 设置权限
+RUN chown -R scanner:scanner /app
+
+# 切换到开发用户
+USER scanner
+
+# 暴露端口
+EXPOSE 5555 5556 5557 5558 8000 8888
+
+# 默认启动命令（可被docker-compose覆盖）
+CMD ["python", "-m", "scanner.main"]

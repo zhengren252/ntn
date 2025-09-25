@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="TACoreService Acceptance Tests" tests="3" failures="3" errors="0" time="1.0550973415374756" timestamp="2025-08-08T16:13:21.662983">
+  <testsuite name="监控管理API测试 (HTTP)" tests="3" failures="3" errors="0" time="0.04740166664123535" package="tacoreservice.acceptance.API-HTTP-MONITORING">
+    <testcase name="GET /status - 服务状态接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-01" time="0.04012703895568848">
+      <failure

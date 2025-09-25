@@ -1,0 +1,49 @@
+============================================================
+集成测试报告 - 验收测试计划第三阶段
+============================================================
+测试时间: 2025-08-08 17:34:07
+总测试数: 3
+通过数量: 0
+失败数量: 3
+成功率: 0.0%
+
+详细结果:
+
+❌ INT-REDIS-01: FAILED
+   Redis状态读取测试失败: Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]
+
+❌ INT-SQLITE-01: FAILED
+   SQLite记忆网络查询测试失败: Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]
+
+❌ INT-ZMQ-01: FAILED
+   ZMQ警报接收与指令发布测试失败: 未收到预期的EMERGENCY_SHUTDOWN指令，收到的指令: []
+
+============================================================
+
+详细测试数据:
+[
+  {
+    "test_name": "INT-REDIS-01",
+    "status": "FAILED",
+    "message": "Redis状态读取测试失败: Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]",
+    "details": {
+      "error": "Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]"
+    }
+  },
+  {
+    "test_name": "INT-SQLITE-01",
+    "status": "FAILED",
+    "message": "SQLite记忆网络查询测试失败: Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]",
+    "details": {
+      "error": "Cannot connect to host localhost:8000 ssl:default [远程计算机拒绝网络连接。]"
+    }
+  },
+  {
+    "test_name": "INT-ZMQ-01",
+    "status": "FAILED",
+    "message": "ZMQ警报接收与指令发布测试失败: 未收到预期的EMERGENCY_SHUTDOWN指令，收到的指令: []",
+    "details": {
+      "error": "未收到预期的EMERGENCY_SHUTDOWN指令，收到的指令: []"
+    }
+  }
+]

@@ -1,0 +1,111 @@
+# 信息源爬虫模组 - 默认 Docker Compose 配置
+# 默认使用开发环境配置，支持通过环境变量切换
+
+version: '3.8'
+
+services:
+  # Redis 缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: ntn-redis-${APP_ENV:-dev}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - ntn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 信息源爬虫主服务
+  dataspider-02:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: ntn-dataspider-02-${APP_ENV:-dev}
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DATABASE_URL=sqlite:///data/${APP_ENV:-dev}.db
+      - REDIS_URL=redis://redis:6379/${REDIS_DB:-0}
+      - ZMQ_PUBLISHER_PORT=5555
+      - ZMQ_SUBSCRIBER_PORT=5556
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - PYTHONPATH=/app
+    env_file:
+      - .env.${APP_ENV:-dev}
+    ports:
+      - "${API_PORT:-5000}:5000"  # Flask API
+      - "${ZMQ_PUB_PORT:-5555}:5555"  # ZeroMQ Publisher
+      - "${ZMQ_SUB_PORT:-5556}:5556"  # ZeroMQ Subscriber
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+      # 开发环境挂载源码
+      - ./app:/app/app${DEV_MOUNT_SUFFIX:-}
+      - ./config:/app/config${DEV_MOUNT_SUFFIX:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ntn-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: ntn-frontend-${APP_ENV:-dev}
+    environment:
+      - NODE_ENV=${APP_ENV:-development}
+      - REACT_APP_API_URL=http://localhost:${API_PORT:-5000}
+      - REACT_APP_WS_URL=ws://localhost:${ZMQ_SUB_PORT:-5556}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      # 开发环境挂载源码
+      - ./frontend/src:/app/src${DEV_MOUNT_SUFFIX:-}
+      - ./frontend/public:/app/public${DEV_MOUNT_SUFFIX:-}
+    depends_on:
+      - dataspider-02
+    networks:
+      - ntn-network
+    restart: unless-stopped
+    profiles:
+      - frontend
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  ntn-network:
+    driver: bridge
+    name: ntn-${APP_ENV:-dev}-network
+
+# 环境变量说明:
+# APP_ENV: 环境名称 (development/staging/production)
+# BUILD_TARGET: Docker构建目标 (development/staging/production)
+# REDIS_PORT: Redis端口
+# REDIS_DB: Redis数据库编号
+# API_PORT: API服务端口
+# ZMQ_PUB_PORT: ZeroMQ发布端口
+# ZMQ_SUB_PORT: ZeroMQ订阅端口
+# FRONTEND_PORT: 前端服务端口
+# LOG_LEVEL: 日志级别
+# DEV_MOUNT_SUFFIX: 开发环境挂载后缀 (:ro 只读)

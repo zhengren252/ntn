@@ -1,0 +1,272 @@
+# Prometheus 告警规则配置
+# 用于信息源爬虫模组的监控告警
+
+groups:
+  # 系统级告警
+  - name: system_alerts
+    rules:
+      # CPU使用率过高
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "高CPU使用率告警"
+          description: "实例 {{ $labels.instance }} CPU使用率超过80%，当前值: {{ $value }}%"
+
+      # 内存使用率过高
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "高内存使用率告警"
+          description: "实例 {{ $labels.instance }} 内存使用率超过85%，当前值: {{ $value }}%"
+
+      # 磁盘空间不足
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 10m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘空间不足告警"
+          description: "实例 {{ $labels.instance }} 磁盘使用率超过90%，当前值: {{ $value }}%"
+
+  # 应用服务告警
+  - name: application_alerts
+    rules:
+      # 服务不可用
+      - alert: ServiceDown
+        expr: up{job="info-crawler"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: info-crawler
+        annotations:
+          summary: "信息源爬虫服务不可用"
+          description: "信息源爬虫服务 {{ $labels.instance }} 已停止响应超过1分钟"
+
+      # API响应时间过长
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job="info-crawler"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: info-crawler
+        annotations:
+          summary: "API响应时间过长"
+          description: "API 95%分位响应时间超过2秒，当前值: {{ $value }}秒"
+
+      # API错误率过高
+      - alert: HighAPIErrorRate
+        expr: rate(flask_http_request_exceptions_total{job="info-crawler"}[5m]) / rate(flask_http_request_total{job="info-crawler"}[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: info-crawler
+        annotations:
+          summary: "API错误率过高"
+          description: "API错误率超过5%，当前值: {{ $value }}%"
+
+  # Redis告警
+  - name: redis_alerts
+    rules:
+      # Redis服务不可用
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis服务不可用"
+          description: "Redis实例 {{ $labels.instance }} 不可用"
+
+      # Redis内存使用率过高
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis实例 {{ $labels.instance }} 内存使用率超过90%，当前值: {{ $value }}%"
+
+      # Redis连接数过多
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis连接数过多"
+          description: "Redis实例 {{ $labels.instance }} 连接数超过100，当前值: {{ $value }}"
+
+  # 爬虫任务告警
+  - name: crawler_alerts
+    rules:
+      # 爬虫任务失败率过高
+      - alert: HighCrawlerFailureRate
+        expr: rate(crawler_tasks_failed_total[5m]) / rate(crawler_tasks_total[5m]) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: crawler
+        annotations:
+          summary: "爬虫任务失败率过高"
+          description: "爬虫任务失败率超过10%，当前值: {{ $value }}%"
+
+      # 爬虫队列积压
+      - alert: CrawlerQueueBacklog
+        expr: crawler_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: crawler
+        annotations:
+          summary: "爬虫队列积压"
+          description: "爬虫队列积压任务超过1000个，当前值: {{ $value }}"
+
+      # 爬虫长时间无数据
+      - alert: CrawlerNoData
+        expr: increase(crawler_data_collected_total[1h]) == 0
+        for: 1h
+        labels:
+          severity: warning
+          service: crawler
+        annotations:
+          summary: "爬虫长时间无数据收集"
+          description: "爬虫在过去1小时内未收集到任何数据"
+
+  # ZeroMQ告警
+  - name: zmq_alerts
+    rules:
+      # ZeroMQ消息发送失败
+      - alert: ZMQMessageSendFailure
+        expr: rate(zmq_messages_send_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: zmq
+        annotations:
+          summary: "ZeroMQ消息发送失败"
+          description: "ZeroMQ消息发送失败，失败率: {{ $value }}/秒"
+
+      # ZeroMQ队列积压
+      - alert: ZMQQueueBacklog
+        expr: zmq_queue_size > 500
+        for: 5m
+        labels:
+          severity: warning
+          service: zmq
+        annotations:
+          summary: "ZeroMQ队列积压"
+          description: "ZeroMQ队列积压消息超过500个，当前值: {{ $value }}"
+
+  # Telegram告警
+  - name: telegram_alerts
+    rules:
+      # Telegram连接断开
+      - alert: TelegramDisconnected
+        expr: telegram_connection_status == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: telegram
+        annotations:
+          summary: "Telegram连接断开"
+          description: "Telegram客户端连接断开超过5分钟"
+
+      # Telegram消息处理延迟
+      - alert: TelegramMessageDelay
+        expr: telegram_message_processing_delay_seconds > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: telegram
+        annotations:
+          summary: "Telegram消息处理延迟"
+          description: "Telegram消息处理延迟超过60秒，当前值: {{ $value }}秒"
+
+  # 数据质量告警
+  - name: data_quality_alerts
+    rules:
+      # 数据验证失败率过高
+      - alert: HighDataValidationFailureRate
+        expr: rate(data_validation_failed_total[5m]) / rate(data_validation_total[5m]) * 100 > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: data-quality
+        annotations:
+          summary: "数据验证失败率过高"
+          description: "数据验证失败率超过20%，当前值: {{ $value }}%"
+
+      # 重复数据率过高
+      - alert: HighDuplicateDataRate
+        expr: rate(data_duplicates_total[5m]) / rate(data_processed_total[5m]) * 100 > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: data-quality
+        annotations:
+          summary: "重复数据率过高"
+          description: "重复数据率超过30%，当前值: {{ $value }}%"
+
+  # 网络告警
+  - name: network_alerts
+    rules:
+      # 网络延迟过高
+      - alert: HighNetworkLatency
+        expr: probe_duration_seconds{job="blackbox"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: network
+        annotations:
+          summary: "网络延迟过高"
+          description: "目标 {{ $labels.instance }} 网络延迟超过5秒，当前值: {{ $value }}秒"
+
+      # SSL证书即将过期
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "SSL证书即将过期"
+          description: "目标 {{ $labels.instance }} 的SSL证书将在7天内过期"
+
+  # 容器告警
+  - name: container_alerts
+    rules:
+      # 容器重启频繁
+      - alert: ContainerRestartingFrequently
+        expr: rate(container_last_seen{name=~"info-crawler.*"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "容器频繁重启"
+          description: "容器 {{ $labels.name }} 在过去5分钟内重启了 {{ $value }} 次"
+
+      # 容器内存使用率过高
+      - alert: ContainerHighMemoryUsage
+        expr: container_memory_usage_bytes{name=~"info-crawler.*"} / container_spec_memory_limit_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "容器内存使用率过高"
+          description: "容器 {{ $labels.name }} 内存使用率超过90%，当前值: {{ $value }}%"

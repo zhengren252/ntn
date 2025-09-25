@@ -1,0 +1,177 @@
+# NeuroTrade Nexus (NTN) - 策略优化模组测试环境配置
+# Strategy Optimization Module Test Environment Configuration
+
+version: '3.8'
+
+services:
+  # 策略优化模组测试服务
+  opticore-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # 使用构建阶段，包含测试工具
+    image: ntn-opticore:test
+    container_name: ntn-opticore-test
+    environment:
+      - NTN_ENVIRONMENT=test
+      - DATABASE_PATH=:memory:  # 使用内存数据库
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - REDIS_DB=15  # 使用测试专用数据库
+      - ZMQ_SUBSCRIBER_PORT=5555
+      - ZMQ_PUBLISHER_PORT=5556
+      - LOG_LEVEL=DEBUG
+      - MAX_WORKERS=1
+      - ENABLE_CORS=true
+      - ENABLE_DOCS=true
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app  # 挂载源代码
+      - opticore_test_logs:/app/logs
+      - opticore_test_cache:/app/cache
+      - ./tests/reports:/app/tests/reports  # 测试报告输出
+    depends_on:
+      - redis-test
+    networks:
+      - ntn-test-network
+    command: >
+      pytest
+      --cov=optimizer
+      --cov-report=html:/app/tests/reports/coverage
+      --cov-report=term
+      --cov-report=xml:/app/tests/reports/coverage.xml
+      --junit-xml=/app/tests/reports/junit.xml
+      --tb=short
+      -v
+      tests/
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # 集成测试服务
+  opticore-integration-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: ntn-opticore:integration-test
+    container_name: ntn-opticore-integration-test
+    ports:
+      - "8000:8000"
+      - "5555:5555"
+      - "5556:5556"
+    environment:
+      - NTN_ENVIRONMENT=test
+      - DATABASE_PATH=/app/data/opticore_test.db
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - REDIS_DB=14
+      - ZMQ_SUBSCRIBER_PORT=5555
+      - ZMQ_PUBLISHER_PORT=5556
+      - LOG_LEVEL=INFO
+      - MAX_WORKERS=2
+      - ENABLE_CORS=true
+      - ENABLE_DOCS=true
+    volumes:
+      - opticore_test_data:/app/data
+      - opticore_test_logs:/app/logs
+      - opticore_test_cache:/app/cache
+    depends_on:
+      - redis-test
+    networks:
+      - ntn-test-network
+    profiles:
+      - integration  # 仅在集成测试时启用
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # Redis测试服务
+  redis-test:
+    image: redis:7-alpine
+    container_name: ntn-redis-test
+    ports:
+      - "6380:6379"  # 使用不同端口避免冲突
+    command: >
+      redis-server
+      --appendonly no
+      --save ""
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --databases 16
+    volumes:
+      - redis_test_data:/data
+    networks:
+      - ntn-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # 测试数据库（PostgreSQL）
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: ntn-postgres-test
+    ports:
+      - "5433:5432"  # 使用不同端口
+    environment:
+      - POSTGRES_DB=ntn_opticore_test
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./tests/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - ntn-test-network
+    profiles:
+      - integration  # 仅在集成测试时启用
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d ntn_opticore_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+
+# 网络配置
+networks:
+  ntn-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# 数据卷配置
+volumes:
+  opticore_test_data:
+    driver: local
+  opticore_test_logs:
+    driver: local
+  opticore_test_cache:
+    driver: local
+  redis_test_data:
+    driver: local
+  postgres_test_data:
+    driver: local

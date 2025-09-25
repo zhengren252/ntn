@@ -1,0 +1,80 @@
+# 信息源爬虫模组基础配置
+# 严格遵循全局规范：数据隔离与环境管理规范 (V1.0)
+
+# 模组基本信息
+module:
+  id: "info-crawler-module"
+  version: "1.1"
+  name: "信息源爬虫模组"
+  description: "系统情报搜集员 - 抓取无API信息源并结构化分发"
+
+# ZeroMQ通信配置
+zmq:
+  # 发布端口 - 用于广播抓取到的信息
+  publisher_port: 5555
+  # 请求端口 - 用于接收控制命令
+  request_port: 5556
+  # 主题配置
+  topics:
+    news: "crawler.news"
+    status: "crawler.status"
+    error: "crawler.error"
+
+# Redis配置
+redis:
+  host: "localhost"
+  port: 6379
+  # 不同环境使用不同数据库
+  db:
+    development: 0
+    staging: 1
+    production: 2
+  password: "${REDIS_PASSWORD:}"  # 通过环境变量注入，默认为空
+
+# SQLite配置
+sqlite:
+  # 不同环境使用独立数据库文件
+  database_files:
+    development: "data/dev.db"
+    staging: "data/staging.db"
+    production: "data/prod.db"
+
+# 爬虫配置
+scraper:
+  # 反爬策略
+  user_agents_rotation: true
+  proxy_rotation: true
+  request_delay:
+    min: 1
+    max: 3
+  retry_times: 3
+  timeout: 30
+
+# Telegram配置
+telegram:
+  # API配置通过环境变量注入
+  api_id: "${TELEGRAM_API_ID:}"  # 从环境变量获取，默认为空
+  api_hash: "${TELEGRAM_API_HASH:}"  # 从环境变量获取，默认为空
+  phone_number: "${TELEGRAM_PHONE:}"  # 从环境变量获取，默认为空
+  session_name: "crawler_session"
+  
+# 日志配置
+logging:
+  level:
+    development: "DEBUG"
+    staging: "INFO"
+    production: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+  rotation: "1 day"
+  retention: "30 days"
+
+# 数据清洗配置
+data_processing:
+  # 数据验证规则
+  validation:
+    max_content_length: 10000
+    required_fields: ["source", "content", "timestamp"]
+  # 过滤规则
+  filters:
+    spam_keywords: ["广告", "推广", "spam"]
+    min_content_length: 10

@@ -1,0 +1,228 @@
+# ===================================================================
+# TACoreService 最终技术规格与实施指南 (V1.0 优化整合版)
+# ===================================================================
+
+document_info:
+  id: "SPEC-M12-TACORESVC-V1.0"
+  title: "TACoreService 最终技术规格与实施指南"
+  version: "1.0"
+  status: "优化与整合版 (Optimized & Consolidated)"
+  colloquial_explanation: "这是为12号模组（TACoreService）制定的唯一、最终的“施工图”。它融合了三份原始文档（PRD、TAD、集成指南）的所有优点，解决了它们之间的所有矛盾，并补充了缺失环节。请严格按照这份文件进行开发。"
+
+product_requirements:
+  colloquial_explanation: "明确我们要打造一个什么样的产品。简单来说，它是一个高性能、可扩展、带监控仪表盘的AI核心能力后台服务。"
+  objective: "作为TradingAgents-CN功能的统一服务化封装，为整个分布式交易系统提供高性能、可扩展的AI交易能力。"
+  target_users: "系统内所有需要AI交易能力的业务模组（扫描器、交易员、风控等）。"
+  core_value: "通过服务化架构极大提升系统稳定性、可维护性和扩展性。"
+  functional_modules:
+    - name: "负载均衡代理 (Load Balancing Proxy)"
+      description: "采用ZeroMQ ROUTER/DEALER模式，作为请求的统一入口和分发中心。"
+    - name: "工作进程集群 (Worker Cluster)"
+      description: "多个可水平扩展的并行工作进程，负责执行具体的AI分析和交易任务。"
+    - name: "服务接口层 (Service Interfaces)"
+      description: "提供标准化的ZeroMQ和HTTP API接口。"
+    - name: "监控管理仪表盘 (Monitoring Dashboard)"
+      description: "提供一个Web界面，用于实时监控服务健康度、性能指标和查看日志。"
+
+technical_architecture:
+  colloquial_explanation: "定义我们用什么技术、以什么结构来构建这个服务。"
+  architectural_paradigm: "基于ZeroMQ的ROUTER/DEALER模式（Lazy Pirate Pattern）构建的、高可用的、可水平扩展的请求-响应式微服务。"
+  technology_stack:
+    - component: "语言/框架"
+      tech: "Python 3.11+"
+    - component: "核心通信"
+      tech: "ZeroMQ (pyzmq)"
+    - component: "监控API服务"
+      tech: "FastAPI (用于提供HTTP接口)"
+    - component: "消息序列化"
+      tech: "JSON"
+    - component: "缓存层"
+      tech: "Redis"
+    - component: "持久化层"
+      tech: "SQLite"
+    - component: "容器化"
+      tech: "Docker & Docker Compose"
+  
+  architecture_diagram:
+    mermaid_code: |
+      graph TD
+          A[业务模组客户端] --> B[负载均衡代理 (ROUTER)]
+          B --> C[工作进程1 (DEALER)]
+          B --> D[工作进程2 (DEALER)]
+          B --> E[工作进程N (DEALER)]
+          C --> F[TradingAgents-CN库]
+          D --> F
+          E --> F
+          G[Redis缓存] --> C & D & E
+          H[SQLite数据库] --> C & D & E
+          I[HTTP监控API] -- attached to --> B
+          UI[监控仪表盘] -- HTTP Request --> I
+          subgraph TACoreService
+              B
+              C
+              D
+              E
+              I
+          end
+
+api_specification:
+  colloquial_explanation: "定义服务之间交流的“语言”和“语法”。这是解决原方案矛盾的核心，我们正式统一所有接口规范。"
+  
+  # --- 优化点 1：统一并采纳TAD中的核心业务API ---
+  zeromq_services:
+    connection_port: 5555
+    description: "供内部业务模组（如扫描器、交易员）调用的核心服务接口。"
+    methods:
+      - method_name: "scan.market"
+        description: "执行市场扫描任务，发现交易机会。"
+        request_schema:
+          method: "scan.market"
+          request_id: "string"
+          market_type: "string"
+          symbols: "array (optional)"
+        response_schema:
+          status: "success | error"
+          request_id: "string"
+          opportunities: "array"
+      - method_name: "execute.order"
+        description: "执行交易订单。"
+        request_schema:
+          method: "execute.order"
+          request_id: "string"
+          symbol: "string"
+          action: "buy | sell"
+          quantity: "number"
+        response_schema:
+          status: "success | error"
+          order_id: "string"
+          execution_price: "number"
+      - method_name: "evaluate.risk"
+        description: "对拟执行的交易进行风险评估。"
+        request_schema:
+          method: "evaluate.risk"
+          request_id: "string"
+          portfolio: "object"
+          proposed_trade: "object"
+        response_schema:
+          risk_score: "number"
+          risk_level: "low | medium | high"
+          recommendations: "array"
+
+  # --- 优化点 2：为PRD中的监控需求补充HTTP API定义 ---
+  http_monitoring_api:
+    connection_port: 8080
+    description: "为前端监控仪表盘提供数据的RESTful API。"
+    endpoints:
+      - endpoint: "GET /status"
+        description: "获取服务的整体健康状态和关键性能指标（QPS, 延迟, 错误率）。"
+        response_body:
+          service_status: "healthy | unhealthy | degraded"
+          active_workers: "integer"
+          total_requests_processed: "integer"
+          avg_latency_ms: "float"
+      - endpoint: "GET /workers"
+        description: "获取所有工作进程的详细列表及其状态。"
+        response_body:
+          - worker_id: "string"
+            status: "idle | busy | unhealthy"
+            cpu_usage: "float"
+            memory_usage: "float"
+            processed_requests: "integer"
+      - endpoint: "GET /logs"
+        description: "获取最新的服务日志（支持分页和级别过滤）。"
+        query_params: "limit=100&level=INFO"
+
+high_availability_and_resilience:
+  colloquial_explanation: "我们如何确保服务足够“皮实耐用”，不怕网络波动和个别进程崩溃。"
+  client_resilience_pattern:
+    name: "Lazy Pirate Pattern (客户端可靠性模式)"
+    description: "客户端在请求超时后，应能自动重新连接并进行有限次数的重试，而不是直接失败。这极大地增强了通信的健壮性。"
+    implementation: "所有调用本服务的客户端，都应实现或使用一个包含超时、重试和重连逻辑的可靠客户端（Reliable REQ Client）。"
+  health_checks:
+    description: "负载均衡器或一个独立的监控进程应定期对工作进程进行健康检查（如心跳检测），并能自动剔除无响应的进程。"
+
+data_model:
+  colloquial_explanation: "服务需要记录的关键数据，以及这些数据在数据库中的“户口本”（表结构）。"
+  er_diagram_mermaid: |
+    erDiagram
+        SERVICE_STATUS ||--o{ WORKER_PROCESS : monitors
+        WORKER_PROCESS ||--o{ REQUEST_LOG : processes
+        REQUEST_LOG {
+            string request_id PK
+            string method
+            string worker_id FK
+            json request_data
+            json response_data
+            int processing_time_ms
+            datetime created_at
+        }
+  ddl_sqlite:
+    - table: "request_logs"
+      sql: |
+        CREATE TABLE request_logs (
+            request_id VARCHAR(100) PRIMARY KEY,
+            method VARCHAR(50) NOT NULL,
+            worker_id VARCHAR(50),
+            request_data TEXT,
+            response_data TEXT,
+            processing_time_ms INTEGER,
+            status VARCHAR(20) DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+deployment_specification:
+  colloquial_explanation: "最终的部署方案，我们采用业界标准的Docker容器化技术。"
+  dockerfile: |
+    # 采用一个简洁且官方的Python镜像
+    FROM python:3.11-slim
+    WORKDIR /app
+    # 安装系统依赖，仅在需要时开启
+    # RUN apt-get update && apt-get install -y gcc g++
+    COPY requirements.txt .
+    RUN pip install --no-cache-dir -r requirements.txt
+    COPY . .
+    # 设置环境变量，确保能找到TradingAgents-CN库
+    ENV PYTHONPATH=/app/TradingAgents-CN:$PYTHONPATH
+    # 暴露核心服务端口和监控API端口
+    EXPOSE 5555 8080
+    # 默认启动命令，可以通过docker-compose覆盖
+    CMD ["python", "-m", "tacoreservice.main"]
+
+  # --- 优化点 3：统一并简化Docker Compose部署策略 ---
+  docker_compose_config:
+    colloquial_explanation: "我们采用'deploy.replicas'这种更现代、更简洁的方式来启动和扩展任意数量的工作进程。"
+    yaml: |
+      version: '3.8'
+      services:
+        tacore_service:
+          build: .
+          container_name: tacore_service
+          command: python -m tacoreservice.load_balancer # 启动负载均衡代理
+          ports:
+            - "5555:5555" # 对外暴露给其他模组的ZMQ端口
+            - "8080:8080" # 对外暴露给监控前端的HTTP端口
+          networks:
+            - asts_net
+          depends_on:
+            - redis
+      
+        tacore_worker:
+          build: .
+          command: python -m tacoreservice.worker # 启动工作进程
+          depends_on:
+            - tacore_service # 依赖代理先启动
+          deploy:
+            replicas: 4 # 在此轻松扩展工作进程数量
+          networks:
+            - asts_net
+
+        redis:
+          image: redis:7-alpine
+          ports:
+            - "6379:6379"
+          networks:
+            - asts_net
+
+      networks:
+        asts_net:
+          driver: bridge

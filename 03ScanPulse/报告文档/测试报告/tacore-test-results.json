@@ -1,0 +1,66 @@
+{
+  "success": true,
+  "total_tests": 4,
+  "passed_tests": 4,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "test_results": [
+    {
+      "test_name": "health_check",
+      "success": true,
+      "duration": 0.067,
+      "response": {
+        "status": "success",
+        "result": {
+          "status": "healthy",
+          "uptime_seconds": 10242.060649,
+          "worker_count": 4,
+          "stats": {
+            "requests_total": 44,
+            "requests_success": 27,
+            "requests_failed": 16,
+            "start_time": "2025-08-06T12:36:04.555184"
+          }
+        },
+        "request_id": null,
+        "timestamp": "2025-08-06T15:26:46.615833"
+      },
+      "timestamp": "2025-08-06T15:26:46.615833"
+    },
+    {
+      "test_name": "scan_market",
+      "success": true,
+      "duration": 0.008,
+      "response_size": 158,
+      "symbols_count": 0,
+      "timestamp": "2025-08-06T15:26:47.124762"
+    },
+    {
+      "test_name": "analyze_symbol",
+      "success": true,
+      "duration": 0.009,
+      "symbol": "BTCUSDT",
+      "analysis_data": {},
+      "timestamp": "2025-08-06T15:26:47.634368"
+    },
+    {
+      "test_name": "get_market_data",
+      "success": true,
+      "duration": 0.009,
+      "symbol": "ETHUSDT",
+      "data_points": 0,
+      "timestamp": "2025-08-06T15:26:48.143720"
+    },
+    {
+      "test_name": "performance_test",
+      "total_requests": 10,
+      "successful_requests": 10,
+      "success_rate": 100.0,
+      "average_response_time": 0.01,
+      "total_time": 0.103,
+      "timestamp": "2025-08-06T15:26:48.747483"
+    }
+  ],
+  "timestamp": "2025-08-06T15:26:48.747483",
+  "service_url": "tcp://localhost:5555"
+}

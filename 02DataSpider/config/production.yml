@@ -1,0 +1,265 @@
+# NeuroTrade Nexus - 信息源爬虫模组
+# 生产环境配置 (Production Environment)
+
+# 环境标识
+environment: production
+debug: false
+
+# ZeroMQ配置
+zmq:
+  publisher:
+    host: "${ZMQ_HOST:localhost}"
+    port: 5555
+    topic: "crawler.news"
+  subscriber:
+    host: "${ZMQ_HOST:localhost}"
+    port: 5556
+  timeout: 15000
+  high_water_mark: 10000
+
+# Redis配置
+redis:
+  host: "${REDIS_HOST:redis-prod}"
+  port: 6379
+  db: 0
+  password: "${REDIS_PASSWORD:}"
+  max_connections: 50
+  socket_timeout: 15
+  ssl: ${REDIS_SSL:false}
+  ssl_cert_reqs: "required"
+
+# SQLite配置
+sqlite:
+  database_path: "data/crawler_production.db"
+  timeout: 120
+  check_same_thread: false
+
+# Scrapy爬虫配置
+scrapy:
+  concurrent_requests: 64
+  download_delay: 0.25
+  randomize_download_delay: 0.2
+  user_agent: "NTN-Crawler/1.0 (+https://neurotrade.nexus)"
+  robotstxt_obey: true
+  cookies_enabled: true
+  retry_times: 8
+  retry_http_codes: [500, 502, 503, 504, 408, 429, 403, 404]
+  
+  # 反爬虫策略
+  anti_spider:
+    rotate_user_agent: true
+    use_proxy: true
+    proxy_list:
+      - "https://proxy1.prod.ntn.com:8080"
+      - "https://proxy2.prod.ntn.com:8080"
+      - "https://proxy3.prod.ntn.com:8080"
+      - "https://proxy4.prod.ntn.com:8080"
+    request_fingerprinting: true
+    
+  # 中间件配置
+  middlewares:
+    - "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware"
+    - "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    - "scrapy.downloadermiddlewares.redirect.RedirectMiddleware"
+    - "scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware"
+    - "scrapy.downloadermiddlewares.stats.DownloaderStats"
+
+# Telegram配置
+telegram:
+  enabled: ${TELEGRAM_ENABLED:false}
+  api_id: "${TELEGRAM_API_ID:}"
+  api_hash: "${TELEGRAM_API_HASH:}"
+  phone_number: "${TELEGRAM_PHONE:}"
+  session_name: "ntn_crawler_production"
+  
+  # 监听配置
+  channels:
+    - "@bloomberg_crypto"
+    - "@coindesk_news"
+    - "@cointelegraph"
+    - "@binance_announcements"
+    - "@ethereum_foundation"
+    - "@bitcoin_magazine"
+  
+  # 关键词过滤
+  keywords:
+    - "bitcoin"
+    - "ethereum"
+    - "trading"
+    - "market"
+    - "price"
+    - "analysis"
+    - "forecast"
+    - "signal"
+    - "breakout"
+    - "support"
+    - "resistance"
+    - "volume"
+  
+  # 消息处理
+  message_limit: 1000
+  fetch_interval: 5
+  duplicate_check: true
+
+# API服务配置
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  threaded: true
+  
+  # CORS配置
+  cors:
+    origins: 
+      - "https://app.ntn.com"
+      - "https://admin.ntn.com"
+      - "https://dashboard.ntn.com"
+    methods: ["GET", "POST", "PUT", "DELETE"]
+    headers: ["Content-Type", "Authorization"]
+  
+  # 认证配置
+  auth:
+    enabled: true
+    secret_key: "${API_SECRET_KEY:dev-placeholder}"
+    token_expiry: 3600
+
+# 日志配置
+logging:
+  level: "WARNING"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 文件日志
+  file:
+    enabled: true
+    path: "logs/crawler_production.log"
+    max_size: "100MB"
+    backup_count: 30
+    rotation: "daily"
+  
+  # 控制台日志
+  console:
+    enabled: false
+    level: "ERROR"
+  
+  # 结构化日志
+  structured:
+    enabled: true
+    format: "json"
+  
+  # 远程日志
+  remote:
+    enabled: ${LOG_AGGREGATION_ENABLED:false}
+    endpoint: "${LOG_AGGREGATION_ENDPOINT:}"
+    api_key: "${LOG_API_KEY:}"
+
+# 数据处理配置
+data_processing:
+  # 数据清洗
+  cleaning:
+    remove_html: true
+    normalize_whitespace: true
+    remove_duplicates: true
+    min_content_length: 50
+    max_content_length: 100000
+  
+  # 数据验证
+  validation:
+    required_fields: ["title", "content", "source", "timestamp", "category", "sentiment"]
+    content_encoding: "utf-8"
+    timestamp_format: "ISO8601"
+  
+  # 数据格式化
+  formatting:
+    output_format: "json"
+    include_metadata: true
+    compress_output: true
+
+# 监控配置
+monitoring:
+  # 健康检查
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    interval: 15
+  
+  # 性能指标
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    prometheus_format: true
+  
+  # 告警配置
+  alerts:
+    enabled: ${ALERTS_ENABLED:false}
+    webhook_url: "${ALERT_WEBHOOK_URL:}"
+    slack_webhook: "${SLACK_WEBHOOK_URL:}"
+    email_smtp: "${SMTP_SERVER:}"
+    error_threshold: 50
+    response_time_threshold: 2000
+
+# 存储配置
+storage:
+  # 本地存储
+  local:
+    data_dir: "data/"
+    backup_dir: "data/backup/"
+    temp_dir: "data/temp/"
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl: 900
+    max_size: 20000
+  
+  # 备份配置
+  backup:
+    enabled: true
+    interval: "daily"
+    retention_days: 30
+    remote_backup: true
+    s3_bucket: "${S3_BACKUP_BUCKET:}"
+
+# 安全配置
+security:
+  # 请求限制
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 300
+  
+  # IP白名单
+  ip_whitelist:
+    enabled: true
+    allowed_ips: 
+      - "${ALLOWED_IP_RANGE_1:}"
+      - "${ALLOWED_IP_RANGE_2:}"
+  
+  # 数据加密
+  encryption:
+    enabled: true
+    algorithm: "AES-256"
+    key_rotation: true
+    rotation_interval: "monthly"
+  
+  # SSL/TLS配置
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    cert_file: "${SSL_CERT_PATH:}"
+    key_file: "${SSL_KEY_PATH:}"
+    ca_file: "${SSL_CA_PATH:}"
+
+# 性能优化
+performance:
+  # 连接池
+  connection_pool:
+    max_connections: 100
+    pool_timeout: 30
+  
+  # 内存管理
+  memory:
+    max_memory_usage: "2GB"
+    gc_threshold: 0.8
+  
+  # 并发控制
+  concurrency:
+    max_workers: 16
+    queue_size: 1000

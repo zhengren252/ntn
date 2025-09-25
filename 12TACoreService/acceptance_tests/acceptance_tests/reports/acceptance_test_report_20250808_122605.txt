@@ -1,0 +1,127 @@
+================================================================================
+TACoreService 验收测试报告
+================================================================================
+生成时间: 2025-08-08 12:26:05
+
+测试摘要:
+----------------------------------------
+总测试数: 16
+通过测试: 0
+失败测试: 16
+成功率: 0.0%
+总耗时: 154.94s
+
+详细测试结果:
+----------------------------------------
+
+[API-ZMQ-BUSINESS] 核心业务API测试 (ZeroMQ)
+------------------------------------------------------------
+✗ ZMQ-API-01: scan.market - 成功路径
+   执行时间: 17.068s
+   错误: 请求超时或连接失败
+
+✗ ZMQ-API-02: execute.order - 成功路径
+   执行时间: 17.083s
+   错误: 请求超时或连接失败
+
+✗ ZMQ-API-03: evaluate.risk - 成功路径
+   执行时间: 17.047s
+   错误: 请求超时或连接失败
+
+✗ ZMQ-API-04: 无效方法测试
+   执行时间: 17.035s
+   错误: 请求超时或连接失败
+
+
+[API-HTTP-MONITORING] 监控管理API测试 (HTTP)
+------------------------------------------------------------
+✗ HTTP-API-01: GET /status - 服务状态接口
+   执行时间: 4.064s
+   错误: HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /status (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7B33D0>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+✗ HTTP-API-02: GET /workers - 工作进程列表接口
+   执行时间: 4.067s
+   错误: HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /workers (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7BCA10>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+✗ HTTP-API-03: GET /logs - 日志获取接口
+   执行时间: 4.065s
+   错误: HTTP请求异常: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /logs?limit=50&level=INFO (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024C5F7BE210>: Failed to establish a new connection: [WinError 10061] 由于目标计算机积极拒绝，无法连接。'))
+
+
+[PERF-LOAD-BALANCING] 负载均衡与可扩展性测试
+------------------------------------------------------------
+✗ LB-01: 请求分发验证
+   执行时间: 10.150s
+   验证点:
+     ✗ 验证大部分请求成功 (成功率 >= 80%)
+       成功率: 0.0% (0/20)
+     ✗ 验证响应时间分布合理 (表明负载均衡有效)
+       没有成功的请求，无法分析响应时间
+     ✓ 验证请求ID唯一性 (无重复处理)
+       唯一ID数: 0, 总响应数: 0
+
+✗ SCALE-01: 水平扩展能力验证
+   执行时间: 15.437s
+   验证点:
+     ✗ 验证系统能够处理持续负载
+       成功处理 0/15 个请求
+     ✗ 验证吞吐量合理 (>= 1.0 req/s)
+       实际吞吐量: 0.00 req/s
+     ✗ 验证成功率合理 (>= 70%)
+       成功率: 0.0%
+
+✗ PERF-01: 负载下的性能表现
+   执行时间: 10.153s
+   验证点:
+     ✗ 验证所有测试场景的成功率 (>= 70%)
+       轻量级请求 (scan.market): 0.0%; 中等复杂度请求 (evaluate.risk): 0.0%
+     ✓ 验证平均响应时间合理 (< 10s)
+       轻量级请求 (scan.market): 0.000s; 中等复杂度请求 (evaluate.risk): 0.000s
+
+
+[SYS-HIGH-AVAILABILITY] 高可用与弹性测试
+------------------------------------------------------------
+✗ HA-01: 工作进程故障转移
+   执行时间: 0.176s
+   错误: 未找到工作进程容器
+
+✗ HA-02: 客户端自动重试 (Lazy Pirate)
+   执行时间: 4.079s
+   错误: 服务初始状态不健康，无法进行重试测试
+   验证点:
+     ✗ 验证服务初始状态健康
+       HTTP: False, ZMQ: False
+
+✗ HA-03: 服务恢复能力测试
+   执行时间: 10.100s
+   验证点:
+     ✗ 验证HTTP监控API恢复正常
+       HTTP API状态: False
+     ✗ 验证ZMQ业务API恢复正常
+       ZMQ API状态: False
+     ✗ 验证服务整体恢复健康
+       整体健康状态: False
+
+
+[DATA-PERSISTENCE] 数据层集成测试
+------------------------------------------------------------
+✗ DATA-03: 数据库连接性验证
+   执行时间: 4.100s
+   验证点:
+     ✗ 验证SQLite数据库连接和表结构
+       连接: True, request_logs表存在: False
+     ✗ 验证Redis缓存连接和基本操作
+       连接: False, 基本操作: False
+
+✗ DATA-01: SQLite 请求日志持久化
+   执行时间: 11.035s
+   错误: execute.order请求失败，无法验证日志持久化
+   验证点:
+     ✗ 验证execute.order请求成功
+       响应状态: None
+
+✗ DATA-02: Redis 缓存机制验证
+   执行时间: 4.067s
+   错误: 无法连接Redis缓存
+
+================================================================================

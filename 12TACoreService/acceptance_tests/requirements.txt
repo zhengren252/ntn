@@ -1,0 +1,50 @@
+# TACoreService 验收测试依赖
+# Acceptance Test Dependencies
+
+# ZeroMQ 客户端
+pyzmq>=25.1.0
+
+# HTTP 客户端
+requests>=2.31.0
+
+# 数据库客户端
+redis>=4.6.0
+
+# 测试工具
+pytest>=7.4.0
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+
+# 并发测试
+# concurrent-futures 为标准库自带 (Python 3.8+)，不需额外安装
+# threading-utils 未被使用，移除以避免安装失败
+
+# Docker 客户端
+docker>=6.1.0
+
+# 数据处理
+pandas>=2.0.0
+numpy>=1.24.0
+
+# 报告生成
+jinja2>=3.1.0
+markdown>=3.4.0
+
+# 日志和监控
+psutil>=5.9.0
+
+# 时间处理
+python-dateutil>=2.8.0
+
+# JSON 处理
+orjson>=3.9.0
+
+# 配置管理
+python-dotenv>=1.0.0
+
+# 类型检查
+typing-extensions>=4.7.0
+
+# API服务器
+flask>=2.3.0
+flask-cors>=4.0.0

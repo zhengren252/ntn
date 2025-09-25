@@ -1,0 +1,320 @@
+{
+  "description": "交易执行铁三角项目查询优化配置",
+  "version": "1.0.0",
+  "lastUpdated": "2024-12-25",
+  
+  "optimizedQueries": {
+    "trader": {
+      "getActiveStrategies": {
+        "description": "获取活跃策略包",
+        "original": "SELECT * FROM strategy_packages WHERE status = 'active'",
+        "optimized": "SELECT id, name, symbol, strategy_type, risk_level, expected_return, max_drawdown, status, created_at FROM strategy_packages WHERE status = 'active' ORDER BY created_at DESC",
+        "indexes": ["idx_strategy_packages_status", "idx_strategy_packages_created_at"],
+        "estimatedRows": 100,
+        "maxExecutionTime": 50
+      },
+      
+      "getOrdersByTrader": {
+        "description": "根据交易员ID获取订单",
+        "original": "SELECT * FROM orders WHERE trader_id = ?",
+        "optimized": "SELECT id, strategy_package_id, symbol, order_type, quantity, price, status, created_at FROM orders WHERE trader_id = ? ORDER BY created_at DESC LIMIT 100",
+        "indexes": ["idx_orders_trader_id", "idx_orders_created_at"],
+        "estimatedRows": 50,
+        "maxExecutionTime": 30
+      },
+      
+      "getOrdersByStatus": {
+        "description": "根据状态获取订单",
+        "original": "SELECT * FROM orders WHERE status = ?",
+        "optimized": "SELECT id, trader_id, strategy_package_id, symbol, order_type, quantity, price, status, created_at FROM orders WHERE status = ? ORDER BY created_at DESC",
+        "indexes": ["idx_orders_status", "idx_orders_created_at"],
+        "estimatedRows": 200,
+        "maxExecutionTime": 100
+      },
+      
+      "getStrategyPerformance": {
+        "description": "获取策略包性能统计",
+        "original": "SELECT sp.*, COUNT(o.id) as order_count FROM strategy_packages sp LEFT JOIN orders o ON sp.id = o.strategy_package_id GROUP BY sp.id",
+        "optimized": "SELECT sp.id, sp.name, sp.symbol, sp.expected_return, sp.max_drawdown, COUNT(o.id) as order_count, SUM(CASE WHEN o.status = 'filled' THEN o.quantity * o.price ELSE 0 END) as total_value FROM strategy_packages sp LEFT JOIN orders o ON sp.id = o.strategy_package_id WHERE sp.status = 'active' GROUP BY sp.id, sp.name, sp.symbol, sp.expected_return, sp.max_drawdown ORDER BY total_value DESC",
+        "indexes": ["idx_strategy_packages_status", "idx_orders_strategy_id", "idx_orders_status"],
+        "estimatedRows": 50,
+        "maxExecutionTime": 200
+      }
+    },
+    
+    "risk": {
+      "getHighRiskAssessments": {
+        "description": "获取高风险评估",
+        "original": "SELECT * FROM risk_assessments WHERE risk_level = 'high'",
+        "optimized": "SELECT id, strategy_package_id, risk_level, risk_score, var_1d, var_5d, max_drawdown, correlation_risk, liquidity_risk, created_at FROM risk_assessments WHERE risk_level = 'high' ORDER BY risk_score DESC, created_at DESC",
+        "indexes": ["idx_risk_assessments_risk_level", "idx_risk_assessments_risk_score", "idx_risk_assessments_created_at"],
+        "estimatedRows": 20,
+        "maxExecutionTime": 50
+      },
+      
+      "getRiskAlertsByType": {
+        "description": "根据类型获取风险告警",
+        "original": "SELECT * FROM risk_alerts WHERE alert_type = ?",
+        "optimized": "SELECT id, alert_type, severity, title, message, strategy_package_id, threshold_value, current_value, status, created_at FROM risk_alerts WHERE alert_type = ? AND status = 'active' ORDER BY severity DESC, created_at DESC",
+        "indexes": ["idx_risk_alerts_alert_type", "idx_risk_alerts_severity", "idx_risk_alerts_status"],
+        "estimatedRows": 30,
+        "maxExecutionTime": 40
+      },
+      
+      "getRiskTrend": {
+        "description": "获取风险趋势分析",
+        "original": "SELECT DATE(created_at) as date, AVG(risk_score) as avg_risk FROM risk_assessments GROUP BY DATE(created_at)",
+        "optimized": "SELECT DATE(created_at) as date, risk_level, COUNT(*) as count, AVG(risk_score) as avg_risk, MIN(risk_score) as min_risk, MAX(risk_score) as max_risk FROM risk_assessments WHERE created_at >= datetime('now', '-30 days') GROUP BY DATE(created_at), risk_level ORDER BY date DESC, risk_level",
+        "indexes": ["idx_risk_assessments_created_at", "idx_risk_assessments_level_score"],
+        "estimatedRows": 90,
+        "maxExecutionTime": 150
+      },
+      
+      "getPortfolioRisk": {
+        "description": "获取投资组合风险",
+        "original": "SELECT sp.symbol, ra.risk_score FROM strategy_packages sp JOIN risk_assessments ra ON sp.id = ra.strategy_package_id",
+        "optimized": "SELECT sp.symbol, sp.name, ra.risk_level, ra.risk_score, ra.var_1d, ra.correlation_risk, ra.created_at FROM strategy_packages sp INNER JOIN risk_assessments ra ON sp.id = ra.strategy_package_id WHERE sp.status = 'active' AND ra.created_at = (SELECT MAX(created_at) FROM risk_assessments ra2 WHERE ra2.strategy_package_id = sp.id) ORDER BY ra.risk_score DESC",
+        "indexes": ["idx_strategy_packages_status", "idx_risk_assessments_strategy_id", "idx_risk_assessments_created_at"],
+        "estimatedRows": 50,
+        "maxExecutionTime": 100
+      }
+    },
+    
+    "finance": {
+      "getPendingBudgetRequests": {
+        "description": "获取待审批预算申请",
+        "original": "SELECT * FROM budget_requests WHERE status = 'pending'",
+        "optimized": "SELECT id, trader_id, amount, purpose, justification, risk_assessment, expected_return, status, created_at FROM budget_requests WHERE status = 'pending' ORDER BY amount DESC, created_at ASC",
+        "indexes": ["idx_budget_requests_status", "idx_budget_requests_amount", "idx_budget_requests_created_at"],
+        "estimatedRows": 15,
+        "maxExecutionTime": 30
+      },
+      
+      "getAccountBalances": {
+        "description": "获取账户余额",
+        "original": "SELECT * FROM accounts",
+        "optimized": "SELECT id, account_name, account_type, balance, currency, status, last_updated FROM accounts WHERE status = 'active' ORDER BY balance DESC",
+        "indexes": ["idx_accounts_status", "idx_accounts_balance"],
+        "estimatedRows": 20,
+        "maxExecutionTime": 20
+      },
+      
+      "getFundAllocationsByBudget": {
+        "description": "根据预算获取资金分配",
+        "original": "SELECT * FROM fund_allocations WHERE budget_request_id = ?",
+        "optimized": "SELECT id, budget_request_id, account_id, allocated_amount, allocation_percentage, allocation_date, status FROM fund_allocations WHERE budget_request_id = ? ORDER BY allocated_amount DESC",
+        "indexes": ["idx_fund_allocations_budget_id", "idx_fund_allocations_amount"],
+        "estimatedRows": 5,
+        "maxExecutionTime": 20
+      },
+      
+      "getTradeRecordsByAccount": {
+        "description": "根据账户获取交易记录",
+        "original": "SELECT * FROM trade_records WHERE account_id = ?",
+        "optimized": "SELECT id, account_id, order_id, symbol, trade_type, quantity, price, amount, commission, created_at FROM trade_records WHERE account_id = ? ORDER BY created_at DESC LIMIT 100",
+        "indexes": ["idx_trade_records_account_id", "idx_trade_records_created_at"],
+        "estimatedRows": 100,
+        "maxExecutionTime": 80
+      },
+      
+      "getFinancialSummary": {
+        "description": "获取财务汇总",
+        "original": "SELECT SUM(balance) as total_balance FROM accounts",
+        "optimized": "SELECT account_type, COUNT(*) as account_count, SUM(balance) as total_balance, AVG(balance) as avg_balance FROM accounts WHERE status = 'active' GROUP BY account_type ORDER BY total_balance DESC",
+        "indexes": ["idx_accounts_status", "idx_accounts_account_type", "idx_accounts_balance"],
+        "estimatedRows": 5,
+        "maxExecutionTime": 30
+      }
+    },
+    
+    "common": {
+      "getAuditLogsByUser": {
+        "description": "根据用户获取审计日志",
+        "original": "SELECT * FROM audit_logs WHERE user_id = ?",
+        "optimized": "SELECT id, user_id, action, table_name, record_id, old_values, new_values, created_at FROM audit_logs WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
+        "indexes": ["idx_audit_logs_user_id", "idx_audit_logs_created_at"],
+        "estimatedRows": 50,
+        "maxExecutionTime": 60
+      },
+      
+      "getSystemConfig": {
+        "description": "获取系统配置",
+        "original": "SELECT * FROM system_config",
+        "optimized": "SELECT config_key, config_value, description, is_active FROM system_config WHERE is_active = 1 ORDER BY config_key",
+        "indexes": ["idx_system_config_active"],
+        "estimatedRows": 20,
+        "maxExecutionTime": 10
+      },
+      
+      "getRecentActivity": {
+        "description": "获取最近活动",
+        "original": "SELECT 'order' as type, id, created_at FROM orders UNION SELECT 'risk' as type, id, created_at FROM risk_assessments ORDER BY created_at DESC",
+        "optimized": "SELECT 'order' as type, id, trader_id as user_id, symbol, status, created_at FROM orders WHERE created_at >= datetime('now', '-1 day') UNION ALL SELECT 'risk' as type, id, NULL as user_id, NULL as symbol, risk_level as status, created_at FROM risk_assessments WHERE created_at >= datetime('now', '-1 day') ORDER BY created_at DESC LIMIT 20",
+        "indexes": ["idx_orders_created_at", "idx_risk_assessments_created_at"],
+        "estimatedRows": 20,
+        "maxExecutionTime": 100
+      }
+    }
+  },
+  
+  "queryPatterns": {
+    "pagination": {
+      "description": "分页查询模式",
+      "template": "SELECT {fields} FROM {table} WHERE {conditions} ORDER BY {orderBy} LIMIT {limit} OFFSET {offset}",
+      "bestPractices": [
+        "总是使用LIMIT限制返回行数",
+        "使用ORDER BY确保结果一致性",
+        "避免使用OFFSET进行深度分页",
+        "考虑使用游标分页替代OFFSET"
+      ]
+    },
+    
+    "aggregation": {
+      "description": "聚合查询模式",
+      "template": "SELECT {groupFields}, {aggregateFunctions} FROM {table} WHERE {conditions} GROUP BY {groupFields} HAVING {havingConditions} ORDER BY {orderBy}",
+      "bestPractices": [
+        "在WHERE子句中过滤数据，而不是HAVING",
+        "确保GROUP BY字段有适当的索引",
+        "避免在聚合函数中使用复杂表达式",
+        "考虑使用物化视图缓存复杂聚合"
+      ]
+    },
+    
+    "join": {
+      "description": "关联查询模式",
+      "template": "SELECT {fields} FROM {mainTable} {joinType} JOIN {joinTable} ON {joinCondition} WHERE {conditions}",
+      "bestPractices": [
+        "确保关联字段有索引",
+        "使用INNER JOIN而不是WHERE关联",
+        "避免关联过多表（建议不超过5个）",
+        "考虑使用子查询替代复杂关联"
+      ]
+    },
+    
+    "subquery": {
+      "description": "子查询模式",
+      "template": "SELECT {fields} FROM {table} WHERE {field} IN (SELECT {subField} FROM {subTable} WHERE {subConditions})",
+      "bestPractices": [
+        "使用EXISTS替代IN子查询",
+        "避免相关子查询",
+        "考虑使用JOIN替代子查询",
+        "确保子查询返回的数据量较小"
+      ]
+    }
+  },
+  
+  "indexStrategies": {
+    "singleColumn": {
+      "description": "单列索引策略",
+      "usage": "用于单个字段的等值查询和排序",
+      "examples": [
+        "WHERE status = 'active'",
+        "ORDER BY created_at DESC"
+      ]
+    },
+    
+    "composite": {
+      "description": "复合索引策略",
+      "usage": "用于多个字段的组合查询",
+      "examples": [
+        "WHERE trader_id = ? AND status = 'pending'",
+        "WHERE created_at >= ? AND risk_level = 'high'"
+      ],
+      "bestPractices": [
+        "将选择性高的字段放在前面",
+        "考虑查询的WHERE、ORDER BY和GROUP BY子句",
+        "避免创建过多的复合索引"
+      ]
+    },
+    
+    "covering": {
+      "description": "覆盖索引策略",
+      "usage": "索引包含查询所需的所有字段",
+      "benefits": [
+        "避免回表查询",
+        "提高查询性能",
+        "减少I/O操作"
+      ]
+    }
+  },
+  
+  "performanceGuidelines": {
+    "queryDesign": [
+      "只选择需要的字段，避免SELECT *",
+      "使用适当的WHERE条件过滤数据",
+      "避免在WHERE子句中使用函数",
+      "使用LIMIT限制返回行数",
+      "避免使用LIKE '%pattern%'模式"
+    ],
+    
+    "indexUsage": [
+      "确保WHERE、ORDER BY、GROUP BY字段有索引",
+      "避免在索引字段上使用函数",
+      "注意索引的选择性",
+      "定期分析和优化索引"
+    ],
+    
+    "dataTypes": [
+      "使用适当的数据类型",
+      "避免过大的VARCHAR字段",
+      "使用数值类型而不是字符串进行计算",
+      "考虑使用ENUM类型替代字符串"
+    ],
+    
+    "transactions": [
+      "保持事务简短",
+      "避免长时间持有锁",
+      "使用适当的隔离级别",
+      "考虑使用批量操作"
+    ]
+  },
+  
+  "monitoringQueries": {
+    "slowQueries": {
+      "description": "监控慢查询",
+      "threshold": 1000,
+      "unit": "milliseconds",
+      "action": "记录并分析执行计划"
+    },
+    
+    "frequentQueries": {
+      "description": "监控频繁查询",
+      "threshold": 100,
+      "unit": "requests per minute",
+      "action": "考虑缓存或优化"
+    },
+    
+    "resourceUsage": {
+      "description": "监控资源使用",
+      "metrics": [
+        "CPU使用率",
+        "内存使用率",
+        "磁盘I/O",
+        "连接数"
+      ]
+    }
+  },
+  
+  "cacheStrategies": {
+    "queryCache": {
+      "description": "查询结果缓存",
+      "ttl": 300,
+      "unit": "seconds",
+      "suitable": [
+        "配置数据查询",
+        "统计数据查询",
+        "不频繁变化的数据"
+      ]
+    },
+    
+    "applicationCache": {
+      "description": "应用层缓存",
+      "implementation": "Redis",
+      "patterns": [
+        "Cache-Aside",
+        "Write-Through",
+        "Write-Behind"
+      ]
+    }
+  }
+}

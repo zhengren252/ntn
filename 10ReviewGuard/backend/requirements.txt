@@ -1,0 +1,67 @@
+# ReviewGuard人工审核模组 - Python依赖
+
+# Web框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 数据库
+# sqlite3  # Python内置模块，无需安装
+aiosqlite==0.19.0  # 异步SQLite支持
+
+# 消息队列
+pyzmq==25.1.1
+
+# 缓存
+redis==5.0.1
+
+# 认证和安全
+PyJWT==2.8.0
+bcrypt==4.1.2
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# 数据验证
+pydantic==2.5.0
+
+# HTTP客户端
+httpx==0.25.2
+requests==2.31.0
+
+# 日期时间处理
+python-dateutil==2.8.2
+
+# 环境变量
+python-dotenv==1.0.0
+
+# 日志
+loguru==0.7.2
+
+# 数据处理
+numpy==1.24.4
+pandas==2.0.3
+
+# JSON处理
+orjson==3.9.10
+
+# 异步支持
+aiofiles==23.2.1
+aioredis==1.3.1
+
+# 开发工具
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+
+# 类型注解
+typing-extensions==4.8.0
+
+# CORS支持
+# fastapi-cors==0.0.6  # 不存在的包，CORS由FastAPI内置中间件提供
+
+# 监控和健康检查
+psutil==5.9.6
+
+# 配置管理
+pydantic-settings==2.1.0

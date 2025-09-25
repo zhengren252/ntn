@@ -1,0 +1,238 @@
+# AI智能体驱动交易系统 V3.5 - 完整系统编排
+version: '3.8'
+
+services:
+  # 核心服务 - TACoreService (新增)
+  tacore_service:
+    build:
+      context: ./12TACoreService
+      dockerfile: Dockerfile
+    container_name: tacore_service
+    # 已移除宿主端口映射，避免与根编排的 5555 冲突
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import zmq; ctx=zmq.Context(); sock=ctx.socket(zmq.REQ); sock.connect('tcp://localhost:5555'); sock.send_json({'method':'system.health','id':1}); resp=sock.recv_json(); sock.close(); ctx.term(); exit(0 if resp.get('result',{}).get('status')=='healthy' else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 01 主控制台
+  master_control:
+    build:
+      context: ./01MasterControl
+      dockerfile: Dockerfile
+    container_name: master_control
+    # 已移除宿主端口映射 8001:8000，避免端口冲突
+    depends_on:
+      - tacore_service
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 02 数据中心
+  data_center:
+    build:
+      context: ./02DataCenter
+      dockerfile: Dockerfile
+    container_name: data_center
+    # 已移除宿主端口映射 8002:8000，避免与根栈端口冲突
+    depends_on:
+      - tacore_service
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+    volumes:
+      - ./data:/app/data
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 03 扫描脉冲
+  scan_pulse:
+    build:
+      context: ./03ScanPulse
+      dockerfile: Dockerfile
+    container_name: scan_pulse
+    depends_on:
+      - tacore_service
+      - data_center
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - DATA_CENTER_URL=http://data_center:8000
+    networks:
+      - trading_network
+    restart: unless-stopped
+    profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import zmq,sys;ctx=zmq.Context();s=ctx.socket(zmq.REQ);s.connect('tcp://tacore_service:5555');s.send_json({'method':'system.health','id':1});p=zmq.Poller();p.register(s, zmq.POLLIN);ev=dict(p.poll(3000));ok=1 if (s in ev and (lambda r: isinstance(r,dict) and isinstance(r.get('result',{}), dict) and str(r['result'].get('status')).lower() in ('healthy','ok','ready','true'))(s.recv_json())) else 0; s.close(); ctx.term(); sys.exit(0 if ok else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 04 策略工厂
+  strategy_factory:
+    build:
+      context: ./04StrategyFactory
+      dockerfile: Dockerfile
+    container_name: strategy_factory
+    ports:
+      - "8004:8000"
+    depends_on:
+      - tacore_service
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - SCAN_PULSE_URL=http://host.docker.internal:8083
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 05-07 TradeGuard - 交易执行铁三角统一服务
+  tradeguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: tradeguard
+    ports:
+      - "3000:3000"  # 主服务端口
+      - "5556:5556"  # ZMQ Trader端口
+      - "5557:5557"  # ZMQ Risk端口
+      - "5558:5558"  # ZMQ Finance端口
+    depends_on:
+      - tacore_service
+      - strategy_factory
+      - redis
+    environment:
+      - NODE_ENV=production
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - STRATEGY_FACTORY_URL=http://strategy_factory:8000
+      - REDIS_URL=redis://redis:6379
+      - ZMQ_TRADER_PORT=5556
+      - ZMQ_RISK_PORT=5557
+      - ZMQ_FINANCE_PORT=5558
+      - LOG_LEVEL=info
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: tradeguard_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - trading_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 08 性能监控
+  performance_monitor:
+    build:
+      context: ./08PerformanceMonitor
+      dockerfile: Dockerfile
+    container_name: performance_monitor
+    ports:
+      - "8008:8000"
+    depends_on:
+      - tacore_service
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 09 告警系统
+  alert_system:
+    build:
+      context: ./09AlertSystem
+      dockerfile: Dockerfile
+    container_name: alert_system
+    ports:
+      - "8009:8000"
+    depends_on:
+      - tacore_service
+      - performance_monitor
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - PERFORMANCE_MONITOR_URL=http://performance_monitor:8000
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 10 数据分析
+  data_analyzer:
+    build:
+      context: ./10DataAnalyzer
+      dockerfile: Dockerfile
+    container_name: data_analyzer
+    ports:
+      - "8010:8000"
+    depends_on:
+      - tacore_service
+      - data_center
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - DATA_CENTER_URL=http://data_center:8000
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+  # 11 报告生成
+  report_generator:
+    build:
+      context: ./11ReportGenerator
+      dockerfile: Dockerfile
+    container_name: report_generator
+    ports:
+      - "8011:8000"
+    depends_on:
+      - tacore_service
+      - data_analyzer
+    environment:
+      - TACORE_SERVICE_URL=tcp://tacore_service:5555
+      - DATA_ANALYZER_URL=http://data_analyzer:8000
+    networks:
+      - trading_network
+    restart: unless-stopped
+
+networks:
+  trading_network:
+    driver: bridge
+
+volumes:
+  trading_data:
+    driver: local
+  trading_logs:
+    driver: local
+  redis_data:
+    driver: local

@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="TACoreService Acceptance Tests" tests="16" failures="12" errors="0" time="36.07783007621765" timestamp="2025-08-08T19:57:02.888964">
+  <testsuite name="核心业务API测试 (ZeroMQ)" tests="4" failures="4" errors="0" time="12.134187936782837" package="tacoreservice.acceptance.API-ZMQ-BUSINESS">
+    <testcase name="scan.market - 成功路径" classname="tacoreservice.acceptance.API-ZMQ-BUSINESS.ZMQ-API-01" time="12.09621286392212">
+      <failure

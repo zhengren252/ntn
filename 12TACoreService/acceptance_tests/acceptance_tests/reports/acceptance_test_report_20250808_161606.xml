@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="TACoreService Acceptance Tests" tests="3" failures="1" errors="0" time="1.186828374862671" timestamp="2025-08-08T16:16:06.902724">
+  <testsuite name="监控管理API测试 (HTTP)" tests="3" failures="1" errors="0" time="0.18151473999023438" package="tacoreservice.acceptance.API-HTTP-MONITORING">
+    <testcase name="GET /status - 服务状态接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-01" time="0.025402069091796875">
+      <system-out>[PASS] 验证HTTP状态码为 200 OK
+  Details: 实际状态码: 200
+[PASS] 验证响应JSON体中包含关键字段
+  Details: 所有必需字段都存在
+[PASS] 验证字段类型和值的合理性
+  Details: service_name: TACoreService (字符串); status: running (字符串); uptime: 402.5990025997162 (有效)</system-out>
+    </testcase>
+    <testcase name="GET /workers - 工作进程列表接口" classname="tacoreservice.acceptance.API-HTTP-MONITORING.HTTP-API-02" time="0.07648682594299316">
+      <failure

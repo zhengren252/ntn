@@ -1,0 +1,318 @@
+# 预发布环境配置
+app:
+  name: "NeuroTrade Nexus - Staging"
+  version: "1.0.0"
+  environment: "staging"
+  port: 4000
+  host: "0.0.0.0"
+  debug: false
+  logLevel: "info"
+
+# 数据库配置
+database:
+  path: "./data/staging.db"
+  options:
+    verbose: false
+    readonly: false
+    fileMustExist: false
+  backup:
+    enabled: true
+    interval: 3600000  # 1小时
+    path: "./backups/staging"
+    retention: 7       # 保留7天
+
+# Redis缓存配置
+redis:
+  host: "redis-staging.internal"
+  port: 6379
+  password: "${REDIS_STAGING_PASSWORD}"
+  db: 1
+  keyPrefix: "ntn:staging:"
+  ttl:
+    default: 1800      # 30分钟
+    session: 21600     # 6小时
+    realtime: 30       # 30秒
+    cache: 900         # 15分钟
+  connectionPool:
+    min: 3
+    max: 20
+
+# ZeroMQ消息总线配置
+zeromq:
+  publisher:
+    port: 5557
+    bind: "tcp://*:5557"
+  subscriber:
+    endpoints:
+      - "tcp://localhost:5557"
+  request:
+    port: 5558
+    bind: "tcp://*:5558"
+    timeout: 4000
+  reply:
+    endpoints:
+      - "tcp://localhost:5558"
+    timeout: 4000
+  heartbeat:
+    interval: 20000    # 20秒
+    timeout: 60000     # 60秒
+
+# 安全配置
+security:
+  jwt:
+    secret: "${JWT_STAGING_SECRET}"
+    expiresIn: "12h"
+    issuer: "ntn-staging"
+  bcrypt:
+    saltRounds: 11
+  cors:
+    origin: 
+      - "https://staging.neurotrade.com"
+      - "https://staging-admin.neurotrade.com"
+    credentials: true
+  rateLimit:
+    windowMs: 900000   # 15分钟
+    max: 200           # 每个IP最多200次请求
+
+# 交易配置
+trading:
+  maxPositionSize: 5000000    # 最大持仓金额 500万
+  maxOrderSize: 500000       # 最大单笔订单金额 50万
+  defaultStopLoss: 0.04      # 默认止损比例 4%
+  defaultTakeProfit: 0.08    # 默认止盈比例 8%
+  maxDailyLoss: 0.015        # 最大日损失比例 1.5%
+  maxDrawdown: 0.08          # 最大回撤比例 8%
+  riskFreeRate: 0.02         # 无风险利率 2%
+  circuitBreaker:
+    enabled: true
+    lossThreshold: 0.03      # 熔断损失阈值 3%
+    cooldownPeriod: 1800000  # 冷却期 30分钟
+
+# 风控配置
+risk:
+  var:
+    confidenceLevel: 0.97      # VaR置信水平 97%
+    timeHorizon: 1             # 时间跨度(天)
+    historicalDays: 378        # 历史数据天数 1.5年
+  limits:
+    maxPositionConcentration: 0.18  # 最大持仓集中度 18%
+    maxSectorExposure: 0.28         # 最大行业敞口 28%
+    maxLeverage: 2.5                # 最大杠杆倍数
+  alerts:
+    enabled: true
+    thresholds:
+      low: 0.65
+      medium: 0.78
+      high: 0.88
+      critical: 0.95
+    escalation:
+      enabled: true
+      levels:
+        - "staging-alerts@neurotrade.com"
+        - "dev-team@neurotrade.com"
+
+# 财务配置
+finance:
+  baseCurrency: "USD"
+  initialCapital: 10000000    # 初始资金 1000万
+  minCashReserve: 0.08        # 最小现金储备比例 8%
+  maxAllocationPerStrategy: 0.22  # 单策略最大资金分配比例 22%
+  budgetApproval:
+    autoApproveLimit: 25000   # 自动审批限额
+    requiresApproval: 75000   # 需要审批的金额
+  commission:
+    rate: 0.0008              # 佣金费率 0.08%
+    minimum: 2.0              # 最小佣金
+
+# 监控配置
+monitoring:
+  metrics:
+    enabled: true
+    interval: 2000            # 2秒
+    retention: 604800         # 7天
+    aggregation:
+      enabled: true
+      intervals: [60, 300, 1800]  # 1分钟、5分钟、30分钟
+  alerts:
+    email:
+      enabled: true
+      smtp:
+        host: "${SMTP_HOST}"
+        port: 587
+        secure: true
+        auth:
+          user: "${SMTP_USER}"
+          pass: "${SMTP_PASS}"
+    webhook:
+      enabled: true
+      url: "${STAGING_WEBHOOK_URL}"
+      retries: 2
+    slack:
+      enabled: true
+      webhook: "${SLACK_WEBHOOK_URL}"
+      channel: "#staging-alerts"
+  healthCheck:
+    interval: 15000           # 15秒
+    timeout: 4000             # 4秒
+    endpoints:
+      - "/health"
+      - "/health/db"
+      - "/health/redis"
+      - "/health/zmq"
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+  file:
+    enabled: true
+    path: "./logs/staging.log"
+    maxSize: "50m"
+    maxFiles: 10
+    compress: true
+  console:
+    enabled: true
+    colorize: false
+  audit:
+    enabled: true
+    path: "./logs/staging-audit.log"
+    retention: 2592000000     # 30天
+
+# API配置
+api:
+  prefix: "/api/v1"
+  timeout: 15000              # 15秒
+  maxRequestSize: "5mb"
+  documentation:
+    enabled: true             # 预发布环境开启文档用于测试
+    path: "/docs"
+  versioning:
+    enabled: true
+    header: "API-Version"
+  throttling:
+    enabled: true
+    requests: 500
+    window: 3600000           # 1小时
+
+# 外部服务配置
+externalServices:
+  marketData:
+    provider: "sandbox"        # 预发布环境使用沙盒数据
+    apiKey: "${SANDBOX_API_KEY}"
+    baseUrl: "https://sandbox-api.marketdata.com"
+    timeout: 8000
+  tradingEngine:
+    provider: "paper_trading"  # 预发布环境使用模拟交易
+    apiKey: "${PAPER_TRADING_KEY}"
+    baseUrl: "https://paper-api.broker.com"
+    timeout: 10000
+
+# 性能配置
+performance:
+  clustering:
+    enabled: false            # 预发布环境单进程
+    workers: 1
+  caching:
+    enabled: true
+    strategy: "moderate"
+  compression:
+    enabled: true
+    algorithm: "gzip"
+    level: 4
+  keepAlive:
+    enabled: true
+    timeout: 30000
+
+# 测试配置
+testing:
+  enabled: true
+  mockData:
+    enabled: true
+    refresh: true
+  loadTesting:
+    enabled: true
+    maxConcurrentUsers: 100
+    testDuration: 300000      # 5分钟
+  e2e:
+    enabled: true
+    browser: "chromium"
+    headless: true
+  integration:
+    enabled: true
+    timeout: 30000
+
+# 备份配置
+backup:
+  database:
+    enabled: true
+    schedule: "0 */12 * * *"   # 每12小时
+    retention: 14             # 保留14天
+    destination: "./backups/staging/db/"
+  logs:
+    enabled: true
+    schedule: "0 3 * * *"     # 每天凌晨3点
+    retention: 30             # 保留30天
+    destination: "./backups/staging/logs/"
+
+# 部署配置
+deployment:
+  strategy: "blue-green"
+  healthCheckPath: "/health"
+  healthCheckTimeout: 30000
+  rollback:
+    enabled: true
+    automatic: true
+    threshold: 0.95           # 错误率阈值
+  canary:
+    enabled: true
+    percentage: 10            # 金丝雀流量比例
+    duration: 600000          # 10分钟
+
+# 质量保证配置
+qa:
+  codeQuality:
+    enabled: true
+    coverage:
+      minimum: 80             # 最小代码覆盖率
+    linting:
+      enabled: true
+      strict: true
+  security:
+    scanning:
+      enabled: true
+      schedule: "0 4 * * *"   # 每天凌晨4点
+    vulnerabilities:
+      autoFix: false
+      reportOnly: true
+  performance:
+    profiling:
+      enabled: true
+      interval: 300000        # 5分钟
+    benchmarking:
+      enabled: true
+      baseline: "production"
+
+# 环境特定配置
+staging:
+  dataSeeding:
+    enabled: true
+    resetOnDeploy: true
+    scenarios:
+      - "basic_trading"
+      - "risk_scenarios"
+      - "stress_testing"
+  featureFlags:
+    enabled: true
+    provider: "launchdarkly"
+    key: "${FEATURE_FLAG_KEY}"
+  debugging:
+    enabled: true
+    remoteDebugging: true
+    port: 9229
+  simulation:
+    marketConditions:
+      - "normal"
+      - "volatile"
+      - "crash"
+      - "recovery"
+    timeAcceleration: 1       # 实时模拟

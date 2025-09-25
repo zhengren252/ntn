@@ -1,0 +1,124 @@
+# Docker Compose配置文件
+# 模组八总控模块及相关服务编排
+
+services:
+  # Redis服务 - 状态缓存和消息队列
+  redis:
+    image: redis:7-alpine
+    container_name: master-control-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - neurotrade_network
+
+  # ZeroMQ代理服务 (可选)
+  zmq_broker:
+    image: zeromq/zeromq:latest
+    container_name: master-control-zmq
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+    networks:
+      - neurotrade_network
+
+  # 总控模块主服务
+  master_control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: master-control-app
+    ports:
+      - "8000:8000"  # API服务
+      - "5557:5555"  # ZeroMQ Publisher
+      - "5558:5556"  # ZeroMQ Subscriber
+    env_file:
+      - .env.${APP_ENV:-development}
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - REDIS_HOST=redis
+      - ZMQ_BROKER_HOST=zmq_broker
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      zmq_broker:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - neurotrade_network
+
+  # Prometheus监控 (可选)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: master-control-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - neurotrade_network
+    profiles:
+      - monitoring
+
+  # Grafana仪表盘 (可选)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: master-control-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - neurotrade_network
+    profiles:
+      - monitoring
+
+# 网络配置
+networks:
+  neurotrade_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+# 数据卷配置
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

@@ -1,0 +1,201 @@
+# NeuroTrade Nexus - 信息源爬虫模组
+# 开发环境配置 (Development Environment)
+
+# 环境标识
+environment: development
+debug: true
+
+# ZeroMQ配置
+zmq:
+  publisher:
+    host: "127.0.0.1"
+    port: 5555
+    topic: "crawler.news"
+  subscriber:
+    host: "127.0.0.1"
+    port: 5556
+  timeout: 5000
+  high_water_mark: 1000
+
+# Redis配置
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  db: 0
+  password: "${REDIS_PASSWORD:}"
+  max_connections: 10
+  socket_timeout: 5
+
+# SQLite配置
+sqlite:
+  database_path: "data/crawler_dev.db"
+  timeout: 30
+  check_same_thread: false
+
+# Scrapy爬虫配置
+scrapy:
+  concurrent_requests: 16
+  download_delay: 1
+  randomize_download_delay: 0.5
+  user_agent: "NTN-Crawler/1.0 (+http://neurotrade.nexus)"
+  robotstxt_obey: false
+  cookies_enabled: true
+  retry_times: 3
+  retry_http_codes: [500, 502, 503, 504, 408, 429]
+  
+  # 反爬虫策略
+  anti_spider:
+    rotate_user_agent: true
+    use_proxy: false
+    proxy_list: []
+    request_fingerprinting: true
+    
+  # 中间件配置
+  middlewares:
+    - "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware"
+    - "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    - "scrapy.downloadermiddlewares.redirect.RedirectMiddleware"
+
+# Telegram配置
+telegram:
+  api_id: "${TELEGRAM_API_ID:}"
+  api_hash: "${TELEGRAM_API_HASH:}"
+  phone_number: "${TELEGRAM_PHONE_NUMBER:}"
+  session_name: "ntn_crawler_dev"
+  
+  # 监听配置
+  channels:
+    - "@financial_news"
+    - "@crypto_signals"
+    - "@trading_alerts"
+  
+  # 关键词过滤
+  keywords:
+    - "bitcoin"
+    - "ethereum"
+    - "trading"
+    - "market"
+    - "price"
+    - "analysis"
+  
+  # 消息处理
+  message_limit: 100
+  fetch_interval: 30
+  duplicate_check: true
+
+# API服务配置
+api:
+  host: "127.0.0.1"
+  port: 5000
+  debug: true
+  threaded: true
+  
+  # CORS配置
+  cors:
+    origins: ["*"]
+    methods: ["GET", "POST", "PUT", "DELETE"]
+    headers: ["Content-Type", "Authorization"]
+  
+  # 认证配置
+  auth:
+    enabled: false
+    secret_key: "${API_SECRET_KEY:dev-secret-key-change-in-production}"
+    token_expiry: 3600
+
+# 日志配置
+logging:
+  level: "DEBUG"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 文件日志
+  file:
+    enabled: true
+    path: "logs/crawler_dev.log"
+    max_size: "10MB"
+    backup_count: 5
+    rotation: "daily"
+  
+  # 控制台日志
+  console:
+    enabled: true
+    level: "INFO"
+  
+  # 结构化日志
+  structured:
+    enabled: true
+    format: "json"
+
+# 数据处理配置
+data_processing:
+  # 数据清洗
+  cleaning:
+    remove_html: true
+    normalize_whitespace: true
+    remove_duplicates: true
+    min_content_length: 10
+    max_content_length: 10000
+  
+  # 数据验证
+  validation:
+    required_fields: ["title", "content", "source", "timestamp"]
+    content_encoding: "utf-8"
+    timestamp_format: "ISO8601"
+  
+  # 数据格式化
+  formatting:
+    output_format: "json"
+    include_metadata: true
+    compress_output: false
+
+# 监控配置
+monitoring:
+  # 健康检查
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    interval: 30
+  
+  # 性能指标
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    prometheus_format: true
+  
+  # 告警配置
+  alerts:
+    enabled: false
+    webhook_url: null
+    error_threshold: 10
+    response_time_threshold: 5000
+
+# 存储配置
+storage:
+  # 本地存储
+  local:
+    data_dir: "data/"
+    backup_dir: "data/backup/"
+    temp_dir: "data/temp/"
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl: 3600
+    max_size: 1000
+
+# 安全配置
+security:
+  # 请求限制
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 60
+  
+  # IP白名单
+  ip_whitelist:
+    enabled: false
+    allowed_ips: ["127.0.0.1"]
+  
+  # 数据加密
+  encryption:
+    enabled: false
+    algorithm: "AES-256"
+    key_rotation: false

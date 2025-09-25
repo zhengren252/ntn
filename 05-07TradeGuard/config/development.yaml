@@ -1,0 +1,185 @@
+# 开发环境配置
+app:
+  name: "NeuroTrade Nexus - Development"
+  version: "1.0.0"
+  environment: "development"
+  port: 3000
+  host: "localhost"
+  debug: true
+  logLevel: "debug"
+
+# 数据库配置
+database:
+  path: "./data/development.db"
+  options:
+    verbose: true
+    readonly: false
+    fileMustExist: false
+  backup:
+    enabled: true
+    interval: 3600000  # 1小时
+    path: "./backups/dev"
+
+# Redis缓存配置
+redis:
+  host: "localhost"
+  port: 6379
+  password: null
+  db: 0
+  keyPrefix: "ntn:dev:"
+  ttl:
+    default: 3600      # 1小时
+    session: 86400     # 24小时
+    realtime: 60       # 1分钟
+    cache: 1800        # 30分钟
+  connectionPool:
+    min: 2
+    max: 10
+
+# ZeroMQ消息总线配置
+zeromq:
+  publisher:
+    port: 5555
+    bind: "tcp://*:5555"
+  subscriber:
+    endpoints:
+      - "tcp://localhost:5555"
+  request:
+    port: 5556
+    bind: "tcp://*:5556"
+    timeout: 5000
+  reply:
+    endpoints:
+      - "tcp://localhost:5556"
+    timeout: 5000
+  heartbeat:
+    interval: 30000    # 30秒
+    timeout: 90000     # 90秒
+
+# 安全配置
+security:
+  jwt:
+    secret: "dev-jwt-secret-key-change-in-production"
+    expiresIn: "24h"
+    issuer: "ntn-dev"
+  bcrypt:
+    saltRounds: 10
+  cors:
+    origin: 
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+    credentials: true
+  rateLimit:
+    windowMs: 900000   # 15分钟
+    max: 1000          # 每个IP最多1000次请求
+
+# 交易配置
+trading:
+  maxPositionSize: 1000000    # 最大持仓金额
+  maxOrderSize: 100000       # 最大单笔订单金额
+  defaultStopLoss: 0.05      # 默认止损比例 5%
+  defaultTakeProfit: 0.10    # 默认止盈比例 10%
+  maxDailyLoss: 0.02         # 最大日损失比例 2%
+  maxDrawdown: 0.10          # 最大回撤比例 10%
+  riskFreeRate: 0.02         # 无风险利率 2%
+
+# 风控配置
+risk:
+  var:
+    confidenceLevel: 0.95      # VaR置信水平 95%
+    timeHorizon: 1             # 时间跨度(天)
+    historicalDays: 252        # 历史数据天数
+  limits:
+    maxPositionConcentration: 0.20  # 最大持仓集中度 20%
+    maxSectorExposure: 0.30         # 最大行业敞口 30%
+    maxLeverage: 3.0                # 最大杠杆倍数
+  alerts:
+    enabled: true
+    thresholds:
+      low: 0.7
+      medium: 0.8
+      high: 0.9
+      critical: 0.95
+
+# 财务配置
+finance:
+  baseCurrency: "USD"
+  initialCapital: 1000000     # 初始资金 100万
+  minCashReserve: 0.05        # 最小现金储备比例 5%
+  maxAllocationPerStrategy: 0.25  # 单策略最大资金分配比例 25%
+  budgetApproval:
+    autoApproveLimit: 10000   # 自动审批限额
+    requiresApproval: 50000   # 需要审批的金额
+  commission:
+    rate: 0.001               # 佣金费率 0.1%
+    minimum: 1.0              # 最小佣金
+
+# 监控配置
+monitoring:
+  metrics:
+    enabled: true
+    interval: 5000            # 5秒
+    retention: 86400          # 24小时
+  alerts:
+    email:
+      enabled: false
+      smtp:
+        host: "smtp.gmail.com"
+        port: 587
+        secure: false
+    webhook:
+      enabled: true
+      url: "http://localhost:3001/webhooks/alerts"
+  healthCheck:
+    interval: 30000           # 30秒
+    timeout: 5000             # 5秒
+
+# 日志配置
+logging:
+  level: "debug"
+  format: "combined"
+  file:
+    enabled: true
+    path: "./logs/development.log"
+    maxSize: "10m"
+    maxFiles: 5
+  console:
+    enabled: true
+    colorize: true
+
+# API配置
+api:
+  prefix: "/api/v1"
+  timeout: 30000              # 30秒
+  maxRequestSize: "10mb"
+  documentation:
+    enabled: true
+    path: "/docs"
+  versioning:
+    enabled: true
+    header: "API-Version"
+
+# 外部服务配置
+externalServices:
+  marketData:
+    provider: "mock"           # 开发环境使用模拟数据
+    apiKey: "dev-api-key"
+    baseUrl: "http://localhost:3002"
+    timeout: 10000
+  tradingEngine:
+    provider: "simulation"     # 开发环境使用模拟交易
+    apiKey: "dev-trading-key"
+    baseUrl: "http://localhost:3003"
+    timeout: 15000
+
+# 开发工具配置
+development:
+  hotReload: true
+  mockData: true
+  debugMode: true
+  profiling: true
+  testData:
+    generateOnStartup: true
+    userCount: 5
+    strategyCount: 10
+    orderCount: 100

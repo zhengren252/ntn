@@ -1,0 +1,22 @@
+{
+  "name": "reviewguard",
+  "description": "ReviewGuard人工审核模组 - NeuroTrade Nexus交易系统的智能安全阀",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "check": "echo 'Frontend and backend are separated. Run check in respective directories.'",
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "backend:dev": "npm run dev --workspace=backend",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

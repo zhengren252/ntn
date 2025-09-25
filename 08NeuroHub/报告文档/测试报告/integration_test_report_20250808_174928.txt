@@ -1,0 +1,85 @@
+============================================================
+集成测试报告 - 验收测试计划第三阶段
+============================================================
+测试时间: 2025-08-08 17:49:28
+总测试数: 3
+通过数量: 3
+失败数量: 0
+成功率: 100.0%
+
+详细结果:
+
+✅ INT-REDIS-01: PASSED
+   Redis状态读取测试通过，total_positions = 15
+
+✅ INT-SQLITE-01: PASSED
+   SQLite数据库集成测试通过，数据库包含 3 个表
+
+✅ INT-ZMQ-01: PASSED
+   ZMQ警报接收与指令发布测试通过，ZMQ通信功能正常
+
+============================================================
+
+详细测试数据:
+[
+  {
+    "test_name": "INT-REDIS-01",
+    "status": "PASSED",
+    "message": "Redis状态读取测试通过，total_positions = 15",
+    "details": {
+      "redis_key": "system:status",
+      "expected_value": "15",
+      "actual_value": "15",
+      "api_response": {
+        "status": "healthy",
+        "components": {
+          "redis": "healthy",
+          "zeromq": "healthy"
+        },
+        "timestamp": "2025-08-08T17:49:14.477867"
+      }
+    }
+  },
+  {
+    "test_name": "INT-SQLITE-01",
+    "status": "PASSED",
+    "message": "SQLite数据库集成测试通过，数据库包含 3 个表",
+    "details": {
+      "table_count": 3,
+      "test_data_inserted": "integration_test_1754646554",
+      "api_response": {
+        "status": "healthy",
+        "components": {
+          "redis": "healthy",
+          "zeromq": "healthy"
+        },
+        "timestamp": "2025-08-08T17:49:16.613018"
+      }
+    }
+  },
+  {
+    "test_name": "INT-ZMQ-01",
+    "status": "PASSED",
+    "message": "ZMQ警报接收与指令发布测试通过，ZMQ通信功能正常",
+    "details": {
+      "sent_alert": {
+        "alert_type": "RISK_THRESHOLD_EXCEEDED",
+        "severity": "CRITICAL",
+        "message": "持仓风险超过阈值，建议紧急停机",
+        "timestamp": "2025-08-08T17:49:16.615026",
+        "metadata": {
+          "risk_level": 0.95,
+          "threshold": 0.8,
+          "affected_positions": [
+            "BTC-USDT",
+            "ETH-USDT"
+          ]
+        }
+      },
+      "received_commands": [
+        "ZMQ_SEND_SUCCESS"
+      ],
+      "emergency_shutdown_triggered": false
+    }
+  }
+]

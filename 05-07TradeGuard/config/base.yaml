@@ -1,0 +1,79 @@
+# 交易执行铁三角 - 基础配置
+app:
+  name: "TradeGuard"
+  version: "1.0.0"
+  description: "交易执行铁三角系统"
+
+# 服务器配置
+server:
+  port: 3000
+  host: "localhost"
+  cors:
+    enabled: true
+    origins: ["http://localhost:5173"]
+
+# 数据库配置
+database:
+  type: "sqlite"
+  filename: "tradeguard.db"
+  logging: false
+  synchronize: true
+
+# Redis配置
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null
+  keyPrefix: "tradeguard:"
+
+# ZeroMQ配置
+zeromq:
+  trader:
+    pub_port: 5555
+    rep_port: 5556
+  risk:
+    pub_port: 5557
+    rep_port: 5558
+  finance:
+    pub_port: 5559
+    rep_port: 5560
+  master_control:
+    pub_port: 5561
+    rep_port: 5562
+
+# 日志配置
+logging:
+  level: "info"
+  format: "combined"
+  file: "logs/app.log"
+
+# 安全配置
+security:
+  jwt_secret: "your-jwt-secret-here"
+  bcrypt_rounds: 10
+  session_timeout: 3600
+
+# 交易配置
+trading:
+  max_concurrent_orders: 10
+  default_timeout: 30000
+  retry_attempts: 3
+
+# 风控配置
+risk:
+  max_risk_score: 10.0
+  min_risk_score: 1.0
+  default_risk_threshold: 7.0
+  alert_thresholds:
+    low: 3.0
+    medium: 5.0
+    high: 7.0
+    critical: 9.0
+
+# 财务配置
+finance:
+  base_allocation_ratio: 0.05
+  max_allocation_ratio: 0.2
+  min_allocation_amount: 10.0
+  currency: "USDT"

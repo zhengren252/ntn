@@ -1,0 +1,303 @@
+# 生产环境配置
+app:
+  name: "NeuroTrade Nexus - Production"
+  version: "1.0.0"
+  environment: "production"
+  port: 8080
+  host: "0.0.0.0"
+  debug: false
+  logLevel: "info"
+
+# 数据库配置
+database:
+  path: "/data/production.db"
+  options:
+    verbose: false
+    readonly: false
+    fileMustExist: true
+  backup:
+    enabled: true
+    interval: 1800000  # 30分钟
+    path: "/backups/prod"
+    retention: 30      # 保留30天
+
+# Redis缓存配置
+redis:
+  host: "redis-cluster.internal"
+  port: 6379
+  password: "${REDIS_PASSWORD}"
+  db: 0
+  keyPrefix: "ntn:prod:"
+  ttl:
+    default: 1800      # 30分钟
+    session: 43200     # 12小时
+    realtime: 30       # 30秒
+    cache: 900         # 15分钟
+  connectionPool:
+    min: 5
+    max: 50
+  cluster:
+    enabled: true
+    nodes:
+      - "redis-node1.internal:6379"
+      - "redis-node2.internal:6379"
+      - "redis-node3.internal:6379"
+
+# ZeroMQ消息总线配置
+zeromq:
+  publisher:
+    port: 5555
+    bind: "tcp://*:5555"
+  subscriber:
+    endpoints:
+      - "tcp://zmq-publisher.internal:5555"
+  request:
+    port: 5556
+    bind: "tcp://*:5556"
+    timeout: 3000
+  reply:
+    endpoints:
+      - "tcp://zmq-router.internal:5556"
+    timeout: 3000
+  heartbeat:
+    interval: 15000    # 15秒
+    timeout: 45000     # 45秒
+  encryption:
+    enabled: true
+    keyFile: "/etc/ntn/zmq.key"
+
+# 安全配置
+security:
+  jwt:
+    secret: "${JWT_SECRET}"
+    expiresIn: "8h"
+    issuer: "ntn-prod"
+  bcrypt:
+    saltRounds: 12
+  cors:
+    origin: 
+      - "https://trading.neurotrade.com"
+      - "https://admin.neurotrade.com"
+    credentials: true
+  rateLimit:
+    windowMs: 900000   # 15分钟
+    max: 100           # 每个IP最多100次请求
+  ssl:
+    enabled: true
+    cert: "/etc/ssl/certs/ntn.crt"
+    key: "/etc/ssl/private/ntn.key"
+
+# 交易配置
+trading:
+  maxPositionSize: 10000000   # 最大持仓金额 1000万
+  maxOrderSize: 1000000      # 最大单笔订单金额 100万
+  defaultStopLoss: 0.03      # 默认止损比例 3%
+  defaultTakeProfit: 0.06    # 默认止盈比例 6%
+  maxDailyLoss: 0.01         # 最大日损失比例 1%
+  maxDrawdown: 0.05          # 最大回撤比例 5%
+  riskFreeRate: 0.025        # 无风险利率 2.5%
+  circuitBreaker:
+    enabled: true
+    lossThreshold: 0.02      # 熔断损失阈值 2%
+    cooldownPeriod: 3600000  # 冷却期 1小时
+
+# 风控配置
+risk:
+  var:
+    confidenceLevel: 0.99      # VaR置信水平 99%
+    timeHorizon: 1             # 时间跨度(天)
+    historicalDays: 504        # 历史数据天数 2年
+  limits:
+    maxPositionConcentration: 0.15  # 最大持仓集中度 15%
+    maxSectorExposure: 0.25         # 最大行业敞口 25%
+    maxLeverage: 2.0                # 最大杠杆倍数
+  alerts:
+    enabled: true
+    thresholds:
+      low: 0.6
+      medium: 0.75
+      high: 0.85
+      critical: 0.95
+    escalation:
+      enabled: true
+      levels:
+        - "risk-team@neurotrade.com"
+        - "management@neurotrade.com"
+        - "board@neurotrade.com"
+
+# 财务配置
+finance:
+  baseCurrency: "USD"
+  initialCapital: 100000000   # 初始资金 1亿
+  minCashReserve: 0.10        # 最小现金储备比例 10%
+  maxAllocationPerStrategy: 0.20  # 单策略最大资金分配比例 20%
+  budgetApproval:
+    autoApproveLimit: 50000   # 自动审批限额
+    requiresApproval: 100000  # 需要审批的金额
+  commission:
+    rate: 0.0005              # 佣金费率 0.05%
+    minimum: 5.0              # 最小佣金
+  compliance:
+    enabled: true
+    reportingInterval: 86400000  # 24小时
+
+# 监控配置
+monitoring:
+  metrics:
+    enabled: true
+    interval: 1000            # 1秒
+    retention: 2592000        # 30天
+    aggregation:
+      enabled: true
+      intervals: [60, 300, 3600]  # 1分钟、5分钟、1小时
+  alerts:
+    email:
+      enabled: true
+      smtp:
+        host: "${SMTP_HOST}"
+        port: 587
+        secure: true
+        auth:
+          user: "${SMTP_USER}"
+          pass: "${SMTP_PASS}"
+    webhook:
+      enabled: true
+      url: "${WEBHOOK_URL}"
+      retries: 3
+    sms:
+      enabled: true
+      provider: "twilio"
+      apiKey: "${SMS_API_KEY}"
+  healthCheck:
+    interval: 10000           # 10秒
+    timeout: 3000             # 3秒
+    endpoints:
+      - "/health"
+      - "/health/db"
+      - "/health/redis"
+      - "/health/zmq"
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+  file:
+    enabled: true
+    path: "/var/log/ntn/production.log"
+    maxSize: "100m"
+    maxFiles: 30
+    compress: true
+  console:
+    enabled: false
+  syslog:
+    enabled: true
+    host: "syslog.internal"
+    port: 514
+    facility: "local0"
+  audit:
+    enabled: true
+    path: "/var/log/ntn/audit.log"
+    retention: 2555000000     # 7年
+
+# API配置
+api:
+  prefix: "/api/v1"
+  timeout: 10000              # 10秒
+  maxRequestSize: "1mb"
+  documentation:
+    enabled: false            # 生产环境关闭文档
+  versioning:
+    enabled: true
+    header: "API-Version"
+  throttling:
+    enabled: true
+    requests: 1000
+    window: 3600000           # 1小时
+
+# 外部服务配置
+externalServices:
+  marketData:
+    provider: "bloomberg"      # 生产环境使用真实数据源
+    apiKey: "${BLOOMBERG_API_KEY}"
+    baseUrl: "https://api.bloomberg.com"
+    timeout: 5000
+    backup:
+      provider: "refinitiv"
+      apiKey: "${REFINITIV_API_KEY}"
+      baseUrl: "https://api.refinitiv.com"
+  tradingEngine:
+    provider: "interactive_brokers"
+    apiKey: "${IB_API_KEY}"
+    baseUrl: "https://api.interactivebrokers.com"
+    timeout: 8000
+    backup:
+      provider: "alpaca"
+      apiKey: "${ALPACA_API_KEY}"
+      baseUrl: "https://api.alpaca.markets"
+
+# 性能配置
+performance:
+  clustering:
+    enabled: true
+    workers: 4                # CPU核心数
+  caching:
+    enabled: true
+    strategy: "aggressive"
+  compression:
+    enabled: true
+    algorithm: "gzip"
+    level: 6
+  keepAlive:
+    enabled: true
+    timeout: 65000
+
+# 备份和恢复配置
+backup:
+  database:
+    enabled: true
+    schedule: "0 */6 * * *"    # 每6小时
+    retention: 90             # 保留90天
+    encryption: true
+    destination: "s3://ntn-backups/db/"
+  logs:
+    enabled: true
+    schedule: "0 2 * * *"     # 每天凌晨2点
+    retention: 365            # 保留1年
+    destination: "s3://ntn-backups/logs/"
+  configuration:
+    enabled: true
+    schedule: "0 0 * * 0"     # 每周日
+    retention: 52             # 保留52周
+    destination: "s3://ntn-backups/config/"
+
+# 灾难恢复配置
+disasterRecovery:
+  enabled: true
+  rpo: 300                    # 恢复点目标 5分钟
+  rto: 900                    # 恢复时间目标 15分钟
+  replication:
+    enabled: true
+    target: "dr-site.internal"
+    interval: 300000          # 5分钟
+  failover:
+    automatic: false
+    manual: true
+    healthCheckInterval: 30000
+
+# 合规配置
+compliance:
+  enabled: true
+  regulations:
+    - "MiFID II"
+    - "GDPR"
+    - "SOX"
+  reporting:
+    enabled: true
+    schedule: "0 0 * * *"     # 每日报告
+    recipients:
+      - "compliance@neurotrade.com"
+      - "audit@neurotrade.com"
+  dataRetention:
+    trades: 2555000000        # 7年
+    communications: 2555000000 # 7年
+    logs: 2555000000          # 7年

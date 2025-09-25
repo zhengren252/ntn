@@ -1,0 +1,648 @@
+<<<<<<< HEAD
+# 01APIForge - API统一管理工厂
+
+## 概述
+
+APIForge是NeuroTrade Nexus (NTN)系统的核心模块，负责统一管理和协调所有API接口，提供安全、高效的API网关服务。
+
+## 核心功能
+
+### 1. API网关服务
+- 统一API入口点
+- 请求路由和负载均衡
+- API版本管理
+- 请求/响应转换
+
+### 2. 认证与授权
+- JWT令牌管理
+- 用户身份验证
+- 权限控制
+- API密钥管理
+
+### 3. 限流与熔断
+- 请求频率限制
+- 熔断器模式
+- 降级策略
+- 流量控制
+
+### 4. 监控与日志
+- API调用统计
+- 性能监控
+- 错误追踪
+- 审计日志
+
+## 技术架构
+
+### 技术栈
+- **框架**: FastAPI 0.104.1
+- **异步运行时**: Uvicorn
+- **数据库**: SQLite (SQLAlchemy ORM)
+- **缓存**: Redis
+- **消息队列**: ZeroMQ
+- **认证**: JWT + Passlib
+
+### 目录结构
+```
+api_factory/
+├── __init__.py
+├── main.py              # 应用入口
+├── config/              # 配置管理
+├── core/                # 核心业务逻辑
+├── routers/             # API路由
+└── security/            # 安全模块
+```
+=======
+# API Factory Module (API统一管理工厂)
+
+## 项目概述
+
+API Factory Module 是 NeuroTrade Nexus (NTN) 系统的核心模组，实现统一的API管理、认证、配额控制和集群管理功能。基于微服务架构设计，支持三环境隔离部署，提供高性能、高可用的API服务管理平台。
+
+## 核心功能
+
+### 🚀 四大核心模块
+
+1. **API Gateway (API网关)**
+   - 统一API入口管理
+   - 支持交易所、大模型、数据源API
+   - 请求路由和负载均衡
+   - API版本管理和文档生成
+
+2. **Authentication Center (认证中心)**
+   - JWT令牌认证
+   - API密钥管理
+   - 用户权限控制
+   - 多租户隔离
+
+3. **Quota & Circuit Breaker (配额和熔断器)**
+   - API调用限流控制
+   - 熔断器保护机制
+   - 实时监控和告警
+   - 动态配额调整
+
+4. **Cluster Management (集群管理)**
+   - 服务节点注册发现
+   - 负载均衡策略
+   - 健康检查监控
+   - 自动故障转移
+
+### 🏗️ 技术架构
+
+- **后端框架**: FastAPI + Python 3.11
+- **消息队列**: ZeroMQ (高性能异步通信)
+- **缓存系统**: Redis (会话和缓存管理)
+- **数据存储**: SQLite (本地数据持久化)
+- **容器化**: Docker + Docker Compose
+- **监控**: Prometheus + Grafana (可选)
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+## 快速开始
+
+### 环境要求
+<<<<<<< HEAD
+- Python 3.11+
+- Redis 7.0+
+- Docker (可选)
+
+### 本地开发
+
+1. **安装依赖**
+```bash
+pip install -r requirements.txt
+```
+
+2. **配置环境变量**
+```bash
+cp .env.example .env
+# 编辑 .env 文件设置必要的配置
+```
+
+3. **启动服务**
+```bash
+python -m api_factory.main
+```
+
+### Docker部署
+
+1. **构建镜像**
+```bash
+docker build -t ntn-api-forge .
+```
+
+2. **运行容器**
+```bash
+docker run -p 8000:8000 -p 5555:5555 -p 5556:5556 ntn-api-forge
+=======
+
+- Python 3.11+
+- Docker & Docker Compose
+- Redis 7+
+- Git
+
+### 安装部署
+
+#### 1. 克隆项目
+```bash
+git clone <repository-url>
+cd 01APIForge
+```
+
+#### 2. 环境配置
+```bash
+# 复制环境配置文件
+cp .env.example .env
+
+# 编辑配置文件（根据实际环境修改）
+nano .env
+```
+
+#### 3. Docker部署（推荐）
+```bash
+# 开发环境
+docker-compose up -d
+
+# 生产环境
+ENV=production docker-compose --profile production up -d
+
+# 包含监控服务
+docker-compose --profile monitoring up -d
+```
+
+#### 4. 本地开发部署
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动Redis（如果未使用Docker）
+redis-server
+
+# 启动API服务
+uvicorn api_factory.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 验证部署
+
+```bash
+# 健康检查
+curl http://localhost:8000/health
+
+# API文档
+open http://localhost:8000/docs
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+```
+
+## API文档
+
+<<<<<<< HEAD
+启动服务后，访问以下地址查看API文档：
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## 核心端点
+
+### 健康检查
+```
+GET /health
+```
+
+### 认证
+```
+POST /auth/login
+POST /auth/refresh
+POST /auth/logout
+```
+
+### API管理
+```
+GET /api/routes
+POST /api/register
+DELETE /api/unregister
+=======
+### 核心端点
+
+#### API Gateway
+- `POST /api/v1/gateway/apis` - 创建API配置
+- `GET /api/v1/gateway/apis` - 获取API列表
+- `POST /api/v1/gateway/call/{api_name}` - 统一API调用
+- `GET /api/v1/gateway/stats` - API统计信息
+
+#### Authentication Center
+- `POST /api/v1/auth/register` - 用户注册
+- `POST /api/v1/auth/login` - 用户登录
+- `POST /api/v1/auth/api-keys` - 创建API密钥
+- `GET /api/v1/auth/profile` - 用户信息
+
+#### Quota & Circuit Breaker
+- `POST /api/v1/quota/quotas` - 创建配额
+- `POST /api/v1/quota/rate-limit/check` - 限流检查
+- `POST /api/v1/quota/circuit-breaker` - 熔断器配置
+- `GET /api/v1/quota/stats` - 配额统计
+
+#### Cluster Management
+- `POST /api/v1/cluster/nodes` - 注册节点
+- `POST /api/v1/cluster/discover` - 服务发现
+- `GET /api/v1/cluster/stats` - 集群统计
+- `POST /api/v1/cluster/rebalance` - 集群重平衡
+
+### 认证方式
+
+```bash
+# JWT Token认证
+curl -H "Authorization: Bearer <jwt_token>" \
+     http://localhost:8000/api/v1/auth/profile
+
+# API Key认证
+curl -H "X-API-Key: <api_key>" \
+     http://localhost:8000/api/v1/gateway/apis
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+```
+
+## 配置说明
+
+### 环境变量
+
+| 变量名 | 描述 | 默认值 |
+|--------|------|--------|
+<<<<<<< HEAD
+| `APP_ENV` | 运行环境 | `development` |
+| `REDIS_HOST` | Redis主机 | `localhost` |
+| `REDIS_PASSWORD` | Redis密码 | - |
+| `ZMQ_PUBLISHER_PORT` | ZMQ发布端口 | `5555` |
+| `ZMQ_SUBSCRIBER_PORT` | ZMQ订阅端口 | `5556` |
+| `JWT_SECRET_KEY` | JWT密钥 | 自动生成 |
+| `JWT_ALGORITHM` | JWT算法 | `HS256` |
+| `JWT_EXPIRE_MINUTES` | JWT过期时间 | `30` |
+
+## 开发指南
+
+### 代码规范
+- 遵循PEP 8代码风格
+- 使用Black进行代码格式化
+- 使用isort进行导入排序
+- 使用MyPy进行类型检查
+
+### 测试
+```bash
+# 运行所有测试
+pytest
+
+# 运行测试并生成覆盖率报告
+pytest --cov=api_factory
+
+# 运行特定测试
+pytest tests/test_auth_center.py
+```
+
+### 代码质量检查
+```bash
+# 代码格式化
+black api_factory/
+
+# 导入排序
+isort api_factory/
+
+# 代码检查
+flake8 api_factory/
+
+# 类型检查
+mypy api_factory/
+```
+
+## 监控与运维
+
+### 健康检查
+服务提供多层次的健康检查：
+- HTTP健康检查端点
+- Redis连接检查
+- 数据库连接检查
+- ZMQ连接检查
+
+### 日志管理
+- 使用Loguru进行结构化日志
+- 支持多种日志级别
+- 自动日志轮转
+- 集中化日志收集
+
+### 性能监控
+- Prometheus指标导出
+- API响应时间监控
+- 错误率统计
+- 资源使用监控
+=======
+| `ENV` | 环境类型 | `development` |
+| `API_PORT` | API服务端口 | `8000` |
+| `REDIS_HOST` | Redis主机 | `localhost` |
+| `JWT_SECRET_KEY` | JWT密钥 | `需要设置` |
+| `DEFAULT_RATE_LIMIT` | 默认限流 | `100` |
+
+### 三环境配置
+
+#### 开发环境 (development)
+```bash
+ENV=development
+DEBUG=true
+LOG_LEVEL=DEBUG
+```
+
+#### 测试环境 (staging)
+```bash
+ENV=staging
+DEBUG=false
+LOG_LEVEL=INFO
+```
+
+#### 生产环境 (production)
+```bash
+ENV=production
+DEBUG=false
+LOG_LEVEL=WARNING
+WORKERS=4
+```
+
+## 监控和日志
+
+### 健康检查
+```bash
+# 系统健康状态
+curl http://localhost:8000/health
+
+# 各模块健康状态
+curl http://localhost:8000/api/v1/gateway/health
+curl http://localhost:8000/api/v1/auth/health
+curl http://localhost:8000/api/v1/quota/health
+curl http://localhost:8000/api/v1/cluster/health
+```
+
+### 监控指标
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin)
+
+### 日志查看
+```bash
+# Docker日志
+docker-compose logs -f api-factory
+
+# 本地日志
+tail -f logs/api_factory.log
+```
+
+## 开发指南
+
+### 项目结构
+```
+api_factory/
+├── main.py                 # 应用入口
+├── config/                 # 配置管理
+│   ├── __init__.py
+│   └── settings.py
+├── core/                   # 核心组件
+│   ├── __init__.py
+│   ├── zmq_manager.py      # ZeroMQ管理
+│   ├── redis_manager.py    # Redis管理
+│   └── sqlite_manager.py   # SQLite管理
+├── security/               # 安全认证
+│   ├── __init__.py
+│   └── auth.py
+└── routers/                # 路由模块
+    ├── __init__.py
+    ├── api_gateway.py      # API网关
+    ├── auth_center.py      # 认证中心
+    ├── quota_circuit.py    # 配额熔断
+    └── cluster_management.py # 集群管理
+```
+
+### 添加新API
+
+1. 在对应路由文件中添加端点
+2. 更新API文档
+3. 添加测试用例
+4. 更新配置文件
+
+### 测试
+```bash
+# 运行测试
+pytest tests/
+
+# 代码覆盖率
+pytest --cov=api_factory tests/
+
+# 代码质量检查
+flake8 api_factory/
+black api_factory/
+```
+
+## 部署指南
+
+### Docker部署
+
+#### 单机部署
+```bash
+# 构建镜像
+docker build -t api-factory:latest .
+
+# 运行容器
+docker run -d \
+  --name api-factory \
+  -p 8000:8000 \
+  -e ENV=production \
+  api-factory:latest
+```
+
+#### 集群部署
+```bash
+# 使用Docker Swarm
+docker swarm init
+docker stack deploy -c docker-compose.yml api-factory
+
+# 或使用Kubernetes
+kubectl apply -f k8s/
+```
+
+### 生产环境优化
+
+1. **性能调优**
+   - 增加Worker进程数
+   - 配置连接池大小
+   - 启用缓存机制
+
+2. **安全加固**
+   - 使用HTTPS
+   - 配置防火墙
+   - 定期更新密钥
+
+3. **监控告警**
+   - 配置Prometheus告警规则
+   - 设置Grafana仪表板
+   - 集成日志聚合系统
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+## 故障排除
+
+### 常见问题
+
+<<<<<<< HEAD
+1. **Redis连接失败**
+   - 检查Redis服务状态
+   - 验证连接配置
+   - 检查网络连通性
+
+2. **ZMQ端口冲突**
+   - 检查端口占用情况
+   - 修改配置文件中的端口设置
+   - 重启相关服务
+
+3. **数据库锁定**
+   - 检查SQLite文件权限
+   - 确保没有其他进程占用数据库
+   - 重启服务
+
+### 日志分析
+```bash
+# 查看最新日志
+tail -f logs/api_factory.log
+
+# 搜索错误日志
+grep "ERROR" logs/api_factory.log
+
+# 分析API调用统计
+grep "API_CALL" logs/api_factory.log | awk '{print $5}' | sort | uniq -c
+=======
+#### 1. 服务启动失败
+```bash
+# 检查端口占用
+netstat -tulpn | grep :8000
+
+# 检查依赖服务
+docker-compose ps
+```
+
+#### 2. Redis连接失败
+```bash
+# 检查Redis状态
+redis-cli ping
+
+# 检查网络连接
+telnet localhost 6379
+```
+
+#### 3. ZeroMQ通信异常
+```bash
+# 检查端口绑定
+netstat -tulpn | grep :555
+
+# 检查防火墙设置
+sudo ufw status
+```
+
+### 日志分析
+
+```bash
+# 错误日志过滤
+grep "ERROR" logs/api_factory.log
+
+# 性能分析
+grep "slow" logs/api_factory.log
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+```
+
+## 贡献指南
+
+1. Fork项目
+2. 创建功能分支
+<<<<<<< HEAD
+3. 提交更改
+4. 推送到分支
+5. 创建Pull Request
+
+## 许可证
+
+本项目采用MIT许可证 - 详见 [LICENSE](../LICENSE) 文件。
+
+## 联系方式
+
+- 项目维护者: NTN开发团队
+- 邮箱: dev@neurotrade-nexus.com
+- 文档: https://docs.neurotrade-nexus.com
+=======
+3. 提交代码变更
+4. 创建Pull Request
+
+### 代码规范
+
+- 遵循PEP 8代码风格
+- 添加类型注解
+- 编写单元测试
+- 更新文档
+
+## 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 联系方式
+
+- 项目维护者: NeuroTrade Nexus Team
+- 邮箱: support@neurotrade-nexus.com
+- 文档: https://docs.neurotrade-nexus.com
+
+## 更新日志
+
+### v1.0.0 (2024-01-01)
+- ✨ 初始版本发布
+- 🚀 实现四大核心模块
+- 🐳 支持Docker容器化部署
+- 📊 集成监控和日志系统
+- 🔒 完善安全认证机制
+
+---
+
+**注意**: 这是一个企业级API管理系统，请在生产环境中谨慎配置安全参数。
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  extends: [
+    // other configs...
+    // Enable lint rules for React
+    reactX.configs['recommended-typescript'],
+    // Enable lint rules for React DOM
+    reactDom.configs.recommended,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

@@ -1,0 +1,84 @@
+MIT License
+
+Copyright (c) 2024 NeuroTrade Nexus Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+NeuroTrade Nexus - 策略优化模组 (OptiCore)
+
+本软件是NeuroTrade Nexus交易系统的核心组件之一，专注于策略参数优化、
+回测验证和风险控制。
+
+核心设计理念：
+1. 微服务架构设计
+2. ZeroMQ消息总线通信
+3. Docker容器化部署
+4. 三环境隔离(development/staging/production)
+5. 数据隔离与环境管理规范
+6. Python+VectorBT技术栈
+
+免责声明：
+本软件仅用于教育和研究目的，不构成投资建议。交易有风险，投资需谨慎。
+使用本软件进行实际交易所产生的任何损失，开发团队概不负责。
+
+技术支持：
+- 项目主页: https://github.com/neurotrade-nexus/opticore
+- 文档中心: https://docs.neurotrade-nexus.com
+- 问题反馈: https://github.com/neurotrade-nexus/opticore/issues
+- 邮箱支持: support@neurotrade-nexus.com
+
+贡献者：
+感谢所有为NeuroTrade Nexus项目做出贡献的开发者和研究人员。
+
+第三方依赖：
+本项目使用了多个开源库，包括但不限于：
+- VectorBT (Apache License 2.0)
+- ZeroMQ (Mozilla Public License 2.0)
+- FastAPI (MIT License)
+- Redis (BSD License)
+- Docker (Apache License 2.0)
+- Pandas (BSD License)
+- NumPy (BSD License)
+- SciPy (BSD License)
+- Scikit-learn (BSD License)
+
+所有第三方库的许可证条款请参考各自的官方文档。
+
+版本信息：
+- 当前版本: 1.0.0
+- 发布日期: 2024
+- 最低Python版本: 3.11
+- 支持平台: Windows, Linux, macOS
+
+更新日志：
+v1.0.0 (2024)
+- 初始版本发布
+- 基础策略优化功能
+- VectorBT回测引擎集成
+- 遗传算法优化器
+- Docker容器化支持
+- 三环境隔离架构
+- ZeroMQ消息总线
+- Redis缓存支持
+- 完整的测试套件
+- API文档和用户指南
+
+================================================================================

@@ -1,0 +1,235 @@
+# 测试环境专用配置
+# 继承基础配置并覆盖测试特定设置
+
+# 应用配置
+app:
+  name: "TradeGuard Test"
+  version: "1.0.0"
+  environment: "test"
+  debug: false
+  logLevel: "error"
+
+# 数据库配置
+database:
+  path: "./data/test.db"
+  options:
+    verbose: false
+    readonly: false
+    fileMustExist: false
+  backup:
+    enabled: false
+
+# Redis缓存配置
+redis:
+  host: "localhost"
+  port: 6379
+  password: null
+  db: 15  # 测试专用数据库
+  keyPrefix: "ntn:test:"
+  ttl:
+    default: 300      # 5分钟
+    session: 1800     # 30分钟
+    realtime: 30      # 30秒
+    cache: 600        # 10分钟
+
+# ZeroMQ消息总线配置
+zeromq:
+  publisher:
+    port: 5565
+    bind: "tcp://*:5565"
+  subscriber:
+    endpoints:
+      - "tcp://localhost:5565"
+  request:
+    port: 5566
+    bind: "tcp://*:5566"
+    timeout: 3000
+  reply:
+    endpoints:
+      - "tcp://localhost:5566"
+    timeout: 3000
+  heartbeat:
+    interval: 10000    # 10秒
+    timeout: 30000     # 30秒
+
+# 安全配置
+security:
+  jwt:
+    secret: "test-jwt-secret-key"
+    expiresIn: "1h"
+    issuer: "ntn-test"
+  bcrypt:
+    saltRounds: 4  # 降低测试时的计算开销
+  cors:
+    origin: 
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+    credentials: true
+  rateLimit:
+    windowMs: 60000    # 1分钟
+    max: 1000          # 每个IP最多1000次请求
+
+# 交易配置
+trading:
+  maxPositionSize: 100000     # 最大持仓金额
+  maxOrderSize: 50000        # 最大单笔订单金额
+  defaultStopLoss: 0.05      # 默认止损比例 5%
+  defaultTakeProfit: 0.10    # 默认止盈比例 10%
+  maxDailyLoss: 0.02         # 最大日损失比例 2%
+  maxDrawdown: 0.10          # 最大回撤比例 10%
+  riskFreeRate: 0.02         # 无风险利率 2%
+
+# 风控配置
+risk:
+  # 风险阈值配置
+  thresholds:
+    low: 30.0          # 低风险阈值
+    medium: 50.0       # 中风险阈值
+    high: 70.0         # 高风险阈值
+    critical: 90.0     # 极高风险阈值
+  
+  # 风险评分范围
+  scoreRange:
+    min: 0.0
+    max: 100.0
+  
+  # VaR配置
+  var:
+    confidenceLevel: 0.95      # VaR置信水平 95%
+    timeHorizon: 1             # 时间跨度(天)
+    historicalDays: 30         # 历史数据天数（测试用较短期间）
+  
+  # 风险限制
+  limits:
+    maxPositionConcentration: 0.20  # 最大持仓集中度 20%
+    maxSectorExposure: 0.30         # 最大行业敞口 30%
+    maxLeverage: 2.0                # 最大杠杆倍数（测试用较低杠杆）
+  
+  # 告警配置
+  alerts:
+    enabled: false  # 测试时禁用告警
+    thresholds:
+      low: 0.7
+      medium: 0.8
+      high: 0.9
+      critical: 0.95
+
+# 财务配置
+finance:
+  baseCurrency: "USD"
+  initialCapital: 1000000     # 初始资金 100万
+  minCashReserve: 0.05        # 最小现金储备比例 5%
+  
+  # 预算配置
+  budget:
+    maxBudgetPerStrategy: 500000    # 单策略最大预算
+    maxDailyAllocation: 2000000     # 日最大分配额度
+    emergencyReserveRatio: 0.20     # 紧急储备比例
+    autoApprovalThreshold: 10000    # 自动批准阈值
+  
+  # 风险等级资金分配限制
+  riskBasedLimits:
+    low:
+      maxAllocation: 500000   # 低风险最大分配
+      maxRatio: 0.30         # 低风险最大比例
+    medium:
+      maxAllocation: 200000   # 中风险最大分配
+      maxRatio: 0.20         # 中风险最大比例
+    high:
+      maxAllocation: 100000   # 高风险最大分配
+      maxRatio: 0.10         # 高风险最大比例
+    critical:
+      maxAllocation: 50000    # 极高风险最大分配
+      maxRatio: 0.05         # 极高风险最大比例
+  
+  # 审批工作流
+  approvalWorkflow:
+    autoApproval:
+      maxAmount: 10000
+      allowedTypes: ["initial", "adjustment"]
+      requiredRiskLevel: ["low", "medium"]
+    manualApproval:
+      minAmount: 10001
+      requiredApprovers: 1
+      escalationThreshold: 100000
+  
+  # 佣金配置
+  commission:
+    rate: 0.001               # 佣金费率 0.1%
+    minimum: 1.0              # 最小佣金
+
+# 监控配置
+monitoring:
+  metrics:
+    enabled: false  # 测试时禁用指标收集
+    interval: 10000           # 10秒
+    retention: 3600           # 1小时
+  alerts:
+    email:
+      enabled: false
+    webhook:
+      enabled: false
+  healthCheck:
+    interval: 30000           # 30秒
+    timeout: 3000             # 3秒
+
+# 日志配置
+logging:
+  level: "error"  # 测试时只记录错误
+  format: "simple"
+  file:
+    enabled: false  # 测试时禁用文件日志
+  console:
+    enabled: false  # 测试时禁用控制台输出
+
+# API配置
+api:
+  prefix: "/api/v1"
+  timeout: 10000              # 10秒（测试用较短超时）
+  maxRequestSize: "1mb"
+  documentation:
+    enabled: false  # 测试时禁用文档
+  versioning:
+    enabled: true
+    header: "API-Version"
+
+# 外部服务配置（测试用模拟服务）
+externalServices:
+  marketData:
+    provider: "mock"
+    apiKey: "test-api-key"
+    baseUrl: "http://localhost:3002"
+    timeout: 5000
+  tradingEngine:
+    provider: "simulation"
+    apiKey: "test-trading-key"
+    baseUrl: "http://localhost:3003"
+    timeout: 5000
+
+# 测试专用配置
+test:
+  # 模拟数据配置
+  mockData:
+    enabled: true
+    generateOnStartup: false
+    
+  # 测试数据库配置
+  database:
+    recreateOnStartup: true
+    seedData: false
+    
+  # 测试超时配置
+  timeouts:
+    unit: 5000        # 单元测试超时 5秒
+    integration: 15000 # 集成测试超时 15秒
+    
+  # 测试覆盖率配置
+  coverage:
+    threshold: 70     # 覆盖率阈值
+    
+  # 测试环境端口配置
+  ports:
+    api: 3002
+    redis: 6379
+    zmq_pub: 5565
+    zmq_req: 5566

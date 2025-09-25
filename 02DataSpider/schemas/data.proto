@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package dataspider;
+
+// 数据项消息
+message DataItem {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string url = 4;
+  string timestamp = 5;
+  string category = 6;
+  repeated string keywords = 7;
+  string source = 8;
+  map<string, string> metadata = 9;
+  DataMetrics metrics = 10;
+}
+
+// 数据指标
+message DataMetrics {
+  double relevance_score = 1;
+  double sentiment_score = 2;
+  int32 word_count = 3;
+  int32 view_count = 4;
+  int32 share_count = 5;
+}
+
+// 批量数据消息
+message DataBatch {
+  repeated DataItem items = 1;
+  string batch_id = 2;
+  string created_at = 3;
+  int32 total_count = 4;
+  map<string, string> batch_metadata = 5;
+}
+
+// 格式化结果消息
+message FormattingResult {
+  bool success = 1;
+  DataItem formatted_data = 2;
+  DataItem original_data = 3;
+  repeated string applied_rules = 4;
+  repeated string errors = 5;
+  repeated string warnings = 6;
+  double formatting_time = 7;
+  map<string, string> metadata = 8;
+}

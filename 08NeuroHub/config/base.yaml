@@ -1,0 +1,98 @@
+# 模组八总控模块基础配置文件
+# 严格遵循数据隔离与环境管理规范V1.0
+
+# 应用基础配置
+app:
+  name: "NeuroTrade-MasterControl"
+  version: "1.0.0"
+  description: "总控模块 - 系统决策大脑"
+
+# 服务器配置
+server:
+  host: "localhost"
+  port: 8000
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+
+# ZeroMQ通信配置
+zeromq:
+  publisher:
+    port: 5555
+    topics:
+      - "control.commands"
+  subscriber:
+    port: 5556
+    topics:
+      - "risk.alerts"
+      - "system.status"
+
+# Redis配置
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  key_prefix: "master_control:"
+  status_keys:
+    - "system:status:trader"
+    - "system:status:risk"
+    - "system:status:scanner"
+    - "market:bull_bear_index"
+
+# SQLite数据库配置
+database:
+  type: "sqlite"
+  filename: "master_control.db"
+  tables:
+    - "system_status"
+    - "module_status"
+    - "memory_events"
+    - "event_actions"
+    - "control_commands"
+    - "risk_assessments"
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/master_control.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# 监控配置
+monitoring:
+  health_check_interval: 30  # 秒
+  status_update_interval: 5   # 秒
+  alert_thresholds:
+    risk_score: 80
+    system_health: "warning"
+    module_offline_count: 2
+
+# 决策引擎配置
+decision_engine:
+  mode: "state_machine"
+  states:
+    - "NORMAL"
+    - "DEFENSIVE"
+    - "AGGRESSIVE"
+    - "EMERGENCY"
+  transition_cooldown: 60  # 秒
+
+# 熔断配置
+circuit_breaker:
+  enabled: true
+  triggers:
+    - "risk_score_critical"
+    - "market_crash_detected"
+    - "system_overload"
+  actions:
+    - "emergency_liquidation"
+    - "position_freeze"
+    - "alert_notification"
+
+# 记忆网络配置
+memory_network:
+  enabled: true
+  similarity_threshold: 0.8
+  max_events: 1000
+  learning_rate: 0.01

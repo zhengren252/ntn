@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}系统状态 - ScanPulse{% endblock %}
+
+{% block page_title %}系统状态监控{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 系统概览 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-server"></i> 系统概览</h6>
+            </div>
+            <div class="card-body">
+                <div id="system-overview">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 连接状态 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-plug"></i> 连接状态</h6>
+            </div>
+            <div class="card-body">
+                <div id="connection-status">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 性能指标 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-tachometer-alt"></i> 性能指标</h6>
+            </div>
+            <div class="card-body">
+                <div id="performance-metrics">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 扫描引擎详情 -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-cogs"></i> 扫描引擎详情</h6>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshEngines()">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="engines-detail">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 系统日志 -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-file-alt"></i> 系统日志</h6>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshLogs()">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="system-logs" style="height: 300px; overflow-y: auto;">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 活跃交易对 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-coins"></i> 活跃交易对</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>交易对</th>
+                                <th>状态</th>
+                                <th>最后扫描</th>
+                                <th>扫描次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="active-symbols-table">
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 错误统计 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-exclamation-triangle"></i> 错误统计</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="error-chart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let errorChart;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadStatusData();
+    
+    // 每15秒自动刷新数据
+    setInterval(loadStatusData, 15000);
+});
+
+// 初始化图表
+function initializeCharts() {
+    const ctx = document.getElementById('error-chart').getContext('2d');
+    errorChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['连接错误', '扫描错误', '数据错误', '其他错误'],
+            datasets: [{
+                label: '错误次数',
+                data: [0, 0, 0, 0],
+                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 加载状态数据
+function loadStatusData() {
+    Promise.all([
+        fetch('/api/status').then(r => r.json()),
+        fetch('/api/metrics').then(r => r.json()),
+        fetch('/api/symbols').then(r => r.json())
+    ]).then(([status, metrics, symbols]) => {
+        updateSystemOverview(status);
+        updateConnectionStatus(status.connections);
+        updatePerformanceMetrics(metrics);
+        updateEnginesDetail(status.engines);
+        updateActiveSymbols(symbols);
+        updateErrorChart(metrics.errors || {});
+    }).catch(error => {
+        console.error('Error loading status data:', error);
+        showError('system-overview', '数据加载失败');
+    });
+}
+
+// 更新系统概览
+function updateSystemOverview(status) {
+    const container = document.getElementById('system-overview');
+    const scanner = status.scanner || {};
+    
+    const statusClass = scanner.status === 'running' ? 'success' : 'danger';
+    const statusText = scanner.status === 'running' ? '运行中' : '离线';
+    
+    container.innerHTML = `
+        <div class="text-center mb-3">
+            <div class="status-indicator bg-${statusClass} mb-2"></div>
+            <h5 class="text-${statusClass}">${statusText}</h5>
+        </div>
+        <hr>
+        <div class="row text-center">
+            <div class="col-6">
+                <div class="h4 mb-0">${formatNumber(scanner.total_scans || 0)}</div>
+                <small class="text-muted">总扫描次数</small>
+            </div>
+            <div class="col-6">
+                <div class="h4 mb-0">${formatNumber(scanner.active_symbols || 0)}</div>
+                <small class="text-muted">活跃交易对</small>
+            </div>
+        </div>
+        <hr>
+        <div class="text-center">
+            <small class="text-muted">运行时间</small><br>
+            <strong>${scanner.uptime || '未知'}</strong>
+        </div>
+    `;
+}
+
+// 更新连接状态
+function updateConnectionStatus(connections) {
+    const container = document.getElementById('connection-status');
+    
+    if (!connections) {
+        container.innerHTML = '<div class="text-muted">连接信息不可用</div>';
+        return;
+    }
+    
+    const services = [
+        { name: 'Redis', key: 'redis', icon: 'database' },
+        { name: 'ZeroMQ', key: 'zmq', icon: 'exchange-alt' },
+        { name: 'TACoreService', key: 'tacore', icon: 'server' }
+    ];
+    
+    container.innerHTML = services.map(service => {
+        const isConnected = connections[service.key];
+        const statusClass = isConnected ? 'success' : 'danger';
+        const statusText = isConnected ? '已连接' : '断开';
+        
+        return `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <i class="fas fa-${service.icon} mr-2"></i>
+                    <strong>${service.name}</strong>
+                </div>
+                <span class="badge bg-${statusClass}">${statusText}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新性能指标
+function updatePerformanceMetrics(metrics) {
+    const container = document.getElementById('performance-metrics');
+    
+    container.innerHTML = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <small>CPU使用率</small>
+                <small>${(metrics.cpu_usage || 0).toFixed(1)}%</small>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: ${metrics.cpu_usage || 0}%"></div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <small>内存使用率</small>
+                <small>${(metrics.memory_usage || 0).toFixed(1)}%</small>
+            </div>
+            <div class="progress">
+                <div class="progress-bar bg-info" style="width: ${metrics.memory_usage || 0}%"></div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+                <small>成功率</small>
+                <small>${(metrics.success_rate || 0).toFixed(1)}%</small>
+            </div>
+            <div class="progress">
+                <div class="progress-bar bg-success" style="width: ${metrics.success_rate || 0}%"></div>
+            </div>
+        </div>
+        <div>
+            <div class="d-flex justify-content-between">
+                <small>平均响应时间</small>
+                <small>${(metrics.avg_response_time || 0).toFixed(0)}ms</small>
+            </div>
+        </div>
+    `;
+}
+
+// 更新引擎详情
+function updateEnginesDetail(engines) {
+    const container = document.getElementById('engines-detail');
+    
+    if (!engines) {
+        container.innerHTML = '<div class="text-muted">引擎信息不可用</div>';
+        return;
+    }
+    
+    const engineNames = {
+        'three_high': '三高规则引擎',
+        'black_horse': '黑马检测引擎',
+        'potential_finder': '潜力挖掘引擎'
+    };
+    
+    container.innerHTML = Object.entries(engines).map(([key, engine]) => {
+        const name = engineNames[key] || key;
+        const statusClass = engine.enabled ? 'success' : 'secondary';
+        const statusText = engine.enabled ? '启用' : '禁用';
+        
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">${name}</h6>
+                        <span class="badge bg-${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="h6 mb-0">${formatNumber(engine.scans || 0)}</div>
+                            <small class="text-muted">扫描次数</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h6 mb-0">${formatNumber(engine.matches || 0)}</div>
+                            <small class="text-muted">匹配数</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h6 mb-0">${(engine.success_rate || 0).toFixed(1)}%</div>
+                            <small class="text-muted">成功率</small>
+                        </div>
+                    </div>
+                    ${engine.last_scan ? `
+                        <hr>
+                        <small class="text-muted">最后扫描: ${formatTime(engine.last_scan)}</small>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 更新活跃交易对
+function updateActiveSymbols(symbols) {
+    const tbody = document.getElementById('active-symbols-table');
+    
+    if (!symbols.symbols || symbols.symbols.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暂无活跃交易对</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = symbols.symbols.slice(0, 10).map(symbol => `
+        <tr>
+            <td><strong>${symbol.symbol}</strong></td>
+            <td><span class="badge bg-${symbol.active ? 'success' : 'secondary'}">
+                ${symbol.active ? '活跃' : '非活跃'}
+            </span></td>
+            <td>${formatTime(symbol.last_scan)}</td>
+            <td>${formatNumber(symbol.scan_count || 0)}</td>
+        </tr>
+    `).join('');
+}
+
+// 更新错误图表
+function updateErrorChart(errors) {
+    if (errorChart) {
+        errorChart.data.datasets[0].data = [
+            errors.connection || 0,
+            errors.scan || 0,
+            errors.data || 0,
+            errors.other || 0
+        ];
+        errorChart.update();
+    }
+}
+
+// 刷新引擎状态
+function refreshEngines() {
+    showLoading('engines-detail');
+    fetch('/api/status')
+        .then(r => r.json())
+        .then(status => updateEnginesDetail(status.engines))
+        .catch(error => showError('engines-detail', '刷新失败'));
+}
+
+// 刷新日志
+function refreshLogs() {
+    const container = document.getElementById('system-logs');
+    showLoading('system-logs');
+    
+    // 模拟日志数据（实际应该从API获取）
+    setTimeout(() => {
+        const logs = [
+            { time: new Date(), level: 'INFO', message: '扫描器启动成功' },
+            { time: new Date(Date.now() - 60000), level: 'INFO', message: '连接到Redis服务器' },
+            { time: new Date(Date.now() - 120000), level: 'WARN', message: 'ZeroMQ连接重试' },
+            { time: new Date(Date.now() - 180000), level: 'INFO', message: '开始扫描BTCUSDT' },
+            { time: new Date(Date.now() - 240000), level: 'ERROR', message: '获取市场数据失败' }
+        ];
+        
+        container.innerHTML = logs.map(log => {
+            const levelClass = {
+                'INFO': 'info',
+                'WARN': 'warning', 
+                'ERROR': 'danger'
+            }[log.level] || 'secondary';
+            
+            return `
+                <div class="mb-2">
+                    <small class="text-muted">${formatTime(log.time.toISOString())}</small>
+                    <span class="badge bg-${levelClass} ms-2">${log.level}</span><br>
+                    <span>${log.message}</span>
+                </div>
+            `;
+        }).join('');
+    }, 500);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,174 @@
+# 测试环境 Docker Compose 配置
+# 用于预生产测试和集成测试
+
+version: '3.8'
+
+services:
+  # Redis 缓存服务
+  redis-staging:
+    image: redis:7-alpine
+    container_name: ntn-redis-staging
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_staging_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - ntn-staging-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # 信息源爬虫主服务
+  info-crawler-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: staging
+    container_name: ntn-crawler-staging
+    environment:
+      - APP_ENV=staging
+      - DATABASE_URL=sqlite:///data/staging.db
+      - REDIS_URL=redis://redis-staging:6379/1
+      - ZMQ_PUBLISHER_PORT=5555
+      - ZMQ_SUBSCRIBER_PORT=5556
+      - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
+    env_file:
+      - .env.staging
+    ports:
+      - "5001:5000"  # Flask API
+      - "5557:5555"  # ZeroMQ Publisher
+      - "5558:5556"  # ZeroMQ Subscriber
+    volumes:
+      - staging_data:/app/data
+      - staging_logs:/app/logs
+      - staging_temp:/app/temp
+    depends_on:
+      redis-staging:
+        condition: service_healthy
+    networks:
+      - ntn-staging-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # 前端服务
+  frontend-staging:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: staging
+    container_name: ntn-frontend-staging
+    environment:
+      - NODE_ENV=staging
+      - REACT_APP_API_URL=http://localhost:5001
+      - REACT_APP_WS_URL=ws://localhost:5558
+    ports:
+      - "3001:3000"
+    depends_on:
+      - info-crawler-staging
+    networks:
+      - ntn-staging-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # 监控服务（可选）
+  monitoring-staging:
+    image: prom/prometheus:latest
+    container_name: ntn-monitoring-staging
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_staging_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ntn-staging-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # 日志聚合服务（可选）
+  log-aggregator-staging:
+    image: fluent/fluent-bit:latest
+    container_name: ntn-logs-staging
+    volumes:
+      - ./config/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - staging_logs:/var/log/app
+    networks:
+      - ntn-staging-network
+    restart: unless-stopped
+    profiles:
+      - logging
+
+volumes:
+  redis_staging_data:
+    driver: local
+  staging_data:
+    driver: local
+  staging_logs:
+    driver: local
+  staging_temp:
+    driver: local
+  prometheus_staging_data:
+    driver: local
+
+networks:
+  ntn-staging-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

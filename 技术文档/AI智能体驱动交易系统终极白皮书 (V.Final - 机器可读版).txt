@@ -1,0 +1,256 @@
+# ===================================================================
+# AI智能体驱动交易系统终极白皮书 (V.Final - 机器可读版)
+# ===================================================================
+
+document_info:
+  [cite_start]title: "AI智能体驱动交易系统终极白皮书" [cite: 1]
+  [cite_start]version: "V.Final" [cite: 1]
+  [cite_start]status: "最终优化版" [cite: 1]
+  [cite_start]purpose: "为AI大模型和人类开发者提供一个完整、精确、机器可读的知识库，用于指导系统的完整生命周期——从开发、集成、测试到未来的维护与升级。" [cite: 1]
+
+project_vision_and_design:
+  [cite_start]vision_statement: "构建一个高度自动化、智能化、且风险可控的加密货币交易系统。该系统不仅能自主发现并执行交易机会，更能通过人机协同，在复杂的市场环境中实现长期、稳健的盈利。" [cite: 1]
+  core_design_philosophy:
+    - [cite_start]principle: "微服务架构" [cite: 1]
+      [cite_start]description: "将复杂的系统“化整为零”，拆分为14个高内聚、低耦合的独立模组，实现并行开发、独立部署和高可维护性。" [cite: 1]
+    - [cite_start]principle: "人机协同" [cite: 1]
+      [cite_start]description: "承认纯机器决策的局限性，通过【人工审核】模组建立关键的“安全阀”，将AI的高效计算与人类的经验智慧完美结合。" [cite: 1]
+    - [cite_start]principle: "风险优先" [cite: 1]
+      [cite_start]description: "将风险控制作为系统设计的最高优先级，构建了从事前、事中到事后的多层次、立体化风控体系。" [cite: 1]
+
+system_architecture_and_stack:
+  final_architecture_diagram:
+    [cite_start]colloquial_explanation: "此架构图展示了系统的四个逻辑分层：用户交互层、智能与决策层、核心业务流程层和基础支撑层，以及各层之间的关键信息流动。" [cite: 1]
+    mermaid_code: |
+      graph TD
+          subgraph 用户交互层
+              UI[11. 前端管理界面]
+          end
+          subgraph 智能与决策层
+              M[8. 总控]
+              RG[10. 人工审核]
+              MMS[9. 市场微结构仿真引擎]
+              ASA[13. AI策略研究助理 (V2.0)]
+          end
+          subgraph 核心业务流程层
+              S[3. 扫描器] --> O[4. 策略优化]
+              O --> RG
+              RG --> T["5/6/7. 交易执行铁三角"]
+          end
+          subgraph 基础支撑层
+              AF[1. API工厂]
+              IC[2. 信息源爬虫]
+              TA[12. TACoreService]
+              OC[14. 可观测性中心 (V2.0)]
+              DB[(数据库: Redis/SQLite)]
+          end
+          UI -- "HTTP/WebSocket" --> AF & RG & M & ASA
+          O -- "调用" --> MMS
+          S & T -- "请求服务" --> TA
+          ASA -- "请求服务" --> AF & IC
+          classDef ui fill:#4a044e,stroke:#86198f,color:#f3e8ff
+          classDef decision fill:#7f1d1d,stroke:#b91c1c,color:#fef2f2
+          classDef core fill:#0c4a6e,stroke:#0369a1,color:#e0f2fe
+          classDef support fill:#14532d,stroke:#16a34a,color:#f0fdf4
+          class UI ui;
+          class M,RG,MMS,ASA decision;
+          class S,O,T core;
+          class AF,IC,TA,OC,DB support;
+  
+  final_tech_stack:
+    inter_module_communication:
+      [cite_start]technology: "ZeroMQ" [cite: 1]
+      [cite_start]patterns: ["PUB/SUB", "REQ/REP"] [cite: 1]
+      [cite_start]description: "用于模组间的低延迟、高吞吐量异步消息传递。" [cite: 1]
+    data_serialization:
+      [cite_start]format: "JSON" [cite: 1]
+      [cite_start]schema_enforcement: "所有消息体必须包含 'schema_version' 字段。" [cite: 1]
+    caching_and_state_storage:
+      [cite_start]technology: "Redis" [cite: 1]
+      [cite_start]usage: "实时状态存储、市场数据缓存、轻量级消息队列。" [cite: 1]
+    persistent_storage:
+      [cite_start]technology: "SQLite" [cite: 1]
+      [cite_start]usage: "零配置、文件型数据库，用于存储交易记录、回测报告等持久化数据。V2.0可升级至PostgreSQL以支持更复杂的查询。" [cite: 1]
+    deployment:
+      [cite_start]technology: "Docker & Docker Compose" [cite: 1]
+      [cite_start]description: "实现一键式、跨环境的部署和隔离。" [cite: 1]
+    core_ai_library_integration:
+      [cite_start]name: "TradingAgents-CN" [cite: 1]
+      [cite_start]integration_pattern: "服务化封装于'12. TACoreService'，采用负载均衡与多工作进程架构。" [cite: 1]
+    llm_integration:
+      [cite_start]pattern: "自托管路由网关模式" [cite: 1]
+      [cite_start]description: "由'1. API工厂'统一管理精选的几个核心大模型API，并对内提供统一的调用接口。" [cite: 1]
+    frontend_stack:
+      [cite_start]framework: "React (Next.js)" [cite: 1]
+      [cite_start]ui_library: "Shadcn/UI + Tailwind CSS" [cite: 1]
+      [cite_start]state_management: "Zustand" [cite: 1]
+      [cite_start]data_fetching: "TanStack Query (React Query)" [cite: 1]
+    observability_stack:
+      [cite_start]technologies: ["Prometheus", "Grafana", "Loki", "Tempo", "OpenTelemetry"] [cite: 1]
+      [cite_start]description: "V2.0引入，用于提供统一的日志、指标和分布式追踪平台。" [cite: 1]
+
+  devops_principles:
+    - [cite_start]principle: "版本控制" [cite: 1]
+      [cite_start]details: "严格遵循Git Flow分支模型。所有向develop或master分支的合并都必须通过Pull Request，并至少需要一名其他团队成员的代码审查（Code Review）并批准。" [cite: 1]
+    - [cite_start]principle: "向后兼容性" [cite: 1]
+      [cite_start]details: "[最高优先级] 对模组间接口（ZeroMQ消息格式、HTTP API）的任何修改，都必须保持向后兼容，以避免因一个模组的升级导致整个系统瘫痪。" [cite: 1]
+    - [cite_start]principle: "自动化测试" [cite: 1]
+      [cite_start]details: "所有新增的核心业务逻辑，都必须有相应的单元测试；修复Bug时，必须先编写一个能复现该Bug的测试用例。" [cite: 1]
+    - [cite_start]principle: "自动化部署" [cite: 1]
+      [cite_start]details: "严禁通过SSH登录生产服务器进行任何手动代码修改或部署操作。所有部署都必须通过自动化的CI/CD（持续集成/持续部署）流水线来完成。" [cite: 1]
+
+module_specifications:
+  [cite_start]colloquial_explanation: "以下是构成我们系统V1.0版本的12个核心“部门”的最终职责与连接说明。" [cite: 1]
+  modules:
+    - id: "01"
+      [cite_start]name: "API工厂" [cite: 1]
+      [cite_start]core_responsibility: "统一管理所有外部API（交易所、LLM）的连接、认证和请求。" [cite: 1]
+      [cite_start]key_features: "V2.0升级为自托管AI模型路由网关。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: /exchange, /llm 等HTTP API。发布: apiforge.events.status 状态变更通知。" [cite: 1]
+    - id: "02"
+      [cite_start]name: "信息源爬虫" [cite: 1]
+      [cite_start]core_responsibility: "从无标准API的渠道（网站、社交媒体）抓取情报。" [cite: 1]
+      [cite_start]key_features: "支持反爬策略，数据清洗与格式化。" [cite: 1]
+      [cite_start]communication_interfaces: "发布: crawler.news 结构化情报数据。" [cite: 1]
+    - id: "03"
+      [cite_start]name: "扫描器" [cite: 1]
+      [cite_start]core_responsibility: "结合行情与情报，7x24小时发现潜在交易机会。" [cite: 1]
+      [cite_start]key_features: "“三高规则” + “黑马监测器” + “潜力挖掘”。" [cite: 1]
+      [cite_start]communication_interfaces: "发布: scanner.pool.preliminary 交易机会。消费: TACoreService 服务, crawler.news 通知。" [cite: 1]
+    - id: "04"
+      [cite_start]name: "策略优化" [cite: 1]
+      [cite_start]core_responsibility: "对机会进行严格的回测、压力测试和参数优化。" [cite: 1]
+      [cite_start]key_features: "内置策略库，支持AI加速，可调用MMS。" [cite: 1]
+      [cite_start]communication_interfaces: "发布: optimizer.pool.trading 策略参数包。消费: scanner.pool.preliminary 通知, MMS 服务。" [cite: 1]
+    - id: "05"
+      [cite_start]name: "交易员" [cite: 1]
+      [cite_start]core_responsibility: "接收最终指令，生成交易计划，并执行订单。" [cite: 1]
+      [cite_start]key_features: "负责与风控、财务、TACoreService的协同。" [cite: 1]
+      [cite_start]communication_interfaces: "消费: reviewguard.pool.approved 通知, RiskControl, Finance, TACoreService 服务。" [cite: 1]
+    - id: "06"
+      [cite_start]name: "风控" [cite: 1]
+      [cite_start]core_responsibility: "在交易前进行量化风险评分，交易中实时监控。" [cite: 1]
+      [cite_start]key_features: "核心风险评分矩阵，实时持仓监控。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: evaluate 风险评估服务 (ZMQ REQ/REP)。发布: risk.alerts 风险警报。" [cite: 1]
+    - id: "07"
+      [cite_start]name: "财务" [cite: 1]
+      [cite_start]core_responsibility: "根据风险评分和账户状况，动态分配资金。" [cite: 1]
+      [cite_start]key_features: "“智能平衡术”算法，控制风险敞口。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: apply_budget 资金申请服务 (ZMQ REQ/REP)。" [cite: 1]
+    - id: "08"
+      [cite_start]name: "总控" [cite: 1]
+      [cite_start]core_responsibility: "系统的决策大脑，负责宏观监控、模式切换和最终熔断。" [cite: 1]
+      [cite_start]key_features: "“牛熊指数”判断，记忆网络，紧急熔断协议。" [cite: 1]
+      [cite_start]communication_interfaces: "发布: neurohub.commands 全局指令。消费: risk.alerts 警报, Redis中的全局状态。" [cite: 1]
+    - id: "09"
+      [cite_start]name: "MMS" [cite: 1]
+      [cite_start]core_responsibility: "提供比传统回测更高保真的虚拟市场环境。" [cite: 1]
+      [cite_start]key_features: "参数化市场建模，自适应校准，极端场景沙盒。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: simulate 仿真服务 (HTTP/gRPC)。" [cite: 1]
+    - id: "10"
+      [cite_start]name: "人工审核" [cite: 1]
+      [cite_start]core_responsibility: "连接自动化与人类智慧的关键安全阀，审核中高风险交易。" [cite: 1]
+      [cite_start]key_features: "标准化三页式报告，灵活的审核工作流控制。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: /reviews API。消费: optimizer.pool.trading 通知。发布: reviewguard.pool.approved 通知。" [cite: 1]
+    - id: "11"
+      [cite_start]name: "前端界面" [cite: 1]
+      [cite_start]core_responsibility: "系统的统一用户交互界面，用于监控、操作和人工干预。" [cite: 1]
+      [cite_start]key_features: "智能化指挥中心，支持AI交互与高级复盘。" [cite: 1]
+      [cite_start]communication_interfaces: "消费: 多个后台模组提供的HTTP/WebSocket接口。" [cite: 1]
+    - id: "12"
+      [cite_start]name: "TACoreService" [cite: 1]
+      [cite_start]core_responsibility: "TradingAgents-CN的唯一服务化封装，提供核心AI交易能力。" [cite: 1]
+      [cite_start]key_features: "高性能负载均衡架构，多工作进程并行处理。" [cite: 1]
+      [cite_start]communication_interfaces: "提供: scan.market, execute.order 等核心交易服务 (ZMQ REQ/REP)。" [cite: 1]
+
+core_workflows:
+  standard_trading_workflow:
+    diagram: |
+      sequenceDiagram
+          participant S as 扫描器
+          participant TA as TACoreService
+          participant O as 策略优化
+          participant RG as 人工审核
+          participant T as 交易员
+          participant X as 风控/财务
+          participant AF as API工厂
+          S->>TA: req: scan.market
+          TA-->>S: resp: opportunities
+          S->>O: pub: new opportunity
+          O->>RG: pub: strategy_package
+          RG-->>T: pub: approved_trade
+          T->>X: req: evaluate & apply_budget
+          X-->>T: resp: approved
+          T->>TA: req: execute.order
+          TA-->>AF: call: place_order
+          AF-->>TA: return: success
+          TA-->>T: resp: success
+  risk_control_workflow:
+    diagram: |
+      graph TD
+          A["风控模组: 实时监控"] --> B{"异常检测"};
+          B -- "检测到黑天鹅事件" --> M["总控模组: 接收警报"];
+          M -- "决策" --> M_CMD["发布全局熔断指令 (PUB)"];
+          M_CMD --> T["交易员模组: 接收指令"];
+          T --> T_ACTION["执行紧急清仓"];
+          M_CMD --> J["用户通知"];
+  key_data_structure_example:
+    [cite_start]name: "strategy_package" [cite: 1]
+    [cite_start]description: "从'策略优化'模组传递给'人工审核'模组的核心消息体结构示例。" [cite: 1]
+    structure:
+      [cite_start]schema_version: "1.1" [cite: 1]
+      [cite_start]symbol: "RNDR/USDT" [cite: 1]
+      [cite_start]strategy_id: "grid_v1.2" [cite: 1]
+      params:
+        [cite_start]grid_num: 20 [cite: 1]
+        [cite_start]profit_ratio: 0.015 [cite: 1]
+      metrics:
+        [cite_start]max_drawdown: 0.04 [cite: 1]
+        [cite_start]sharpe_ratio: 2.1 [cite: 1]
+      [cite_start]source_node: "strategy-optimizer-01" [cite: 1]
+      [cite_start]timestamp: 1722913560 [cite: 1]
+
+development_roadmap:
+  [cite_start]colloquial_explanation: "这是我们项目的总施工路线图，规定了从打地基到精装修，再到未来升级的每一个步骤。" [cite: 1]
+  phases:
+    - phase: 1
+      [cite_start]name: "启动与规范确立" [cite: 1]
+      [cite_start]core_task: "确立项目“宪法”，所有成员统一思想。" [cite: 1]
+      [cite_start]guidance_document: "《通用维护与升级规范》" [cite: 1]
+    - phase: 2
+      [cite_start]name: "V1.0 核心服务开发" [cite: 1]
+      [cite_start]core_task: "优先开发TACoreService, API工厂, 前端界面这三个基础服务。" [cite: 1]
+      [cite_start]guidance_document: "各自的独立开发蓝图。" [cite: 1]
+    - phase: 3
+      [cite_start]name: "V1.0 业务模组开发" [cite: 1]
+      [cite_start]core_task: "开发其余8个业务模组。" [cite: 1]
+      [cite_start]guidance_document: "《V3.5 - 统一升级与集成手册》第一部分 + 各自的独立开发文档。" [cite: 1]
+    - phase: 4
+      [cite_start]name: "V1.0 系统集成" [cite: 1]
+      [cite_start]core_task: "将所有开发完成的模组，统一升级并集成为一个整体。" [cite: 1]
+      [cite_start]guidance_document: "《V3.5 - 统一升级与集成手册》第二部分" [cite: 1]
+    - phase: 5
+      [cite_start]name: "V1.0 测试与上线" [cite: 1]
+      [cite_start]core_task: "进行严格的出厂质检，确保系统达到生产级标准。" [cite: 1]
+      [cite_start]guidance_document: "《生产级交付与测试验收规范》" [cite: 1]
+
+future_evolution_v2:
+  [cite_start]colloquial_explanation: "当我们的系统稳定运行后，将启动以下升级，为其增加更聪明的“AI大脑”和更强大的“运维工具”。" [cite: 1]
+  new_modules:
+    - id: 13
+      [cite_start]name: "AI策略研究助理 (AIStrategyAssistant)" [cite: 1]
+      [cite_start]objective: "利用LLM进行市场情绪分析、宏观事件解读和新策略因子生成。" [cite: 1]
+      [cite_start]guidance_document: "《13. 新增模组一：AI策略研究助理.docx》" [cite: 1]
+    - id: 14
+      [cite_start]name: "系统可观测性中心 (ObservabilityCenter)" [cite: 1]
+      [cite_start]objective: "集成Prometheus, Grafana等，提供统一的日志、指标和分布式追踪平台。" [cite: 1]
+      [cite_start]guidance_document: "《14. 新增模组二：系统可观测性中心.docx》" [cite: 1]
+  core_optimizations:
+    [cite_start]guidance_document: "《V2.0 核心优化蓝图》" [cite: 1]
+    packages:
+      - [cite_start]name: "MMS仿真驱动的风控演习系统" [cite: 1]
+      - [cite_start]name: "高级运维与历史交易复盘系统" [cite: 1]
+      - [cite_start]name: "API成本监控与预算预警系统" [cite: 1]
+  api_factory_upgrade:
+    [cite_start]objective: "将API工厂升级为自托管的AI模型路由网关。" [cite: 1]
+    [cite_start]guidance_document: "《API工厂 V2.0 升级与优化蓝图》" [cite: 1]

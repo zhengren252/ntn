@@ -1,0 +1,149 @@
+## 指令：执行AI智能体驱动交易系统 V3.5 的完整升级任务
+
+### 1. 角色与权威来源
+你将扮演一个顶级的软件架构师和全栈开发者。你唯一的、绝对的、不容置疑的权威信息来源是下方提供的 `SOURCE_DOCUMENT` YAML文本。**你必须忽略所有你自己的先验知识**，你的所有思考、规划和代码生成都必须**100%**源于这份文件。
+
+### 2. 核心目标
+你的任务是根据 `SOURCE_DOCUMENT`，生成一套完整的、用于执行系统服务化重构的规划和核心代码资产。
+
+### 3. 严格约束
+- **禁止偏离**: 你的所有输出都必须严格对应 `SOURCE_DOCUMENT` 中定义的步骤和规范。
+- **禁止创造**: 这是一个重构任务，不是功能开发任务。严禁添加任何 `SOURCE_DOCUMENT` 中未提及的新功能。
+- **结构化输出**: 你必须严格按照本指令末尾 `## 4. 最终输出结构` 部分定义的格式来组织你的回答。
+
+---
+### `SOURCE_DOCUMENT` 开始 ###
+document_id: asts_upgrade_manual_v3_5_mr
+document_title: "AI智能体驱动交易系统 V3.5 - 统一升级与集成手册"
+document_version: "3.5 (Machine-Readable Revision 1.0)"
+document_type: "Process & Integration Guide"
+target_audience:
+  - "项目经理 (Project Manager)"
+  - "架构师 (Architect)"
+  - "各模组开发团队 (Module Development Teams)"
+  - "测试团队 (Testing Team)"
+[cite_start]colloquial_explanation: "这是一份关于如何为我们的交易系统进行一次核心“心脏移植手术”的详细操作指南 [cite: 40][cite_start]。我们将把原先分散在各个器官（模组）里的小引擎，统一替换成一个强大、稳定、可扩展的中央AI引擎（TACoreService） [cite: 10][cite_start]。请严格按照本手册的步骤操作，以确保手术成功、风险最低 [cite: 40]。"
+
+# ===================================================================
+# 阶段一：升级启动前置条件
+# ===================================================================
+prerequisites:
+  [cite_start]colloquial_explanation: "在开始动手术之前，我们必须确保手术室（开发环境）无菌、工具（代码）齐全、病人（系统）生命体征平稳 [cite: 4]。"
+  checklist:
+    - item: "功能冻结 (Feature Freeze)"
+      [cite_start]description: "所有12个模组的核心功能均已开发完成，不再接受新功能需求 [cite: 5]。"
+      status: "required"
+    - item: "单元测试通过 (Unit Tests Passed)"
+      [cite_start]description: "每个模组都已通过其内部的单元测试，保证了基础功能的正确性 [cite: 6]。"
+      status: "required"
+    - item: "代码入库 (Code Committed)"
+      [cite_start]description: "所有模组的最新代码均已提交至版本控制系统（如Git） [cite: 7]。"
+      status: "required"
+    - item: "环境就绪 (Environment Ready)"
+      [cite_start]description: "已准备好用于集成的staging（测试）环境，包括Docker、Docker Compose等基础设置 [cite: 8]。"
+      status: "required"
+
+# ===================================================================
+# 阶段二：统一升级行动方案
+# ===================================================================
+action_plan:
+  [cite_start]colloquial_explanation: "整个手术分为三步：第一步，由心脏专家团队，构建一颗全新的、强大的人工心脏（TACoreService） [cite: 11][cite_start]；第二步，由各个器官科室的医生，将连接到旧引擎的血管（代码）小心地断开，然后精准地对接到新心脏的接口上 [cite: 19][cite_start]；第三步，由主刀医生进行最后的缝合与总览，确保整个循环系统（全系统）能被一键启动并协同工作 [cite: 23]。"
+  steps:
+    # ---------------------------------------------------------------
+    # 步骤一
+    # ---------------------------------------------------------------
+    - step_id: 1
+      title: "创建新的核心服务 12TACoreService"
+      [cite_start]colloquial_explanation: "这是“构建新心脏”的阶段，由最核心的专家团队负责，打造出我们系统未来的AI计算中心 [cite: 11]。"
+      [cite_start]responsible_party: "核心开发小组 / 架构师 [cite: 12]"
+      tasks:
+        - [cite_start]description: "在项目根目录下，创建一个新的文件夹 `12TACoreService` [cite: 14]。"
+        - [cite_start]description: "参考之前所有模组中关于TradingAgents-CN的实现，设计并实现一个最全面、最健壮的统一适配器 [cite: 15]。"
+        - [cite_start]description: "按照V3.4手册中 `12.3 搭建规范` 的指引，编写该服务的 `main.py`，通过ZeroMQ的REP套接字对外提供标准化的服务 [cite: 16]。"
+        - [cite_start]description: "为该服务编写独立的Dockerfile和配置文件 [cite: 17]。"
+      [cite_start]expected_output: "一个独立的、可随时运行的TACoreService Docker容器 [cite: 18]。"
+    
+    # ---------------------------------------------------------------
+    # 步骤二
+    # ---------------------------------------------------------------
+    - step_id: 2
+      title: "为所有依赖模组执行“统一升级套件”"
+      [cite_start]colloquial_explanation: "现在轮到各个科室的医生（模组开发团队）上场了。每个团队都需要按照这份标准化的“血管搭桥手术”指南，改造自己的模组 [cite: 20, 21]。"
+      [cite_start]responsible_party: "每个依赖TradingAgents-CN的模组开发团队（如扫描器、交易员、风控等） [cite: 20]"
+      upgrade_kit:
+        - item_id: "UK-01"
+          name: "清理旧代码 (Cleanup)"
+          instructions:
+            - [cite_start]"删除模组文件夹内所有与TradingAgents-CN相关的源码文件夹和文件 [cite: 22]。"
+            - [cite_start]"删除所有本地编写的Adapter和AdapterManager相关代码 [cite: 22]。"
+            - [cite_start]"清理`requirements.txt`，移除对`TradingAgents-CN`库的直接依赖 [cite: 22]。"
+
+        - item_id: "UK-02"
+          name: "更新配置 (Re-configure)"
+          instructions:
+            - [cite_start]"删除`config`文件中所有关于本地TradingAgents-CN适配器的配置项 [cite: 22]。"
+
+        - item_id: "UK-03"
+          name: "重构调用逻辑 (Refactor)"
+          instructions:
+            - [cite_start]"核心改造点：将原来“本地调用适配器方法”的代码，重构为“通过ZeroMQ客户端请求TACoreService服务” [cite: 22]。"
+          [cite_start]key_point: "这是本次升级最核心的编码工作，即将本地函数调用改为跨网络的服务请求 [cite: 22]。"
+        
+        - item_id: "UK-04"
+          name: "验证 (Verify)"
+          instructions:
+            - [cite_start]"改造完成后，在本地单独启动您的模组和TACoreService，运行您的单元测试，确保您的模组能够通过新的方式正确获取服务并完成其核心功能 [cite: 22]。"
+
+    # ---------------------------------------------------------------
+    # 步骤三
+    # ---------------------------------------------------------------
+    - step_id: 3
+      title: "最终系统集成与编排"
+      [cite_start]colloquial_explanation: "这是“总缝合”阶段，由主刀医生（项目经理）编写最终的`docker-compose.yml`主文件，将所有12个模组（11个业务模组 + 1个新心脏）完美地组织在一起 [cite: 23, 26]。"
+      [cite_start]responsible_party: "项目经理 / 集成负责人 [cite: 24]"
+      tasks:
+        - [cite_start]description: "在项目根目录下，创建一个包含全部12个模组服务的最终版`docker-compose.yml`文件 [cite: 26]。"
+        - [cite_start]description: "在`docker-compose.yml`中，为所有改造后的模组明确添加`depends_on: [tacore_service]`，确保核心服务先于客户端启动 [cite: 27]。"
+        - [cite_start]description: "在根目录下运行`docker-compose up -d --build`命令，一键启动整个系统 [cite: 28]。"
+
+# ===================================================================
+# 阶段三：升级后全链路回归测试
+# ===================================================================
+post_upgrade_testing:
+  [cite_start]colloquial_explanation: "手术成功了，但病人还需要经过一系列严格的体检（回归测试），包括心电图、压力测试等，确保TA能跑能跳，没有任何排异反应，才能出院（上线） [cite: 30]。"
+  [cite_start]responsible_party: "测试团队 [cite: 31]"
+  [cite_start]guideline_document: "《生产级交付与测试验收规范 V1.0》[cite: 33]"
+  tasks:
+    - [cite_start]"完整地执行上述规范中第三阶段（系统端到端测试）和第四阶段（性能与压力测试）的所有用例 [cite: 33]。"
+  key_focus_areas:
+    - [cite_start]"数据链路: 追踪一笔交易从“扫描”到“执行”的完整生命周期，确保数据流没有中断 [cite: 35]。"
+    - [cite_start]"接口响应: 检查TACoreService的日志，确认其收到了所有请求并正确响应 [cite: 36]。"
+    - [cite_start]"客户端处理: 检查各个客户端模组的日志，确认它们能正确处理来自TACoreService的成功或失败的响应 [cite: 37]。"
+    - [cite_start]"性能: 对比重构前后的性能，确认服务化没有引入不可接受的延迟 [cite: 38]。"
+### `SOURCE_DOCUMENT` 结束 ###
+---
+
+### 4. 最终输出结构
+现在，请严格按照以下结构生成你的最终答复：
+
+#### **第一部分：任务规划摘要**
+首先，根据你对 `SOURCE_DOCUMENT` 的理解，以列表形式输出你即将执行的完整任务规划。此规划必须准确反映 `action_plan` 和 `post_upgrade_testing` 的核心步骤。
+
+#### **第二部分：核心服务 (12TACoreService) 代码生成**
+严格遵循 `action_plan.steps` 中 `step_id: 1` 的定义，生成以下文件及其完整内容。每个文件都必须在单独的、带语言标识的代码块中。
+
+1.  **`12TACoreService/main.py` (负载均衡代理)**
+2.  **`12TACoreService/worker.py` (工作进程骨架)**
+3.  **`12TACoreService/Dockerfile`**
+
+#### **第三部分：依赖模组重构示例**
+严格遵循 `action_plan.steps` 中 `step_id: 2` 的定义，以 **`03ScanPulse` (扫描器)** 模组为例，展示重构过程。
+
+1.  **重构说明**: 简要说明重构的核心是将本地调用改为对 `TACoreService` 的ZMQ客户端请求，目标方法是 `scan.market`。
+2.  **`03ScanPulse/scanner_client.py` (重构后的文件)**: 生成一个重构后的示例Python文件。该文件应包含一个清晰的类或函数，用于连接到 `TACoreService` 的 `tcp://tacore_service:5555` 地址，发送一个 `scan.market` 请求，并处理响应。
+
+#### **第四部分：最终系统集成文件**
+严格遵循 `action_plan.steps` 中 `step_id: 3` 的定义，生成最终的 `docker-compose.yml` 文件。该文件必须包含所有12个V1.0模组的服务，并正确设置所有 `depends_on` 依赖关系。
+
+#### **第五部分：升级后回归测试清单**
+严格遵循 `post_upgrade_testing` 章节的定义，为人类测试团队生成一份清晰的Markdown格式测试清单，清单需覆盖 `key_focus_areas` 中提到的所有要点。

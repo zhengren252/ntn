@@ -1,0 +1,239 @@
+{
+  "planName": "市场微结构仿真引擎 (MMS) - 机器可读测试方案",
+  "planVersion": "1.0.0",
+  "targetModule": "模组九：市场微结构仿真引擎 (MMS)",
+  "generatedAt": "2025-08-08T19:35:36+08:00",
+  "basedOnDocuments": [
+    "市场微结构仿真引擎_产品需求文档.md",
+    "模组九：市场微结构仿真引擎 (MMS) .txt",
+    "市场微结构仿真引擎_技术架构文档.md",
+    "市场微结构仿真引擎 (MMS) 项目总结.md"
+  ],
+  "testSuites": [
+    {
+      "suiteName": "API Functional Tests",
+      "suiteDescription": "验证所有API端点的核心功能是否按预期工作 (Happy Path)。",
+      "tests": [
+        {
+          "testId": "API_HEALTH_01",
+          "description": "验证 /health 端点能正常返回服务健康状态。",
+          "testType": "API",
+          "endpoint": "/health",
+          "method": "GET",
+          "request": {},
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 200,
+              "description": "HTTP状态码应为 200 OK。"
+            }
+          ]
+        },
+        {
+          "testId": "API_STATUS_01",
+          "description": "验证 /status 端点能返回包含工作进程和负载信息的系统状态。",
+          "testType": "API",
+          "endpoint": "/status",
+          "method": "GET",
+          "request": {},
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 200,
+              "description": "HTTP状态码应为 200 OK。"
+            },
+            {
+              "type": "jsonSchema",
+              "expected": {
+                "type": "object",
+                "properties": {
+                  "service_status": {"type": "string"},
+                  "worker_count": {"type": "integer"},
+                  "queue_length": {"type": "integer"},
+                  "avg_response_time": {"type": "number"},
+                  "memory_usage": {"type": "number"},
+                  "cpu_usage": {"type": "number"}
+                },
+                "required": ["service_status", "worker_count", "queue_length"]
+              },
+              "description": "响应体JSON结构应符合预定义模式。"
+            }
+          ]
+        },
+        {
+          "testId": "API_SIM_01",
+          "description": "验证 /simulate 端点能成功接收一个'黑天鹅'场景的仿真请求并返回结果。",
+          "testType": "API",
+          "endpoint": "/simulate",
+          "method": "POST",
+          "request": {
+            "headers": {"Content-Type": "application/json"},
+            "body": {
+              "symbol": "BTCUSDT",
+              "period": "30d",
+              "scenario": "black_swan",
+              "strategy_params": {
+                "entry_threshold": 0.02,
+                "exit_threshold": 0.01,
+                "position_size": 0.1,
+                "stop_loss": 0.05
+              }
+            }
+          },
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 200,
+              "description": "HTTP状态码应为 200 OK。"
+            },
+            {
+              "type": "jsonSchema",
+              "expected": {
+                "type": "object",
+                "properties": {
+                  "simulation_id": {"type": "string"},
+                  "slippage": {"type": "number"},
+                  "fill_probability": {"type": "number"},
+                  "price_impact": {"type": "number"},
+                  "total_return": {"type": "number"},
+                  "max_drawdown": {"type": "number"},
+                  "sharpe_ratio": {"type": "number"},
+                  "report_url": {"type": "string", "format": "uri"},
+                  "execution_time": {"type": "number"}
+                },
+                "required": ["simulation_id", "slippage", "fill_probability", "price_impact", "report_url"]
+              },
+              "description": "响应体JSON结构应包含仿真结果的关键字段。"
+            }
+          ]
+        },
+        {
+          "testId": "API_CALIBRATE_01",
+          "description": "验证 /calibrate 端点能成功接收手动校准请求。",
+          "testType": "API",
+          "endpoint": "/calibrate",
+          "method": "POST",
+          "request": {},
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 200,
+              "description": "HTTP状态码应为 200 OK 或 202 Accepted，表示任务已接收。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suiteName": "API Input Validation Tests",
+      "suiteDescription": "验证API端点对无效或格式错误的输入能做出正确的错误响应。",
+      "tests": [
+        {
+          "testId": "API_VALIDATE_SIM_01",
+          "description": "向 /simulate 发送缺少必需字段 'symbol' 的请求。",
+          "testType": "API",
+          "endpoint": "/simulate",
+          "method": "POST",
+          "request": {
+            "headers": {"Content-Type": "application/json"},
+            "body": {
+              "period": "7d",
+              "scenario": "normal",
+              "strategy_params": {}
+            }
+          },
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 422,
+              "description": "HTTP状态码应为 422 Unprocessable Entity。"
+            }
+          ]
+        },
+        {
+          "testId": "API_VALIDATE_SIM_02",
+          "description": "向 /simulate 发送 'strategy_params' 字段类型错误的请求 (应为object)。",
+          "testType": "API",
+          "endpoint": "/simulate",
+          "method": "POST",
+          "request": {
+            "headers": {"Content-Type": "application/json"},
+            "body": {
+              "symbol": "ETHUSDT",
+              "period": "7d",
+              "scenario": "normal",
+              "strategy_params": "invalid_type"
+            }
+          },
+          "assertions": [
+            {
+              "type": "statusCode",
+              "expected": 422,
+              "description": "HTTP状态码应为 422 Unprocessable Entity。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "suiteName": "E2E and Integration Tests",
+      "suiteDescription": "验证模块间的协作和完整的业务流程。",
+      "tests": [
+        {
+          "testId": "E2E_SIM_FLOW_01",
+          "description": "验证从发起仿真请求到数据库记录创建的完整流程。",
+          "testType": "E2E",
+          "steps": [
+            {
+              "step": 1,
+              "description": "客户端（策略优化器模组）发起仿真请求。",
+              "action": {
+                "type": "apiCall",
+                "method": "POST",
+                "endpoint": "/simulate",
+                "payload": {
+                  "symbol": "BTCUSDT",
+                  "period": "1h",
+                  "scenario": "high_volatility",
+                  "strategy_params": {"param1": "value1"}
+                },
+                "storeResultAs": "simulationResponse"
+              },
+              "assertions": [
+                {
+                  "type": "statusCode",
+                  "expected": 200
+                },
+                {
+                  "type": "jsonFieldExists",
+                  "field": "simulation_id"
+                }
+              ]
+            },
+            {
+              "step": 2,
+              "description": "验证数据库中是否创建了对应的仿真任务记录。",
+              "action": {
+                "type": "databaseQuery",
+                "database": "SQLite",
+                "query": "SELECT status FROM simulation_tasks WHERE task_id = '${simulationResponse.body.simulation_id}'"
+              },
+              "assertions": [
+                {
+                  "type": "recordExists",
+                  "expected": true
+                },
+                {
+                  "type": "fieldValue",
+                  "field": "status",
+                  "expected": ["pending", "running"],
+                  "description": "任务状态应为 'pending' 或 'running'。"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

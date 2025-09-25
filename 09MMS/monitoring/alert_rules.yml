@@ -1,0 +1,263 @@
+# Prometheus 告警规则
+# 市场微结构仿真引擎 (MMS) 监控告警
+
+groups:
+  # 系统资源告警
+  - name: system_alerts
+    rules:
+      # CPU 使用率过高
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+
+      # 内存使用率过高
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}"
+
+      # 磁盘空间不足
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 10m
+        labels:
+          severity: critical
+          service: mms
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk usage is above 90% for more than 10 minutes on {{ $labels.instance }}"
+
+  # MMS 服务告警
+  - name: mms_service_alerts
+    rules:
+      # 服务不可用
+      - alert: MMSServiceDown
+        expr: up{job=~"mms-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: mms
+        annotations:
+          summary: "MMS service is down"
+          description: "MMS service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute"
+
+      # 响应时间过长
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=~"mms-.*"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 5 seconds for {{ $labels.job }}"
+
+      # 错误率过高
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job=~"mms-.*",status=~"5.."}[5m]) / rate(http_requests_total{job=~"mms-.*"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for {{ $labels.job }}"
+
+      # 仿真任务失败率过高
+      - alert: HighSimulationFailureRate
+        expr: rate(simulation_tasks_total{status="failed"}[10m]) / rate(simulation_tasks_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "High simulation failure rate"
+          description: "Simulation failure rate is above 10% in the last 10 minutes"
+
+      # 仿真队列积压
+      - alert: SimulationQueueBacklog
+        expr: simulation_queue_size > 100
+        for: 15m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "Simulation queue backlog"
+          description: "Simulation queue has more than 100 pending tasks for over 15 minutes"
+
+  # Redis 告警
+  - name: redis_alerts
+    rules:
+      # Redis 服务不可用
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis service has been down for more than 1 minute"
+
+      # Redis 内存使用率过高
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is above 90% for more than 5 minutes"
+
+      # Redis 连接数过多
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high connection count"
+          description: "Redis has more than 1000 connected clients for over 5 minutes"
+
+      # Redis 键过期率异常
+      - alert: RedisHighEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high eviction rate"
+          description: "Redis is evicting more than 100 keys per second"
+
+  # ZeroMQ 告警
+  - name: zmq_alerts
+    rules:
+      # ZeroMQ 消息队列积压
+      - alert: ZMQQueueBacklog
+        expr: zmq_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: zmq
+        annotations:
+          summary: "ZeroMQ queue backlog"
+          description: "ZeroMQ queue has more than 1000 pending messages for over 10 minutes"
+
+      # ZeroMQ 消息处理延迟
+      - alert: ZMQHighLatency
+        expr: histogram_quantile(0.95, rate(zmq_message_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: zmq
+        annotations:
+          summary: "ZeroMQ high message latency"
+          description: "95th percentile ZeroMQ message processing time is above 1 second"
+
+  # 数据库告警
+  - name: database_alerts
+    rules:
+      # 数据库连接失败
+      - alert: DatabaseConnectionFailure
+        expr: database_connection_errors_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection failure"
+          description: "Database connection errors detected"
+
+      # 数据库查询延迟过高
+      - alert: DatabaseHighQueryLatency
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database high query latency"
+          description: "95th percentile database query time is above 2 seconds"
+
+      # 数据库文件大小过大
+      - alert: DatabaseFileSizeGrowth
+        expr: increase(database_file_size_bytes[1h]) > 1073741824  # 1GB
+        for: 0m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database file size growing rapidly"
+          description: "Database file size increased by more than 1GB in the last hour"
+
+  # 业务指标告警
+  - name: business_alerts
+    rules:
+      # 仿真执行时间异常
+      - alert: AbnormalSimulationExecutionTime
+        expr: histogram_quantile(0.95, rate(simulation_execution_duration_seconds_bucket[10m])) > 300
+        for: 10m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "Abnormal simulation execution time"
+          description: "95th percentile simulation execution time is above 5 minutes"
+
+      # 仿真结果异常
+      - alert: AbnormalSimulationResults
+        expr: rate(simulation_results_anomaly_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "Abnormal simulation results detected"
+          description: "More than 10% of simulation results are flagged as anomalous"
+
+      # 缓存命中率过低
+      - alert: LowCacheHitRate
+        expr: rate(cache_hits_total[10m]) / (rate(cache_hits_total[10m]) + rate(cache_misses_total[10m])) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is below 70% for over 15 minutes"
+
+      # API 请求量异常
+      - alert: UnusualAPIRequestVolume
+        expr: |
+          (
+            rate(http_requests_total{job=~"mms-.*"}[5m]) > 
+            (
+              avg_over_time(rate(http_requests_total{job=~"mms-.*"}[5m])[1h:5m]) * 2
+            )
+          ) or (
+            rate(http_requests_total{job=~"mms-.*"}[5m]) < 
+            (
+              avg_over_time(rate(http_requests_total{job=~"mms-.*"}[5m])[1h:5m]) * 0.5
+            )
+          )
+        for: 10m
+        labels:
+          severity: warning
+          service: mms
+        annotations:
+          summary: "Unusual API request volume"
+          description: "API request volume is significantly different from normal patterns"

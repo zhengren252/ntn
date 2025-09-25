@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+API Factory Module - 主应用入口
+核心设计理念：微服务架构、数据隔离、ZeroMQ通信、三环境隔离
+"""
+
+import logging
+from contextlib import asynccontextmanager
+<<<<<<< HEAD
+from fastapi import FastAPI, HTTPException, Depends
+=======
+from fastapi import FastAPI, HTTPException, Depends, Request
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+import zmq
+import zmq.asyncio
+from typing import Dict, Any
+<<<<<<< HEAD
+
+from .config.settings import get_settings
+from .routers import api_gateway, auth_center, quota_circuit, cluster_management
+from .core.zmq_manager import ZMQManager
+from .core.redis_manager import RedisManager
+from .core.sqlite_manager import SQLiteManager
+from .security.auth import AuthManager
+=======
+import uuid
+
+from .config.settings import get_settings
+from .routers import api_gateway, auth_center, quota_circuit, cluster_management, keys
+from .core.zmq_manager import ZMQManager
+from .core.sqlite_manager import SQLiteManager
+from .security.auth import AuthManager
+from .dependencies import initialize_dependencies, cleanup_dependencies, check_dependencies_health
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# 全局管理器实例
+zmq_manager: ZMQManager = None
+<<<<<<< HEAD
+redis_manager: RedisManager = None
+sqlite_manager: SQLiteManager = None
+auth_manager: AuthManager = None
+=======
+sqlite_manager: SQLiteManager = None
+auth_manager: AuthManager = None
+redis_manager = None
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理 - 严格按照全局规范"""
+<<<<<<< HEAD
+    global zmq_manager, redis_manager, sqlite_manager, auth_manager
+=======
+    global zmq_manager, sqlite_manager, auth_manager, redis_manager
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+    settings = get_settings()
+    logger.info(f"启动API Factory Module - 环境: {settings.environment}")
+
+    try:
+        # 初始化核心组件 - 按照系统级集成流程
+        zmq_manager = ZMQManager(settings.zmq_config)
+        await zmq_manager.initialize()
+
+<<<<<<< HEAD
+        redis_manager = RedisManager(settings.redis_config)
+        await redis_manager.initialize()
+
+=======
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+        sqlite_manager = SQLiteManager(settings.sqlite_config)
+        await sqlite_manager.initialize()
+
+        auth_manager = AuthManager(settings.auth_config)
+        await auth_manager.initialize()
+
+<<<<<<< HEAD
+=======
+        # 初始化所有依赖（包括Redis、Supabase和加密管理器）
+        await initialize_dependencies()
+        
+        # 获取Redis管理器实例
+        from .dependencies import get_redis_manager
+        redis_manager = await get_redis_manager()
+
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+        logger.info("所有核心组件初始化完成")
+
+        yield
+
+    except Exception as e:
+        logger.error(f"应用启动失败: {e}")
+        raise
+    finally:
+        # 清理资源
+<<<<<<< HEAD
+        if zmq_manager:
+            await zmq_manager.cleanup()
+        if redis_manager:
+            await redis_manager.cleanup()
+=======
+        await cleanup_dependencies()
+        
+        if zmq_manager:
+            await zmq_manager.cleanup()
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+        if sqlite_manager:
+            await sqlite_manager.cleanup()
+        if auth_manager:
+            await auth_manager.cleanup()
+
+        logger.info("API Factory Module 已关闭")
+
+
+# 创建FastAPI应用实例
+app = FastAPI(
+    title="API Factory Module",
+    description="统一API管理工厂 - 微服务架构、数据隔离、ZeroMQ通信",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# CORS中间件配置
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 生产环境需要限制
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 安全认证
+security = HTTPBearer()
+
+# 注册路由模块 - 四大核心功能
+app.include_router(api_gateway.router, prefix="/api/v1/gateway", tags=["API Gateway"])
+
+app.include_router(
+    auth_center.router, prefix="/api/v1/auth", tags=["Authentication Center"]
+)
+
+app.include_router(
+    quota_circuit.router, prefix="/api/v1/quota", tags=["Quota & Circuit Breaker"]
+)
+
+app.include_router(
+    cluster_management.router, prefix="/api/v1/cluster", tags=["Cluster Management"]
+)
+
+<<<<<<< HEAD
+=======
+# 新增：API密钥管理路由
+app.include_router(
+    keys.router, prefix="/api/v1/keys", tags=["API Key Management"]
+)
+
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+@app.get("/")
+async def root():
+    """根路径 - 系统状态检查"""
+    settings = get_settings()
+    return {
+        "service": "API Factory Module",
+        "version": "1.0.0",
+        "environment": settings.environment,
+        "status": "running",
+        "core_modules": [
+            "API Gateway",
+            "Authentication Center",
+            "Quota & Circuit Breaker",
+            "Cluster Management",
+        ],
+    }
+
+
+<<<<<<< HEAD
+@app.get("/health")
+async def health_check():
+    """健康检查端点 - 测试热重载功能"""
+    try:
+        # 检查各组件状态
+        zmq_status = await zmq_manager.health_check() if zmq_manager else False
+        redis_status = await redis_manager.health_check() if redis_manager else False
+        sqlite_status = await sqlite_manager.health_check() if sqlite_manager else False
+
+        return {
+            "status": "healthy",
+            "components": {
+                "zmq": zmq_status,
+                "redis": redis_status,
+                "sqlite": sqlite_status,
+            },
+        }
+    except Exception as e:
+        logger.error(f"健康检查失败: {e}")
+        raise HTTPException(status_code=503, detail="Service unhealthy")
+=======
+async def _build_health_payload(request: Request) -> Dict[str, Any]:
+    """构建标准化健康检查响应（供 /health 与 /api/v1/health 复用）"""
+    try:
+        # 检查新的依赖健康状态
+        dependencies_health = await check_dependencies_health()
+
+        # 组件健康状态
+        components = {
+            "zmq": zmq_manager.is_healthy() if zmq_manager else False,
+            "redis": await redis_manager.health_check() if redis_manager else False,
+            "sqlite": await sqlite_manager.health_check() if sqlite_manager else False,
+            "auth": auth_manager.is_healthy() if auth_manager else False,
+            "encryption_manager": dependencies_health.get("encryption_manager", False),
+            "supabase_client": dependencies_health.get("supabase_client", False),
+        }
+
+        all_healthy = all(components.values())
+        settings = get_settings()
+        req_id = request.headers.get("x-request-id") or request.headers.get("X-Request-ID") or uuid.uuid4().hex
+
+        return {
+            "status": "healthy" if all_healthy else "unhealthy",
+            "success": bool(all_healthy),
+            "timestamp": settings.get_current_timestamp(),
+            "request_id": req_id,
+            "service": "API Factory Module",
+            "version": "1.0.0",
+            "components": components,
+        }
+    except Exception as e:
+        logger.error(f"健康检查失败: {e}")
+        # 在异常情况下仍返回标准化结构，但标记为不健康
+        settings = get_settings()
+        req_id = request.headers.get("x-request-id") or request.headers.get("X-Request-ID") or uuid.uuid4().hex
+        return {
+            "status": "unhealthy",
+            "success": False,
+            "timestamp": settings.get_current_timestamp(),
+            "request_id": req_id,
+            "service": "API Factory Module",
+            "version": "1.0.0",
+            "components": {},
+        }
+
+
+@app.get("/health")
+async def health_check(request: Request):
+    """健康检查端点 - 标准化响应"""
+    return await _build_health_payload(request)
+
+
+@app.get("/api/v1/health")
+async def health_check_v1(request: Request):
+    """健康检查端点（v1路径别名） - 标准化响应"""
+    return await _build_health_payload(request)
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    settings = get_settings()
+
+    uvicorn.run(
+        "api_factory.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug,
+        log_level="info",
+<<<<<<< HEAD
+    )
+=======
+    )
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

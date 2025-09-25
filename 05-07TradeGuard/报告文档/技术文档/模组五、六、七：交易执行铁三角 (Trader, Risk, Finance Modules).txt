@@ -1,0 +1,74 @@
+模组五、六、七：交易执行铁三角 (Trader, Risk, Finance Modules)
+
+**重要提醒**：开发前请务必先阅读《核心设计理念与全局规范.md》文档，了解项目整体架构和开发规范。
+
+## 模组概述
+
+这三个模组是系统的"执行部队"，它们必须紧密协作：
+- 交易员 (Trader): 像个前线指挥官，拿到"参谋部"的策略后，制定详细的作战计划
+- 风控 (Risk Control): 像个政委，审查每一笔交易申请的风险，给出风险评分
+- 财务 (Finance): 像个后勤部长，掌握着钱袋子，根据风险评分决定资金分配
+
+## 接口契约 (Interaction Contracts)
+
+### 交易员 (Trader Module)
+●5.1 模组概述: 您是"前线指挥官"。您负责接收"参谋部"的策略包，并组织协调"风控"和"财务"完成交易前的所有准备工作，最终下达执行指令。
+●5.2 接口契约:
+○订阅的通知: optimizer.pool.trading (获取策略包)。
+○调用的服务 (REQ/REP):
+■向 风控模组 发起 EVALUATE 请求。
+■向 财务模组 发起 APPLY_BUDGET 请求。
+■向 API工厂 发起 POST /exchange/.../order 请求。
+○数据上报: 将持仓状态写入Redis system:status:trader:positions。
+
+### 风控 (Risk Control Module)
+●6.1 模组概述: 您是"安全政委"。您的核心职责是在交易前评估风险，并在交易中实时监控风险。您拥有一票否决权。
+●6.2 接口契约:
+○提供的服务 (REQ/REP):
+■响应 交易员模组 的 EVALUATE 请求，返回风险评分。
+○订阅的通知: crawler.news (获取黑天鹅事件预警)。
+○发布的通知: risk.alerts (当检测到重大风险时，向总控和相关模组发布警报)。
+○数据上报: 将整体风险敞口写入Redis system:status:risk:exposure。
+
+### 财务 (Finance Module)
+●7.1 模组概述: 您是"后勤部长"。您掌管资金，根据"风控"的评估结果和自身的分配算法，决定给每笔交易分配多少预算。
+●7.2 接口契约:
+○提供的服务 (REQ/REP):
+■响应 交易员模组 的 APPLY_BUDGET 请求，返回批准的资金额度。
+○数据上报: 将账户总览和资金分配情况写入Redis system:status:finance:overview。
+
+### 模组八：总控 (Master Control Module) 开发套件
+●8.1 模组概述: 您是整个系统的"总司令"。您不执行具体交易，而是通过监控全局状态（从Redis读取），做出最高级别的战略决策，如切换市场模式（牛/熊）、启动紧急熔断等。
+●8.2 接口契约 (Interaction Contracts)
+○调用的服务: 无，总控不直接调用任何服务，以保证解耦。
+○订阅的通知: risk.alerts (接收来自风控的重大警报)。
+○发布的通知 (PUB):
+■主题: control.commands。
+■消息内容: 发布全局指令。
+■数据结构: {"command": "SWITCH_MODE", "payload": "DEFENSIVE", "timestamp": ...} 或 {"command": "EMERGENCY_SHUTDOWN", "payload": "SEC_lawsuit", "timestamp": ...}
+○核心工作方式: 周期性地（如每秒）从Redis读取所有system:status:*的键，聚合分析后做出决策。
+8.3 需求书、实施计划、搭建规范:
+●口语化说明: 这三个模组是系统的“执行部队”，它们必须紧密协作。
+○交易员 (Trader): 像个前线指挥官，拿到“参谋部”的策略后，制定详细的作战计划（买多少，怎么买），然后向“风控”和“财务”申请。
+○风控 (Risk Control): 像个政委，审查每一笔交易申请的风险，给出一个1-10分的风险评分。分数太高直接驳回。它还时刻盯着战场，一旦发现市场有暴跌迹象，会立刻发出警报。
+○财务 (Finance): 像个后勤部长，掌握着钱袋子。它会根据“风控”的评分来决定给“交易员”批多少钱。风险低的交易，全额批准；风险高的，只给一半甚至更少。
+1. 需求书 (Requirements Document)
+模块	ID	Description	Features
+交易员	trader-module	接收策略包，生成交易计划，申请预算，并执行订单。	[{"id":"feat-01", "name":"策略匹配与预算申请"}, {"id":"feat-02", "name":"订单执行器(TWAP/VWAP)"}, {"id":"feat-03", "name":"TradingAgents-CN执行集成"}]
+风控	risk-control-module	评估交易风险，实时监控市场异动，执行风控规则。	[{"id":"feat-01", "name":"交易前风险评分"}, {"id":"feat-02", "name":"持仓中风险监控"}, {"id":"feat-03", "name":"熔断预警(下架/归零)"}]
+财务	finance-module	根据风险评估和账户状况，动态分配资金。	[{"id":"feat-01", "name":"动态资金分配算法"}, {"id":"feat-02", "name":"账户审计与健康度检查"}, {"id":"feat-03", "name":"人工干预接口"}]
+2. 实施计划 (Implementation Plan)
+阶段	任务	预估工时	产出物
+第1-2周	风控模块开发（核心评分矩阵）	40小时	可对交易进行评分的风控服务
+第2-3周	财务模块开发（动态分配算法）	40小时	智能资金分配服务
+第3-5周	交易员模块开发（集成TA-CN执行器）	60小时	可完整执行交易的模块
+第6周	铁三角联调与集成测试	30小时	协同工作的交易执行系统
+3. 搭建规范 (Construction Specification)
+规范项	具体内容	注释
+语言	Python	保持技术栈统一
+协作流程	Trader -> Risk (评分) -> Trader -> Finance (拨款) -> Trader -> Exchange	严格遵循“先审后批，按风险拨款”的原则
+通信协议	ZeroMQ (REQ/REP)	用于模块间的请求-响应式交互，确保每一步都得到确认
+接口契约	T->R请求: {"type": "EVALUATE", "payload": {"symbol": "PEPE/USDT", "amount": 50}} <br> R->T响应: {"status": "ok", "score": 7.1, "suggestions": ["reduce_leverage"]} <br> T->F请求: {"type": "APPLY_BUDGET", "payload": {"symbol": "...", "risk_score": 7.1}} <br> F->T响应: {"status": "approved", "allocated_amount": 25}	定义清晰的内部服务间通信契约
+资金分配	def allocate_funds(agent): <br> base = total * 0.05 <br> perf_factor = tanh(agent.profit) <br> risk_factor = 1 - (score / 10) <br> return base * perf_factor * risk_factor	核心算法，平衡收益与风险
+订单执行	优先使用TradingAgents-CN的TWAP等智能订单算法，减少对市场的冲击	避免因大单导致价格滑点
+

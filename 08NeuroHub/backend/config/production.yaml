@@ -1,0 +1,158 @@
+# 生产环境配置
+# 严格按照数据隔离和环境管理规范V1.0
+
+# 应用配置
+app:
+  name: "NeuroTrade Nexus - Master Control Module"
+  version: "1.0.0"
+  environment: "production"
+  debug: false
+  log_level: "INFO"
+
+# 数据库配置 - 生产环境隔离
+database:
+  type: "sqlite"
+  path: "./data/prod/master_control.db"
+  backup_path: "./data/prod/backups/"
+  auto_backup: true
+  backup_interval: 900  # 15分钟
+  encryption: true
+
+# Redis配置 - 生产环境隔离
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0  # 生产环境使用DB0
+  password: "${REDIS_PASSWORD}"  # 从环境变量获取
+  max_connections: 20
+  connection_timeout: 3
+  key_prefix: "ntn:prod:"
+  ssl: true
+
+# ZeroMQ配置 - 生产环境端口隔离
+zeromq:
+  base_port: 5555  # 生产环境基础端口
+  pub_port: 5555
+  sub_port: 5556
+  router_port: 5557
+  dealer_port: 5558
+  
+  # 模组端口配置
+  modules:
+    master_control:
+      pub_port: 5555
+      sub_port: 5556
+      router_port: 5557
+      dealer_port: 5558
+    data_collection:
+      pub_port: 5565
+      sub_port: 5566
+      router_port: 5567
+      dealer_port: 5568
+    signal_generation:
+      pub_port: 5575
+      sub_port: 5576
+      router_port: 5577
+      dealer_port: 5578
+    execution_engine:
+      pub_port: 5585
+      sub_port: 5586
+      router_port: 5587
+      dealer_port: 5588
+    risk_management:
+      pub_port: 5595
+      sub_port: 5596
+      router_port: 5597
+      dealer_port: 5598
+    performance_analysis:
+      pub_port: 5605
+      sub_port: 5606
+      router_port: 5607
+      dealer_port: 5608
+    market_analysis:
+      pub_port: 5615
+      sub_port: 5616
+      router_port: 5617
+      dealer_port: 5618
+
+# API配置
+api:
+  host: "0.0.0.0"
+  port: 8000
+  prefix: "/api/v1"
+  cors_origins:
+    - "https://neurotrade.com"
+    - "https://app.neurotrade.com"
+  cors_credentials: true
+  ssl_enabled: true
+  
+# 安全配置
+security:
+  secret_key: "${SECRET_KEY}"  # 从环境变量获取
+  access_token_expire_minutes: 30
+  algorithm: "HS256"
+  encryption_enabled: true
+  rate_limiting: true
+  
+# 日志配置
+logging:
+  level: "INFO"
+  file: "./logs/prod/master_control.log"
+  max_size: "50MB"
+  backup_count: 30
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  remote_logging: true
+  
+# 交易配置 - 生产环境真实交易
+trading:
+  enabled: true
+  simulation_mode: false
+  paper_trading: false
+  live_trading: true
+  
+# 风险管理配置 - 生产环境最严格
+risk:
+  max_drawdown: 0.02  # 2% - 最严格
+  position_limit: 0.10  # 10% - 最保守
+  daily_loss_limit: 0.015  # 1.5%
+  circuit_breaker_enabled: true
+  emergency_stop_enabled: true
+  
+# 资金管理配置
+fund:
+  default_mode: "conservative"
+  initial_capital: "${INITIAL_CAPITAL}"  # 从环境变量获取
+  currency: "USD"
+  
+# 监控配置
+monitoring:
+  enabled: true
+  heartbeat_interval: 10  # 秒 - 更频繁
+  health_check_interval: 15  # 秒
+  metrics_collection: true
+  performance_tracking: true
+  alerting: true
+  
+# 性能配置
+performance:
+  workers: 4
+  max_requests: 1000
+  max_requests_jitter: 100
+  timeout: 30
+  keepalive: 2
+  
+# 备份配置
+backup:
+  enabled: true
+  interval: 900  # 15分钟
+  retention_days: 90
+  remote_backup: true
+  encryption: true
+  
+# 告警配置
+alerting:
+  enabled: true
+  email_notifications: true
+  sms_notifications: true
+  webhook_notifications: true
+  escal

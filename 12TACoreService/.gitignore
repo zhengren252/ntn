@@ -1,0 +1,368 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+tests.log
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#pdm.lock
+#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   in version control.
+#   https://pdm.fming.dev/#use-with-ide
+.pdm.toml
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
+#  project, it is recommended to include the following files:
+#  .idea/
+#  *.iml
+#  *.ipr
+#  *.iws
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+
+# TACoreService specific
+# 数据文件
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/backups/
+data/exports/
+
+# 日志文件
+logs/
+*.log
+*.log.*
+
+# 配置文件（保留示例文件）
+.env
+config.yaml
+config.yml
+settings.ini
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+*.temp
+
+# 缓存文件
+cache/
+*.cache
+
+# 备份文件
+*.bak
+*.backup
+*.old
+
+# 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# TradingAgents-CN (如果作为子模块)
+TradingAgents-CN/
+
+# 监控和指标数据
+metrics/
+prometheus_data/
+grafana_data/
+
+# Redis数据
+redis_data/
+
+# 证书和密钥
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
+keys/
+
+# 性能分析文件
+*.prof
+*.profile
+
+# 内存转储
+*.dump
+*.hprof
+
+# 进程ID文件
+*.pid
+
+# 套接字文件
+*.sock
+
+# 锁文件
+*.lock
+
+# 编译的二进制文件
+*.exe
+*.dll
+*.dylib
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 文档生成
+docs/build/
+docs/_build/
+
+# 本地开发
+local/
+dev/
+
+# 实验和测试数据
+experiments/
+test_data/
+sample_data/
+
+# 第三方库（如果本地安装）
+vendor/
+third_party/
+
+# 运行时文件
+run/
+var/run/
+
+# 配置覆盖
+local_settings.py
+local_config.yaml
+dev_config.yaml
+prod_config.yaml
+
+# IDE和编辑器
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+
+# 操作系统
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# 网络文件
+.netrwhist
+
+# 标签文件
+tags
+TAGS
+
+# 数据库文件
+*.db-journal
+*.db-wal
+*.db-shm
+
+# 安全相关
+secrets/
+.secrets
+passwords.txt
+api_keys.txt
+
+# 部署相关
+deploy/
+kubernetes/secrets/
+helm/values-prod.yaml
+helm/values-staging.yaml
+
+# 监控配置
+prometheus.yml
+grafana.ini
+alertmanager.yml
+
+# 负载测试
+load_test_results/
+*.jmx
+
+# 性能测试
+benchmark_results/
+profile_results/
+
+# 机器学习模型（如果有）
+models/
+*.pkl
+*.joblib
+*.h5
+*.pb
+
+# 数据科学
+*.ipynb
+jupyter_notebooks/
+
+# 前端构建（如果有前端组件）
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+build/
+dist/
+
+# 环境特定
+.env.local
+.env.development
+.env.test
+.env.production

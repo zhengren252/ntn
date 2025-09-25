@@ -1,0 +1,37 @@
+# Scanner Module Development Dependencies
+# Contains development, testing, debugging and code quality tools
+
+# Base dependencies (inherit from production environment)
+-r requirements.txt
+
+# Development and Testing Dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-xdist>=3.3.0
+
+# Code Quality and Formatting Tools
+black>=23.7.0
+flake8>=6.0.0
+mypy>=1.5.0
+isort>=5.12.0
+pre-commit>=3.3.0
+
+# Debugging and Performance Analysis Tools (Simplified)
+psutil>=5.9.0
+
+# Development Tools and Utilities (Simplified)
+ipython>=8.14.0
+
+# Type Annotation Support (Core Types)
+types-requests>=2.31.0
+types-redis>=4.6.0
+
+# Note:
+# This file contains simplified development dependencies
+# Production environment only needs requirements.txt
+# Development environment usage: pip install -r requirements-dev.txt
+# Simplified to keep core development tools: testing framework, code quality tools, type checking
+# Removed non-core tools: documentation generation, security scanning, performance analysis, UI beautification tools
+# Ensures production environment simplicity and development environment efficiency

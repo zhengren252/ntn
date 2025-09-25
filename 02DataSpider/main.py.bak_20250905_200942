@@ -1,0 +1,252 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+NeuroTrade Nexus (NTN) - 信息源爬虫模组主入口
+模组二：Info Crawler Module
+
+启动方式：
+  python main.py --env development
+  python main.py --env staging  
+  python main.py --env production
+"""
+
+import sys
+import os
+import argparse
+from pathlib import Path
+
+# 添加依赖库路径
+# 添加依赖库路径（优先读取环境变量 YILAI_DIR，其次回退到 D:\\YiLai；仅在目录存在且未加入 sys.path 时插入）
+YILAI_DIR = os.getenv("YILAI_DIR", r"D:\\YiLai")
+core_lib_path = os.path.join(YILAI_DIR, "core_lib")
+if os.path.isdir(core_lib_path) and core_lib_path not in sys.path:
+    sys.path.insert(0, core_lib_path)
+
+# 添加项目路径
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+from app.config import ConfigManager
+from app.utils import Logger
+from app.api import create_app
+from app.crawlers import ScrapyCrawler, TelegramCrawler
+from app.zmq_client import ZMQPublisher
+
+
+def parse_arguments():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(description="NeuroTrade Nexus 信息源爬虫模组")
+    parser.add_argument(
+        "--env",
+        choices=["development", "staging", "production"],
+        default="development",
+        help="运行环境 (默认: development)",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["crawler", "api", "all"],
+        default="all",
+        help="运行模式 (默认: all)",
+    )
+    parser.add_argument("--debug", action="store_true", help="启用调试模式")
+    return parser.parse_args()
+
+
+def setup_environment(env: str):
+<<<<<<< HEAD
+    """设置环境变量"""
+    os.environ["NTN_ENV"] = env
+    os.environ["APP_ENV"] = env
+    
+    # 设置日志级别
+    if env == "development":
+        os.environ["LOG_LEVEL"] = "DEBUG"
+    else:
+        os.environ["LOG_LEVEL"] = "INFO"
+=======
+    """设置运行环境"""
+    os.environ["NTN_ENV"] = env
+
+    # 初始化配置管理器
+    config = ConfigManager(env)
+
+    # 初始化日志系统
+    logger = Logger(config)
+
+    return config, logger
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+
+def start_crawler_service(config, logger):
+    """启动爬虫服务"""
+    logger.info("启动爬虫服务...")
+<<<<<<< HEAD
+    
+    try:
+        # 初始化ZMQ发布者
+        zmq_publisher = ZMQPublisher(config)
+        
+        # 启动Scrapy爬虫
+        scrapy_crawler = ScrapyCrawler(config, zmq_publisher)
+        scrapy_crawler.start()
+        
+        # 启动Telegram爬虫
+        telegram_crawler = TelegramCrawler(config, zmq_publisher)
+        telegram_crawler.start()
+        
+        logger.info("爬虫服务启动成功")
+        
+        # 保持服务运行
+        import time
+        while True:
+            time.sleep(1)
+            
+    except Exception as e:
+        logger.error(f"爬虫服务启动失败: {e}")
+        raise
+=======
+
+    # 初始化ZeroMQ发布者
+    zmq_publisher = ZMQPublisher(config, logger)
+
+    # 启动Scrapy爬虫
+    scrapy_crawler = ScrapyCrawler(config, logger, zmq_publisher)
+
+    # 暂时禁用Telegram监听器以避免配置问题
+    # telegram_crawler = TelegramCrawler(config, logger, zmq_publisher)
+
+    # 并发运行爬虫
+    import threading
+
+    def run_scrapy():
+        scrapy_crawler.start_crawling()
+
+    # 启动线程
+    scrapy_thread = threading.Thread(target=run_scrapy, daemon=True)
+    # telegram_thread = threading.Thread(target=run_telegram, daemon=True)
+
+    scrapy_thread.start()
+    # telegram_thread.start()
+
+    logger.info("爬虫服务已启动")
+    return scrapy_thread  # , telegram_thread
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+
+def start_api_service(config, logger):
+    """启动API服务"""
+    logger.info("启动API服务...")
+<<<<<<< HEAD
+    
+    try:
+        app = create_app(config)
+        
+        import uvicorn
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=config.get("api.port", 5000),
+            log_level=config.get("logging.level", "info").lower(),
+        )
+        
+    except Exception as e:
+        logger.error(f"API服务启动失败: {e}")
+        raise
+=======
+
+    # 获取环境名称
+    env_name = config.environment if hasattr(config, "environment") else "production"
+    app = create_app(env_name)
+
+    # 获取API配置
+    api_config = config.get_api_config()
+    host = api_config.get("host", "0.0.0.0")
+    port = api_config.get("port", 5000)
+    debug = api_config.get("debug", False)
+
+    logger.info(f"API服务启动在 http://{host}:{port}")
+    app.run(host=host, port=port, debug=debug)
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+
+
+def main():
+    """主函数"""
+<<<<<<< HEAD
+    args = parse_arguments()
+    
+    # 设置环境
+    setup_environment(args.env)
+    
+    # 初始化配置
+    config = ConfigManager(args.env)
+    
+    # 初始化日志
+    logger = Logger(config).get_logger()
+    
+    logger.info(f"NeuroTrade Nexus 信息源爬虫模组启动 - 环境: {args.env}, 模式: {args.mode}")
+    
+    try:
+        if args.mode == "crawler":
+            start_crawler_service(config, logger)
+        elif args.mode == "api":
+            start_api_service(config, logger)
+        elif args.mode == "all":
+            # 在生产环境中，通常使用进程管理器来分别启动不同服务
+            # 这里为了简化，使用多线程
+            import threading
+            
+            # 启动爬虫服务线程
+            crawler_thread = threading.Thread(
+                target=start_crawler_service, args=(config, logger)
+            )
+            crawler_thread.daemon = True
+            crawler_thread.start()
+            
+            # 启动API服务（主线程）
+            start_api_service(config, logger)
+            
+    except KeyboardInterrupt:
+        logger.info("收到停止信号，正在关闭服务...")
+    except Exception as e:
+        logger.error(f"服务运行异常: {e}")
+=======
+    try:
+        # 解析命令行参数
+        args = parse_arguments()
+
+        # 设置环境
+        config, logger = setup_environment(args.env)
+
+        logger.info(f"NeuroTrade Nexus 信息源爬虫模组启动")
+        logger.info(f"运行环境: {args.env}")
+        logger.info(f"运行模式: {args.mode}")
+        logger.info(f"调试模式: {args.debug}")
+
+        if args.mode in ["crawler", "all"]:
+            crawler_threads = start_crawler_service(config, logger)
+
+        if args.mode in ["api", "all"]:
+            start_api_service(config, logger)
+
+        # 保持主线程运行
+        if args.mode == "crawler":
+            import time
+
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                logger.info("收到停止信号，正在关闭爬虫服务...")
+
+    except Exception as e:
+        print(f"启动失败: {e}")
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+<<<<<<< HEAD
+    main()
+=======
+    main()
+>>>>>>> 4d5ab11 (chore: init repo (private) [skip ci])

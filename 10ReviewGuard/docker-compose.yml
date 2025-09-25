@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # ReviewGuard后端服务 (纯后端服务，遵循单一职责原则)
+  reviewguard-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reviewguard_backend
+    ports:
+      - "8001:8000"  # FastAPI后端端口 (避免与其他服务冲突)
+      - "5557:5555"  # ZeroMQ订阅端口
+      - "5558:5556"  # ZeroMQ发布端口
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_PATH=/app/data/reviewguard.db
+      - ZEROMQ_SUB_PORT=5555
+      - ZEROMQ_PUB_PORT=5556
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - redis
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - reviewguard_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 注意：前端服务已移除，遵循严格约束 - 所有UI功能由【模组十一：ASTS Console】实现
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: reviewguard_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - reviewguard_net
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:
+
+networks:
+  reviewguard_net:
+    driver: bridge

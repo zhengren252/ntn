@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: tacoreservice-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - tacoreservice-network
+
+  # TACoreService主服务
+  tacoreservice:
+    build: .
+    container_name: tacoreservice-app
+    ports:
+      - "5555:5555"  # ZeroMQ端口
+      - "8000:8000"  # FastAPI监控端口
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    environment:
+      - TACORESERVICE_ENV=production
+      - TACORESERVICE_LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_PATH=/app/data/tacoreservice.db
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - tacoreservice-network
+    restart: unless-stopped
+
+  # TACoreService worker service
+  tacore_worker:
+    build: .
+    # 修改为模块方式运行，确保相对导入有效
+    command: ["python", "-u", "-m", "tacoreservice.workers.worker"]
+    environment:
+      - ZMQ_BACKEND_HOST=tacoreservice
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      redis:
+        condition: service_healthy
+      tacoreservice:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - tacoreservice-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  tacoreservice-network:
+    driver: bridge
