@@ -45,7 +45,6 @@ def get_or_create_crawler(crawler_type: str, crawler_id: str = None):
     Returns:
         爬虫实例
     """
-    global crawler_instances
 
     if crawler_id is None:
         crawler_id = f"{crawler_type}_default"

@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-甯傚満寰粨鏋勪豢鐪熷紩鎿?(MMS) - 涓诲叆鍙ｆ枃浠?
-璐熻浇鍧囪　鍣ㄥ疄鐜帮紝鍩轰簬ZeroMQ DEALER/ROUTER妯″紡
+市场微结构仿真引擎(MMS) - 主入口文件
+负载均衡器实现，基于ZeroMQ DEALER/ROUTER模式
 
-浣滆€? NeuroTrade Nexus 寮€鍙戝洟闃?
-鐗堟湰: 1.0.0
-鍒涘缓鏃堕棿: 2024-12-01
+作者: NeuroTrade Nexus 开发团队
+版本: 1.0.0
+创建时间: 2024-12-01
 """
 
 import asyncio
@@ -35,7 +34,7 @@ from src.utils.exceptions import ErrorHandler
 
 
 class HealthResponse(BaseModel):
-    """鍋ュ悍妫€鏌ュ搷搴旀ā鍨?""
+    """健康检查响应模型"""
 
     status: str
     timestamp: float
@@ -44,7 +43,7 @@ class HealthResponse(BaseModel):
 
 
 class StatusResponse(BaseModel):
-    """绯荤粺鐘舵€佸搷搴旀ā鍨?""
+    """系统状态响应模型"""
 
     service_status: str
     worker_count: int
@@ -55,12 +54,12 @@ class StatusResponse(BaseModel):
 
 
 class MMSApplication:
-    """MMS搴旂敤绋嬪簭涓荤被"""
+    """MMS应用程序主类"""
 
     def __init__(self):
         self.app = FastAPI(
-            title="甯傚満寰粨鏋勪豢鐪熷紩鎿?(MMS)",
-            description="NeuroTrade Nexus 浜ゆ槗绯荤粺鐨勮櫄鎷熺幇瀹炲紩鎿?",
+            title="市场微结构仿真引擎(MMS)",
+            description="NeuroTrade Nexus 交易系统的虚拟现实引擎",
             version="1.0.0",
             docs_url="/docs" if settings.DEBUG else None,
             redoc_url="/redoc" if settings.DEBUG else None,
@@ -69,7 +68,7 @@ class MMSApplication:
         self.server: Optional[Server] = None
         self.shutdown_event = threading.Event()
 
-        # 璁剧疆CORS
+        # 设置CORS
         allowed_origins = (
             ["*"]
             if settings.DEBUG
@@ -84,21 +83,21 @@ class MMSApplication:
             allow_headers=["*"],
         )
 
-        # 娉ㄥ唽璺敱
+        # 注册路由
         self.setup_routes()
 
-        # 璁剧疆閿欒澶勭悊
+        # 设置错误处理
         self.setup_error_handlers()
 
-        # 璁剧疆淇″彿澶勭悊
+        # 设置信号处理
         self.setup_signal_handlers()
 
     def setup_routes(self):
-        """璁剧疆API璺敱"""
+        """设置API路由"""
 
         @self.app.get("/health", response_model=HealthResponse)
         async def health_check():
-            """鍋ュ悍妫€鏌ョ鐐?""
+            """健康检查端点"""
             worker_count = (
                 self.load_balancer.get_worker_count()
                 if self.load_balancer
@@ -113,7 +112,7 @@ class MMSApplication:
 
         @self.app.get("/status", response_model=StatusResponse)
         async def get_status():
-            """鑾峰彇绯荤粺鐘舵€?""
+            """获取系统状态"""
             if not self.load_balancer:
                 raise HTTPException(status_code=503, detail="Load balancer not ready")
 
@@ -127,11 +126,11 @@ class MMSApplication:
                 cpu_usage=stats.get("cpu_usage", 0.0),
             )
 
-        # 娉ㄥ唽API璺敱
+        # 注册API路由
         self.app.include_router(api_router, prefix="/api/v1")
 
     def setup_error_handlers(self):
-        """璁剧疆閿欒澶勭悊鍣?""
+        """设置错误处理器"""
         error_handler = ErrorHandler()
 
         @self.app.exception_handler(Exception)
@@ -147,7 +146,7 @@ class MMSApplication:
             return await error_handler.handle_value_error(request, exc)
 
     def setup_signal_handlers(self):
-        """璁剧疆淇″彿澶勭悊鍣?""
+        """设置信号处理器"""
         try:
             # 只在主线程中设置信号处理器
             if threading.current_thread() is threading.main_thread():
@@ -165,7 +164,7 @@ class MMSApplication:
             # 在测试环境中继续运行，不因信号处理失败而中断
 
     async def start_load_balancer(self):
-        """鍚姩璐熻浇鍧囪　鍣?""
+        """启动负载均衡器"""
         try:
             self.load_balancer = LoadBalancer(
                 frontend_port=settings.FRONTEND_PORT,
@@ -179,7 +178,7 @@ class MMSApplication:
             raise
 
     async def start_web_server(self):
-        """鍚姩Web鏈嶅姟鍣?""
+        """启动Web服务器"""
         try:
             config = Config(
                 app=self.app,
@@ -195,27 +194,27 @@ class MMSApplication:
             raise
 
     async def run(self):
-        """杩愯搴旂敤绋嬪簭"""
+        """运行应用程序"""
         try:
-            # 璁剧疆鏃ュ織
+            # 设置日志
             setup_logger()
             logger.info("Starting MMS Application...")
 
-            # 鍒濆鍖栨暟鎹簱
+            # 初始化数据库
             await init_database()
             logger.info("Database initialized")
 
-            # 鍚姩璐熻浇鍧囪　鍣?
+            # 启动负载均衡器
             await self.start_load_balancer()
 
-            # 鍚姩Web鏈嶅姟鍣?
+            # 启动Web服务器
             server_task = asyncio.create_task(self.start_web_server())
 
-            # 绛夊緟鍏抽棴淇″彿
+            # 等待关闭信号
             while not self.shutdown_event.is_set():
                 await asyncio.sleep(1)
 
-            # 浼橀泤鍏抽棴
+            # 优雅关闭
             logger.info("Shutting down...")
             await self.cleanup()
 
@@ -224,7 +223,7 @@ class MMSApplication:
             sys.exit(1)
 
     async def cleanup(self):
-        """娓呯悊璧勬簮"""
+        """清理资源"""
         try:
             if self.load_balancer:
                 await self.load_balancer.stop()
@@ -238,17 +237,17 @@ class MMSApplication:
             logger.error(f"Error during cleanup: {e}")
 
 
-def main():
-    """涓诲嚱鏁?""
-    try:
-        app = MMSApplication()
-        asyncio.run(app.run())
-    except KeyboardInterrupt:
-        logger.info("Application interrupted by user")
-    except Exception as e:
-        logger.error(f"Application failed to start: {e}")
-        sys.exit(1)
+async def main():
+    """主函数"""
+    app_instance = MMSApplication()
+    await app_instance.run()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Application interrupted by user")
+    except Exception as e:
+        logger.error(f"Application failed: {e}")
+        sys.exit(1)

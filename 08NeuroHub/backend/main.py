@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-妯＄粍鍏細鎬绘帶妯″潡 (Master Control Module)
-涓诲簲鐢ㄥ叆鍙ｆ枃浠?
+模块八：总控模块 (Master Control Module)
+主应用入口文件
 
-涓ユ牸鎸夌収鏍稿績璁捐鐞嗗康鍜屽叏灞€瑙勮寖瀹炵幇锛?
-- 寰湇鍔℃灦鏋?
-- ZeroMQ閫氫俊
-- Redis鐘舵€佺鐞?
-- SQLite鎸佷箙鍖栧瓨鍌?
-- 涓夌幆澧冮殧绂?
+严格按照核心设计理念和全局规范实现：
+- 微服务架构
+- ZeroMQ通信
+- Redis状态管理
+- SQLite持久化存储
+- 三环境隔离
 """
 
 import asyncio
@@ -27,10 +27,10 @@ from app.core.zmq_manager import init_zmq, get_zmq_manager
 from app.api.routes import api_router
 from app.websocket.realtime import websocket_manager
 
-# 鑾峰彇閰嶇疆
+# 获取配置
 settings = get_settings()
 
-# 閰嶇疆鏃ュ織
+# 配置日志
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -44,61 +44,61 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """搴旂敤鐢熷懡鍛ㄦ湡绠＄悊"""
-    logger.info(f"鍚姩 {settings.app_name} v{settings.app_version}")
-    logger.info(f"杩愯鐜: {settings.app_env}")
+    """应用生命周期管理"""
+    logger.info(f"启动 {settings.app_name} v{settings.app_version}")
+    logger.info(f"运行环境: {settings.app_env}")
 
     try:
-        # 鍒濆鍖栨暟鎹簱
-        logger.info("鍒濆鍖栨暟鎹簱...")
+        # 初始化数据库
+        logger.info("初始化数据库...")
         await init_database()
 
-        # 鍒濆鍖朢edis
-        logger.info("鍒濆鍖朢edis...")
+        # 初始化Redis
+        logger.info("初始化Redis...")
         await init_redis()
 
-        # 鍒濆鍖朲eroMQ
-        logger.info("鍒濆鍖朲eroMQ...")
+        # 初始化ZeroMQ
+        logger.info("初始化ZeroMQ...")
         await init_zmq()
 
-        logger.info("鎵€鏈夌粍浠跺垵濮嬪寲瀹屾垚")
+        logger.info("所有组件初始化完成")
 
         yield
 
     except Exception as e:
-        logger.error(f"搴旂敤鍚姩澶辫触: {e}")
+        logger.error(f"应用启动失败: {e}")
         raise
     finally:
-        # 娓呯悊璧勬簮
-        logger.info("鍏抽棴搴旂敤缁勪欢...")
+        # 清理资源
+        logger.info("关闭应用组件...")
 
         try:
-            # 鍏抽棴ZeroMQ
+            # 关闭ZeroMQ
             zmq_manager = get_zmq_manager()
             await zmq_manager.stop()
 
-            # 鍏抽棴Redis
+            # 关闭Redis
             redis_manager = get_redis_manager()
             await redis_manager.close()
 
-            # 鍏抽棴鏁版嵁搴?
+            # 关闭数据库
             await close_database()
 
-            logger.info("搴旂敤宸插畨鍏ㄥ叧闂?")
+            logger.info("应用已安全关闭")
         except Exception as e:
-            logger.error(f"搴旂敤鍏抽棴鏃跺嚭閿? {e}")
+            logger.error(f"应用关闭时出错: {e}")
 
 
-# 鍒涘缓FastAPI搴旂敤
+# 创建FastAPI应用
 app = FastAPI(
     title=settings.app_name,
-    description="NeuroTrade Nexus浜ゆ槗绯荤粺鐨勫喅绛栧ぇ鑴戝拰鎸囨尌涓績",
+    description="NeuroTrade Nexus交易系统的决策大脑和指挥中心",
     version=settings.app_version,
     debug=settings.debug,
     lifespan=lifespan
 )
 
-# 娣诲姞CORS涓棿浠?
+# 添加CORS中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -107,7 +107,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 娉ㄥ唽璺敱
+# 注册路由
 app.include_router(api_router, prefix=settings.api_v1_prefix)
 # 为兼容历史与测试期望，额外挂载 /api 前缀，确保 /api/commands/execute 可用
 app.include_router(api_router, prefix="/api")
@@ -115,13 +115,13 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/health")
 async def health_check():
-    """鍋ュ悍妫€鏌ョ鐐?""
+    """健康检查端点"""
     try:
-        # 妫€鏌edis杩炴帴
+        # 检查Redis连接
         redis_manager = get_redis_manager()
         redis_status = await redis_manager.ping()
         
-        # 妫€鏌eroMQ杩炴帴
+        # 检查ZeroMQ连接
         zmq_manager = get_zmq_manager()
         zmq_status = zmq_manager.is_connected()
         
@@ -158,7 +158,7 @@ async def health_check():
 
 @app.get(f"{settings.api_v1_prefix}/system/status")
 async def get_system_status():
-    """鑾峰彇绯荤粺鐘舵€?""
+    """获取系统状态"""
     try:
         redis_manager = get_redis_manager()
         zmq_manager = get_zmq_manager()
@@ -193,20 +193,20 @@ async def get_system_status():
 
 @app.websocket("/ws/realtime")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket瀹炴椂鏁版嵁绔偣"""
+    """WebSocket实时数据端点"""
     await websocket_manager.connect(websocket)
     try:
         while True:
-            # 淇濇寔杩炴帴娲昏穬
+            # 保持连接活跃
             await asyncio.sleep(1)
     except Exception as e:
-        logger.error(f"WebSocket杩炴帴閿欒: {e}")
+        logger.error(f"WebSocket连接错误: {e}")
     finally:
         await websocket_manager.disconnect(websocket)
 
 
 if __name__ == "__main__":
-    # 鏍规嵁鐜鍚姩搴旂敤
+    # 根据环境启动应用
     if settings.app_env == "development":
         uvicorn.run(
             "main:app",
