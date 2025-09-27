@@ -26,6 +26,8 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
+from dataclasses import dataclass
+from typing import Dict, Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -36,6 +38,49 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.config import get_config
 from optimizer.backtester.engine import BacktestEngine
 from optimizer.strategies.grid_strategy import GridTradingStrategy
+
+
+@dataclass
+class BacktestTask:
+    """回测任务数据结构"""
+    task_id: str
+    strategy_id: str
+    strategy_type: str
+    symbol: str
+    start_date: str
+    end_date: str
+    parameters: Dict[str, Any]
+    market_data: Dict[str, Any]
+
+
+@dataclass
+class BacktestResult:
+    """回测结果数据结构"""
+    task_id: str
+    strategy_id: str
+    strategy_type: str
+    symbol: str
+    metrics: Dict[str, Any]
+    trades: List[Dict[str, Any]] = None
+    equity_curve: List[float] = None
+
+
+@dataclass
+class MACrossoverStrategy:
+    """均线交叉策略"""
+    fast_period: int = 5
+    slow_period: int = 20
+    signal_threshold: float = 0.01
+    position_size: float = 0.2
+
+
+@dataclass
+class RSIStrategy:
+    """RSI策略"""
+    rsi_period: int = 14
+    oversold_threshold: int = 30
+    overbought_threshold: int = 70
+    position_size: float = 0.15
 
 
 class TestBacktestEngine(unittest.TestCase):

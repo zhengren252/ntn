@@ -528,7 +528,6 @@ async def _generate_detailed_report(simulation_id: str, result: dict) -> dict:
 # 清理资源
 async def cleanup_resources():
     """清理资源"""
-    global zmq_socket, zmq_context, redis_client
 
     if zmq_socket:
         zmq_socket.close()

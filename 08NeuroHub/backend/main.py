@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI):
             # 鍏抽棴鏁版嵁搴?
             await close_database()
 
-            logger.info("搴旂敤宸插畨鍏ㄥ叧闂?)
+            logger.info("搴旂敤宸插畨鍏ㄥ叧闂?")
         except Exception as e:
             logger.error(f"搴旂敤鍏抽棴鏃跺嚭閿? {e}")
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from collections import deque, defaultdict
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from werkzeug.exceptions import BadRequest
 
 from .middleware import require_auth, handle_errors, cache_response

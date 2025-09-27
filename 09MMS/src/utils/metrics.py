@@ -656,7 +656,6 @@ def get_health_checker() -> HealthChecker:
 
 async def cleanup_metrics():
     """清理指标收集器资源"""
-    global _system_metrics_collector
 
     if _system_metrics_collector:
         await _system_metrics_collector.stop_collection()

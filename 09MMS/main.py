@@ -60,7 +60,7 @@ class MMSApplication:
     def __init__(self):
         self.app = FastAPI(
             title="甯傚満寰粨鏋勪豢鐪熷紩鎿?(MMS)",
-            description="NeuroTrade Nexus 浜ゆ槗绯荤粺鐨勮櫄鎷熺幇瀹炲紩鎿?,
+            description="NeuroTrade Nexus 浜ゆ槗绯荤粺鐨勮櫄鎷熺幇瀹炲紩鎿?",
             version="1.0.0",
             docs_url="/docs" if settings.DEBUG else None,
             redoc_url="/redoc" if settings.DEBUG else None,

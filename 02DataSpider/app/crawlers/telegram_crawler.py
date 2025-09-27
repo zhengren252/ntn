@@ -32,6 +32,7 @@ from telethon.tl.types import (
     PeerChat,
     PeerUser,
 )
+from telethon.tl.functions.channels import JoinChannelRequest
 from telethon.errors import (
     SessionPasswordNeededError,
     PhoneCodeInvalidError,

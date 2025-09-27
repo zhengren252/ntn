@@ -3,6 +3,7 @@
 ReviewGuard人工审核模组 - 认证管理
 """
 
+import os
 import jwt
 import bcrypt
 from datetime import datetime, timedelta
