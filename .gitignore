@@ -1,4 +1,4 @@
-﻿﻿# NeuroTrade Nexus (NTN) - Git Ignore Configuration
+﻿﻿﻿﻿# NeuroTrade Nexus (NTN) - Git Ignore Configuration
 
 # =============================================================================
 # ENVIRONMENT AND SECRETS
@@ -270,7 +270,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # Vuepress build output
 .vuepress/dist
