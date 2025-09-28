@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 澶嶅埗渚濊禆鏂囦欢
-COPY requirements.txt .
+COPY 01APIForge/requirements.txt .
 
 # 瀹夎Python渚濊禆
 RUN pip install --no-cache-dir --user -r requirements.txt

@@ -16,7 +16,7 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
-COPY requirements.txt .
+COPY 03ScanPulse/requirements.txt .
 
 # 安装Python依赖到临时目录
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -50,7 +50,7 @@ RUN mkdir -p /app/logs /app/config && \
     chown -R scanner:scanner /app
 
 # 复制应用代码
-COPY . /app/
+COPY 03ScanPulse/. /app/
 
 # 设置文件权限
 RUN chown -R scanner:scanner /app

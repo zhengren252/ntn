@@ -1,4 +1,4 @@
-﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
+﻿﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
 # Strategy Optimization Module Dockerfile
 # Multi-stage build to reduce final image size
 
@@ -57,7 +57,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements file
-COPY requirements.txt .
+COPY 04OptiCore/requirements.txt .
 
 # Verify requirements.txt content to ensure zipline is removed
 RUN echo "=== Verifying requirements.txt content ===" && \
@@ -126,7 +126,7 @@ RUN mkdir -p /app/logs \
     chown -R ntn:ntn /app
 
 # Copy application code
-COPY --chown=ntn:ntn . .
+COPY --chown=ntn:ntn 04OptiCore/. .
 
 # Set permissions
 RUN chmod +x /app/scripts/*.sh 2>/dev/null || true && \

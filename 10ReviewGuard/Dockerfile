@@ -1,10 +1,10 @@
-﻿# ReviewGuard妯＄粍涓籇ockerfile
-# 浜哄伐瀹℃牳妯＄粍 - 鍩轰簬Python 3.11-slim锛屾敮鎸丗astAPI + ZeroMQ + Redis
-# 閬靛惊AI鏅鸿兘浣撻┍鍔ㄤ氦鏄撶郴缁熸灦鏋勮鑼?
+﻿# ReviewGuard模块主Dockerfile
+# 人工审核模块 - 基于Python 3.11-slim，支持FastAPI + ZeroMQ + Redis
+# 遵循AI智能体驱动交易系统架构规范
 
 FROM python:3.11-slim as base
 
-# 璁剧疆鐜鍙橀噺
+# 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -12,14 +12,14 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/backend/src \
     APP_ENV=production
 
-# 璁剧疆宸ヤ綔鐩綍
+# 设置工作目录
 WORKDIR /app
 
-# 鍒涘缓闈瀝oot鐢ㄦ埛
+# 创建非root用户
 RUN groupadd --gid 1001 reviewguard && \
     useradd --uid 1001 --gid reviewguard --shell /bin/bash --create-home reviewguard
 
-# 瀹夎绯荤粺渚濊禆
+# 安装系统依赖
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y \
     build-essential \
     libzmq3-dev \
@@ -28,36 +28,36 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# 澶嶅埗鍚庣渚濊禆鏂囦欢
-COPY backend/requirements.txt ./backend/
+# 复制后端依赖文件
+COPY 10ReviewGuard/backend/requirements.txt ./backend/
 
-# 瀹夎Python渚濊禆
+# 安装Python依赖
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r backend/requirements.txt
 
-# 澶嶅埗鍚庣婧愪唬鐮?
-COPY backend/ ./backend/
+# 复制后端源代码
+COPY 10ReviewGuard/backend/ ./backend/
 
-# 澶嶅埗閰嶇疆鏂囦欢
-COPY .env.production .env.staging .env.example ./
-COPY docker-compose.yml ./
+# 复制配置文件
+COPY 10ReviewGuard/.env.production 10ReviewGuard/.env.staging 10ReviewGuard/.env.example ./
+COPY 10ReviewGuard/docker-compose.yml ./
 
-# 鍒涘缓蹇呰鐩綍骞惰缃潈闄?
+# 创建数据目录
 RUN mkdir -p /app/data /app/logs /app/config && \
     chown -R reviewguard:reviewguard /app
 
-# 鍒囨崲鍒伴潪root鐢ㄦ埛
+# 切换到非root用户
 USER reviewguard
 
-# 鍋ュ悍妫€鏌?
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# 鏆撮湶绔彛
+# 暴露端口
 # 8000: FastAPI HTTP API
-# 5555: ZeroMQ璁㈤槄绔彛
-# 5556: ZeroMQ鍙戝竷绔彛
+# 5555: ZeroMQ发布端口
+# 5556: ZeroMQ订阅端口
 EXPOSE 8000 5555 5556
 
-# 鍚姩鍛戒护 - 鍚姩ReviewGuard鍚庣鏈嶅姟
+# 启动命令 - 启动ReviewGuard后端服务
 CMD ["uvicorn", "backend.src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

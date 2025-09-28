@@ -54,8 +54,8 @@ services:
   # 模组02: 信息源爬虫
   data_spider:
     build:
-      context: ./02DataSpider
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./02DataSpider/Dockerfile
       target: production
     container_name: ntn-data-spider
     restart: unless-stopped
@@ -91,8 +91,8 @@ services:
   # 模组03: 扫描器
   scan_pulse:
     build:
-      context: ./03ScanPulse
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./03ScanPulse/Dockerfile
       target: runtime
     dns:
       - 8.8.8.8
@@ -123,8 +123,8 @@ services:
   # 模组11: ASTS Console（智能化指挥中心）
   asts_console:
     build:
-      context: ./11ASTS Console
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./11ASTS Console/Dockerfile
     container_name: ntn-asts-console
     restart: unless-stopped
     ports:
@@ -144,8 +144,8 @@ services:
   # 模组04: 优化核心引擎
   opticore:
     build:
-      context: ./04OptiCore
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./04OptiCore/Dockerfile
     container_name: ntn-opticore
     restart: unless-stopped
     environment:
@@ -172,8 +172,8 @@ services:
   # 模组05-07: 交易防护系统
   tradeguard:
     build:
-      context: ./05-07TradeGuard
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./05-07TradeGuard/Dockerfile
     container_name: ntn-tradeguard
     restart: unless-stopped
     environment:
@@ -200,8 +200,8 @@ services:
   # 模组08: 神经网络中枢
   neurohub:
     build:
-      context: ./08NeuroHub
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./08NeuroHub/Dockerfile
     container_name: ntn-neurohub
     restart: unless-stopped
     environment:
@@ -228,8 +228,8 @@ services:
   # 模组09: 多市场监控系统
   mms:
     build:
-      context: ./09MMS
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./09MMS/Dockerfile
     container_name: ntn-mms
     restart: unless-stopped
     environment:
@@ -256,8 +256,8 @@ services:
   # 模组10: 审查防护系统
   reviewguard:
     build:
-      context: ./10ReviewGuard
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./10ReviewGuard/Dockerfile
     container_name: ntn-reviewguard
     restart: unless-stopped
     environment:
@@ -284,8 +284,8 @@ services:
   # 模组12: 交易算法核心服务
   tacore_service:
     build:
-      context: ./12TACoreService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./12TACoreService/Dockerfile
     container_name: ntn-tacore-service
     restart: unless-stopped
     environment:
@@ -312,8 +312,8 @@ services:
   # 模组13: AI策略助手
   ai_strategy_assistant:
     build:
-      context: ./13AIStrategyAssistant
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./13AIStrategyAssistant/Dockerfile
     container_name: ntn-ai-strategy-assistant
     restart: unless-stopped
     environment:
@@ -342,9 +342,8 @@ services:
   # 模组14: 可观测性中心
   observability_center:
     build:
-      context: "./14ObservabilityCenter"
-    
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./14ObservabilityCenter/Dockerfile
     container_name: ntn-observability-center
     restart: unless-stopped
     environment:

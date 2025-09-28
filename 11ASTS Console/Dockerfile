@@ -5,13 +5,13 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # 复制package文件
-COPY package*.json ./
+COPY "11ASTS Console"/package*.json ./
 
 # 安装依赖（包括开发依赖用于构建）
 RUN npm ci --include=dev && npm cache clean --force
 
 # 复制源代码
-COPY . .
+COPY "11ASTS Console"/. ./
 
 # 构建应用（跳过类型检查）
 RUN npx vite build
@@ -26,7 +26,7 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制Nginx配置
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/nginx.conf /etc/nginx/nginx.conf
 
 # 创建日志目录
 RUN mkdir -p /var/log/nginx

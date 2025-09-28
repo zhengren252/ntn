@@ -15,7 +15,7 @@ RUN apk update && apk add --no-cache \
 WORKDIR /app
 
 # 复制package文件
-COPY package*.json ./
+COPY 05-07TradeGuard/package*.json ./
 
 # 安装依赖
 RUN npm ci --only=production
@@ -27,7 +27,7 @@ FROM base AS development
 RUN npm ci
 
 # 复制源代码
-COPY . .
+COPY 05-07TradeGuard/. .
 
 # 暴露端口
 EXPOSE 3000 5173
@@ -42,7 +42,7 @@ FROM base AS build
 RUN npm ci
 
 # 复制源代码
-COPY . .
+COPY 05-07TradeGuard/. .
 
 # 构建应用
 RUN npm run build
@@ -62,7 +62,7 @@ RUN adduser -S tradeguard -u 1001
 WORKDIR /app
 
 # 复制package文件
-COPY package*.json ./
+COPY 05-07TradeGuard/package*.json ./
 
 # 安装生产依赖和tsx
 RUN npm config set registry https://registry.npmmirror.com && \

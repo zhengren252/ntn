@@ -1,4 +1,4 @@
-﻿# Stage 1: Frontend Build
+﻿﻿# Stage 1: Frontend Build
 FROM node:20-bookworm AS frontend
 WORKDIR /app
 
@@ -7,21 +7,21 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
 RUN npm install -g npm@latest
 
 # Copy package files and install dependencies
-COPY .npmrc ./
-COPY package*.json ./
+COPY 08NeuroHub/.npmrc ./
+COPY 08NeuroHub/package*.json ./
 # Clean npm cache and install dependencies
 RUN npm cache clean --force
 RUN npm config set registry https://registry.npmjs.org/
 RUN npm install --legacy-peer-deps --verbose --network-timeout 100000
 
 # Copy frontend source files
-COPY src/ ./src/
-COPY public/ ./public/
-COPY index.html ./
-COPY postcss.config.js ./
-COPY tailwind.config.js ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
+COPY 08NeuroHub/src/ ./src/
+COPY 08NeuroHub/public/ ./public/
+COPY 08NeuroHub/index.html ./
+COPY 08NeuroHub/postcss.config.js ./
+COPY 08NeuroHub/tailwind.config.js ./
+COPY 08NeuroHub/tsconfig.json ./
+COPY 08NeuroHub/vite.config.ts ./
 
 # Build frontend
 RUN npm run build
@@ -43,16 +43,16 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
 WORKDIR /app
 
 # Install Python dependencies
-COPY requirements.txt ./
+COPY 08NeuroHub/requirements.txt ./
 RUN pip install --no-cache-dir --default-timeout=100 --retries 3 -r requirements.txt
 
 # Copy backend source files
-COPY backend/ ./backend/
-COPY api/ ./api/
-COPY config/ ./config/
+COPY 08NeuroHub/backend/ ./backend/
+COPY 08NeuroHub/api/ ./api/
+COPY 08NeuroHub/config/ ./config/
 
 # Install Node.js dependencies for API
-COPY package*.json ./
+COPY 08NeuroHub/package*.json ./
 # Install dependencies with --legacy-peer-deps to avoid peer dependency conflicts
 RUN npm install --legacy-peer-deps
 
@@ -60,7 +60,7 @@ RUN npm install --legacy-peer-deps
 RUN mkdir -p logs data
 
 # Copy package.json for potential runtime references
-COPY package.json ./
+COPY 08NeuroHub/package.json ./
 
 # Expose ports (adjust if needed based on your configuration)
 EXPOSE 3000 5555 5556

@@ -1,15 +1,15 @@
-# 淇℃伅婧愮埇铏ā缁?- Docker闀滃儚
-# 鏀寔涓夌幆澧冮殧绂伙細development/staging/production
+# 信息源爬虫模块 - Docker镜像
+# 支持三环境隔离：development/staging/production
 
 FROM python:3.11-slim as base
 
-# 璁剧疆鐜鍙橀噺
+# 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# 瀹夎绯荤粺渚濊禆
+# 安装系统依赖
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -20,22 +20,22 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 鍒涘缓搴旂敤鐢ㄦ埛
+# 创建应用用户
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# 璁剧疆宸ヤ綔鐩綍
+# 设置工作目录
 WORKDIR /app
 
-# 澶嶅埗渚濊禆鏂囦欢
-COPY requirements.txt .
+# 复制依赖文件
+COPY 02DataSpider/requirements.txt .
 
-# 瀹夎Python渚濊禆
+# 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 寮€鍙戠幆澧冮樁娈?
+# 开发环境阶段
 FROM base as development
 
-# 瀹夎寮€鍙戜緷璧?
+# 安装开发依赖
 RUN pip install --no-cache-dir \
     pytest \
     pytest-cov \
@@ -44,85 +44,85 @@ RUN pip install --no-cache-dir \
     mypy \
     ipython
 
-# 澶嶅埗搴旂敤浠ｇ爜
-COPY . .
+# 复制应用代码
+COPY 02DataSpider/. .
 
-# 鍒涘缓蹇呰鐩綍
+# 创建数据目录
 RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
-# 璁剧疆鐜鍙橀噺
+# 设置环境变量
 ENV APP_ENV=development \
     NTN_ENV=development \
     PYTHONPATH=/app \
     LOG_LEVEL=DEBUG
 
-# 鍒囨崲鍒板簲鐢ㄧ敤鎴?
+# 切换到应用用户
 USER appuser
 
-# 鏆撮湶绔彛
+# 暴露端口
 EXPOSE 5000 5555 5556
 
-# 鍚姩鍛戒护
+# 启动命令
 CMD ["python", "main.py", "--env", "development", "--mode", "all"]
 
-# 娴嬭瘯鐜闃舵
+# 测试环境阶段
 FROM base as staging
 
-# 澶嶅埗搴旂敤浠ｇ爜
-COPY . .
+# 复制应用代码
+COPY 02DataSpider/. .
 
-# 鍒涘缓蹇呰鐩綍
+# 创建数据目录
 RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
-# 璁剧疆鐜鍙橀噺
+# 设置环境变量
 ENV APP_ENV=staging \
     NTN_ENV=staging \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO
 
-# 鍒囨崲鍒板簲鐢ㄧ敤鎴?
+# 切换到应用用户
 USER appuser
 
-# 鏆撮湶绔彛
+# 暴露端口
 EXPOSE 5000 5555 5556
 
-# 鍋ュ悍妫€鏌?
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
     CMD python -c "import sys,urllib.request,socket; socket.setdefaulttimeout(5); sys.exit(0 if 200<=urllib.request.urlopen('http://localhost:5000/live', timeout=5).getcode()<300 else 1)"
 
-# 鍚姩鍛戒护
+# 启动命令
 CMD ["python", "main.py", "--env", "staging", "--mode", "all"]
 
-# 鐢熶骇鐜闃舵
+# 生产环境阶段
 FROM base as production
 
-# 澶嶅埗搴旂敤浠ｇ爜锛堟帓闄ゅ紑鍙戞枃浠讹級
-COPY app/ ./app/
-COPY config/ ./config/
-COPY scripts/ ./scripts/
-COPY main.py requirements.txt ./
+# 复制应用代码（排除开发文件）
+COPY 02DataSpider/app/ ./app/
+COPY 02DataSpider/config/ ./config/
+COPY 02DataSpider/scripts/ ./scripts/
+COPY 02DataSpider/main.py 02DataSpider/requirements.txt ./
 
-# 鍒涘缓蹇呰鐩綍
+# 创建数据目录
 RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
-# 璁剧疆鐜鍙橀噺
+# 设置环境变量
 ENV APP_ENV=production \
     NTN_ENV=production \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO
 
-# 鍒囨崲鍒板簲鐢ㄧ敤鎴?
+# 切换到应用用户
 USER appuser
 
-# 鏆撮湶绔彛
+# 暴露端口
 EXPOSE 5000 5555 5556
 
-# 鍋ュ悍妫€鏌?
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
     CMD python -c "import sys,urllib.request,socket; socket.setdefaulttimeout(5); sys.exit(0 if 200<=urllib.request.urlopen('http://localhost:5000/live', timeout=5).getcode()<300 else 1)"
 
-# 鍚姩鍛戒护
+# 启动命令
 CMD ["python", "main.py", "--env", "production", "--mode", "all"]

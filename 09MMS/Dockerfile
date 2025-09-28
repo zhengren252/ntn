@@ -17,7 +17,7 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     && rm -rf /var/lib/apt/lists/*
 
 # 澶嶅埗渚濊禆鏂囦欢
-COPY requirements.txt .
+COPY 09MMS/requirements.txt .
 
 # 鍒涘缓铏氭嫙鐜骞跺畨瑁匬ython渚濊禆
 RUN python -m venv /opt/venv
@@ -53,12 +53,12 @@ RUN mkdir -p /app/data /app/logs /app/config && \
     chown -R mms:mms /app
 
 # 澶嶅埗搴旂敤浠ｇ爜
-COPY --chown=mms:mms src/ ./src/
-COPY --chown=mms:mms scripts/ ./scripts/
-COPY --chown=mms:mms config/ ./config/
-COPY --chown=mms:mms *.py ./
-COPY --chown=mms:mms *.md ./
-COPY --chown=mms:mms *.txt ./
+COPY --chown=mms:mms 09MMS/src/ ./src/
+COPY --chown=mms:mms 09MMS/scripts/ ./scripts/
+COPY --chown=mms:mms 09MMS/config/ ./config/
+COPY --chown=mms:mms 09MMS/*.py ./
+COPY --chown=mms:mms 09MMS/*.md ./
+COPY --chown=mms:mms 09MMS/*.txt ./
 
 # 鍒囨崲鍒伴潪root鐢ㄦ埛
 USER mms

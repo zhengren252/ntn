@@ -26,17 +26,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # 复制requirements文件
-COPY requirements.txt .
+COPY 13AIStrategyAssistant/requirements.txt .
 
 # 升级pip并使用阿里云镜像安装依赖
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 # 复制健康检查脚本
-COPY health_check.py /app/health_check.py
+COPY 13AIStrategyAssistant/health_check.py /app/health_check.py
 
 # 复制应用代码
-COPY . .
+COPY 13AIStrategyAssistant/. .
 
 # 创建必要的目录
 RUN mkdir -p logs data && \

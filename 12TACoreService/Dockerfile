@@ -15,13 +15,13 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     && rm -rf /var/lib/apt/lists/*
 
 # 复制requirements文件
-COPY requirements.txt .
+COPY 12TACoreService/requirements.txt .
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码
-COPY . .
+COPY 12TACoreService/. .
 
 # 创建必要的目录
 RUN mkdir -p /app/data /app/logs /app/config
