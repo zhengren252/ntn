@@ -10,7 +10,7 @@ COPY "11ASTS Console/package.json" "11ASTS Console/package-lock.json" ./
 RUN npm ci
 
 # Copy the rest of the application source code
-COPY "11ASTS Console/." ./
+COPY "11ASTS Console/." .
 
 # Build the Next.js application
 RUN npm run build
@@ -21,8 +21,8 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy environment configuration
-COPY "11ASTS Console/next.config.js" ./
-COPY "11ASTS Console/public" ./public/
+COPY "11ASTS Console/next.config.js" .
+COPY "11ASTS Console/public" ./public
 
 # Copy build output from the builder stage
 COPY --from=builder /app/.next ./.next
