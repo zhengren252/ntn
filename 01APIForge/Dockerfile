@@ -33,12 +33,12 @@ WORKDIR /app
 COPY --from=builder /root/.local /home/apiuser/.local
 
 # 澶嶅埗搴旂敤浠ｇ爜
-COPY api_factory/ ./api_factory/
+COPY 01APIForge/api_factory/ ./api_factory/
 COPY config/ ./config/
-COPY tests/ ./tests/
+COPY 01APIForge/tests/ ./tests/
 
 # 复制pytest配置，确保标记已注册
-COPY pytest.ini ./
+COPY 01APIForge/pytest.ini ./
 
 # 鍒涘缓蹇呰鐨勭洰褰?
 RUN mkdir -p /app/data /app/logs && \

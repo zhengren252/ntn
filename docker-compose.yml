@@ -24,8 +24,8 @@ services:
   # 模组01: API统一管理工厂
   api_forge:
     build:
-      context: ./01APIForge
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: 01APIForge/Dockerfile
     container_name: ntn-api-forge
     restart: unless-stopped
     environment:
