@@ -119,7 +119,7 @@ services:
   # 模组11: ASTS Console（智能化指挥中心）
   asts_console:
     build:
-      context: ./11ASTS Console
+      context: ./11_ASTS_Console
       dockerfile: Dockerfile
     container_name: ntn-asts-console
     restart: unless-stopped

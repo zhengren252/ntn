@@ -152,7 +152,7 @@ check_container_status() {
         "09MMS"
         "10ReviewGuard-backend"
         "10ReviewGuard-frontend"
-        "11ASTS Console"
+        "11_ASTS_Console"
         "12TACoreService"
         "13AI Strategy Assistant"
         "14Observability Center"

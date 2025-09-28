@@ -124,7 +124,7 @@ services:
   asts_console:
     build:
       context: .
-      dockerfile: ./11ASTS Console/Dockerfile
+      dockerfile: ./11_ASTS_Console/Dockerfile
     container_name: ntn-asts-console
     restart: unless-stopped
     ports:
