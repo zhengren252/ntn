@@ -135,7 +135,7 @@ services:
     networks:
       - ntn_network
     healthcheck:
-      test: ["CMD-SHELL", "rid=$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $rid\" -H \"Accept: application/json\" --max-time 10 http://localhost/health || exit 1"]
+      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

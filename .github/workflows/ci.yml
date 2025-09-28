@@ -103,6 +103,8 @@ jobs:
           type=raw,value=latest,enable={{is_default_branch}}
     
     - name: Build and test Docker images
+      env:
+        REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
       run: |
         # Build all module images
         docker-compose -f docker-compose.yml build
