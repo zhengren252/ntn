@@ -95,12 +95,12 @@ chmod +x ubuntu-docker-deploy.sh
 | 08NeuroHub | 8005 | 神经网络中枢 |
 | 09MMS | 8006 | 市场制造商服务 |
 | 10ReviewGuard-backend | 8007 | 审查守护后端 |
-| 11ASTS-Console | 8008 | ASTS控制台后端 |
+| 11ASTSConsole | 8008 | ASTS控制台后端 |
 | 12TACoreService | 8009 | TA核心服务 |
 | 13AI-Strategy-Assistant | 8010 | AI策略助手 |
 | 14Observability-Center | 8011 | 可观测性中心 |
 | 10ReviewGuard-frontend | 3000 | 审查守护前端 |
-| 11ASTS-Console-frontend | 3001 | ASTS控制台前端 |
+| 11ASTSConsole-frontend | 3001 | ASTS控制台前端 |
 | nginx | 80/443 | Nginx网关 |
 
 ## 部署流程

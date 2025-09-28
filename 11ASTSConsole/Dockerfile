@@ -4,13 +4,13 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files, using quotes to handle spaces in the path
-COPY "11_ASTS_Console/package.json" "11_ASTS_Console/package-lock.json" ./
+COPY "11ASTSConsole/package.json" "11ASTSConsole/package-lock.json" ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy the rest of the application source code
-COPY "11_ASTS_Console/." .
+COPY "11ASTSConsole/." .
 
 # Build the Next.js application
 RUN npm run build
@@ -21,8 +21,8 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy environment configuration
-COPY "11_ASTS_Console/next.config.js" .
-COPY "11_ASTS_Console/public" ./public
+COPY "11ASTSConsole/next.config.js" .
+COPY "11ASTSConsole/public" ./public
 
 # Copy build output from the builder stage
 COPY --from=builder /app/.next ./.next

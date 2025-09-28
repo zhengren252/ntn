@@ -13,7 +13,7 @@ graph TD
     A[用户浏览器] --> B[React前端应用]
     
     subgraph "前端层"
-        B[11ASTS Console - 智能化指挥中心]
+        B[11ASTSConsole - 智能化指挥中心]
     end
     
     subgraph "后端业务服务 (各自暴露HTTP API)"

@@ -348,7 +348,7 @@ services:
   # 10. 用户界面模组
   web_ui:
     build:
-      context: "../11_ASTS_Console"
+      context: "../11ASTSConsole"
       dockerfile: Dockerfile
     container_name: web_ui
     restart: unless-stopped

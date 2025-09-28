@@ -311,7 +311,7 @@ function Main {
         "08NeuroHub",
         "09MMS",
         "10ReviewGuard",
-        "11_ASTS_Console",
+        "11ASTSConsole",
         "12TACoreService",
         "13AI Strategy Assistant",
         "14Observability Center"

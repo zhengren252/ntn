@@ -1,5 +1,5 @@
 # NeuroTrade Nexus - 前端管理界面 Docker Compose 配置
-# 容器名称: 11_ASTS_Console
+# 容器名称: 11ASTSConsole
 version: '3.8'
 
 services:
