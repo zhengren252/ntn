@@ -5,13 +5,13 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # 复制package文件
-COPY "11ASTS Console"/package*.json ./
+COPY "11ASTS Console/package*.json" ./
 
 # 安装依赖（包括开发依赖用于构建）
 RUN npm ci --include=dev && npm cache clean --force
 
 # 复制源代码
-COPY "11ASTS Console"/. ./
+COPY "11ASTS Console/." ./
 
 # 构建应用（跳过类型检查）
 RUN npx vite build
