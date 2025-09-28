@@ -1,42 +1,36 @@
-# 多阶段构建 - 构建阶段
+# Stage 1: Builder
 FROM node:18-alpine AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制package文件
-COPY "11ASTS Console/package*.json" ./
+# Copy package files, using quotes to handle spaces in the path
+COPY "11ASTS Console/package.json" "11ASTS Console/package-lock.json" ./
 
-# 安装依赖（包括开发依赖用于构建）
-RUN npm ci --include=dev && npm cache clean --force
+# Install dependencies
+RUN npm ci
 
-# 复制源代码
+# Copy the rest of the application source code
 COPY "11ASTS Console/." ./
 
-# 构建应用（跳过类型检查）
-RUN npx vite build
+# Build the Next.js application
+RUN npm run build
 
-# 生产阶段
-FROM nginx:alpine
+# Stage 2: Production
+FROM node:18-alpine
 
-# 安装必要工具
-RUN apk add --no-cache curl
+WORKDIR /app
 
-# 复制构建产物
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy environment configuration
+COPY "11ASTS Console/next.config.js" ./
+COPY "11ASTS Console/public" ./public/
 
-# 复制Nginx配置
-COPY --from=builder /app/nginx.conf /etc/nginx/nginx.conf
+# Copy build output from the builder stage
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
-# 创建日志目录
-RUN mkdir -p /var/log/nginx
+# Expose the port the app runs on
+EXPOSE 3000
 
-# 暴露端口
-EXPOSE 80
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
-
-# 启动命令
-CMD ["nginx", "-g", "daemon off;"]
+# Start the application
+CMD ["npm", "start"]
