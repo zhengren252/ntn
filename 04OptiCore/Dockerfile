@@ -36,7 +36,7 @@ RUN cd /tmp && \
     tar -xzf ta-lib-0.4.0-src.tar.gz && \
     cd ta-lib/ && \
     ./configure --prefix=/usr --disable-static && \
-    make -j$(nproc) && make install && \
+    make && make install && \
     ldconfig && \
     cd / && rm -rf /tmp/ta-lib*
 
