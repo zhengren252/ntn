@@ -135,6 +135,7 @@ jobs:
     
     - name: Install test dependencies
       run: |
+        pip install cython
         pip install requests pytest docker-compose
     
     - name: Run integration tests
