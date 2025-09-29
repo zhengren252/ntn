@@ -40,7 +40,6 @@ COPY 10ReviewGuard/backend/ ./backend/
 
 # 复制配置文件
 COPY 10ReviewGuard/.env.production 10ReviewGuard/.env.staging 10ReviewGuard/.env.example ./
-COPY 10ReviewGuard/docker-compose.yml ./
 
 # 创建数据目录
 RUN mkdir -p /app/data /app/logs /app/config && \
