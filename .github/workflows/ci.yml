@@ -135,8 +135,8 @@ jobs:
     
     - name: Install test dependencies
       run: |
-        pip install cython
-        pip install requests pytest docker-compose
+        pip install cython docker-compose
+        pip install -r 03ScanPulse/requirements-dev.txt
     
     - name: Run integration tests
       run: |
