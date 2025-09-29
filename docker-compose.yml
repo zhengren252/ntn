@@ -128,14 +128,14 @@ services:
     container_name: ntn-asts-console
     restart: unless-stopped
     ports:
-      - "8088:80"
+      - "8088:4173"
     depends_on:
       api_forge:
         condition: service_healthy
     networks:
       - ntn_network
     healthcheck:
-      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost/health || exit 1"]
+      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:4173/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
