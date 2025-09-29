@@ -63,6 +63,9 @@ README.md
 **/playwright-report/
 **/test-results/
 
+# Exception: Allow specific test directories needed for Docker builds
+!01APIForge/tests/
+
 # Logs
 **/logs
 **/*.log
@@ -153,3 +156,5 @@ README.md
 # !**/Dockerfile
 # !**/public/
 # !**/src/
+# 修复: 不忽略前端项目中的src/lib目录
+!**/src/lib/
