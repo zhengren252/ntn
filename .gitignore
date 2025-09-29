@@ -301,7 +301,7 @@ dist
 # =============================================================================
 
 # Docker files
-.dockerignore
+# Note: .dockerignore should be tracked for consistent builds
 Dockerfile.local
 docker-compose.override.yml
 docker-compose.local.yml
