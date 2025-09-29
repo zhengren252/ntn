@@ -58,6 +58,8 @@ RUN pip install --upgrade pip setuptools wheel && \
     # Install core numerical packages with optimized builds
     pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
         numpy==1.25.2 pandas==2.1.4 scipy==1.11.4 && \
+    # Install TA-Lib Python bindings (requires C library from previous step)
+    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple TA-Lib==0.4.28 && \
     # Install remaining dependencies in batches for better error handling
     pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt && \
     # Cleanup build artifacts
