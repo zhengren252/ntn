@@ -136,7 +136,7 @@ jobs:
     - name: Install test dependencies
       run: |
         pip install cython docker-compose
-        pip install -r 03ScanPulse/requirements-dev.txt
+        pip install -r 03ScanPulse/requirements-dev.txt --no-build-isolation
     
     - name: Run integration tests
       run: |
@@ -145,7 +145,7 @@ jobs:
         sleep 30
         
         # Run integration test suite
-        python simple_ntn_test.py
+        python end_to_end_test.py
         
         # Cleanup
         docker-compose down
