@@ -35,3 +35,6 @@ types-redis>=4.6.0
 # Simplified to keep core development tools: testing framework, code quality tools, type checking
 # Removed non-core tools: documentation generation, security scanning, performance analysis, UI beautification tools
 # Ensures production environment simplicity and development environment efficiency
+
+# Version Lock for CI/CD Stability
+PyYAML==5.3.1
