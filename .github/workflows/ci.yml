@@ -157,7 +157,7 @@ jobs:
     
     - name: Install test dependencies
       run: |
-        pip install docker-compose
+        pip install -v docker-compose
         pip install -r 03ScanPulse/requirements-dev.txt --no-build-isolation
     
     - name: Run integration tests
