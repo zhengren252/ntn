@@ -1,4 +1,4 @@
-﻿﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
+﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
 # Optimized Multi-stage Build for CI/CD Efficiency and Size Reduction
 # Version: 2.0 - Deep Optimization with Dependency Separation
 
