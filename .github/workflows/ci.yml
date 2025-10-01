@@ -133,9 +133,12 @@ jobs:
       with:
         python-version: '3.11'
     
+    - name: Pre-install Cython for build dependencies
+      run: pip install cython
+    
     - name: Install test dependencies
       run: |
-        pip install cython docker-compose
+        pip install docker-compose
         pip install -r 03ScanPulse/requirements-dev.txt --no-build-isolation
     
     - name: Run integration tests
