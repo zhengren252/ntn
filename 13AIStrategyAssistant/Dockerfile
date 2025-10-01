@@ -30,7 +30,7 @@ COPY 13AIStrategyAssistant/requirements.txt .
 
 # 升级pip并使用阿里云镜像安装依赖
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt
 
 # 复制健康检查脚本
 COPY 13AIStrategyAssistant/health_check.py /app/health_check.py

@@ -1,4 +1,4 @@
-﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
+﻿﻿# NeuroTrade Nexus (NTN) - Strategy Optimization Module Docker Configuration
 # Optimized Multi-stage Build for CI/CD Efficiency and Size Reduction
 # Version: 2.0 - Deep Optimization with Dependency Separation
 
@@ -56,12 +56,12 @@ RUN echo "=== Dependency Analysis ===" && \
 # Optimized installation strategy: Core packages first for better caching
 RUN pip install --upgrade pip setuptools wheel && \
     # Install core numerical packages with optimized builds
-    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    pip install --no-cache-dir \
         numpy==1.25.2 pandas==2.1.4 scipy==1.11.4 && \
     # Install TA-Lib Python bindings (requires C library from previous step)
-    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple TA-Lib==0.4.28 && \
+    pip install --no-cache-dir TA-Lib==0.4.28 && \
     # Install remaining dependencies in batches for better error handling
-    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt && \
     # Cleanup build artifacts
     find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -name "*.pyc" -delete && \
