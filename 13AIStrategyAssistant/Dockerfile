@@ -28,9 +28,13 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # 复制requirements文件
 COPY 13AIStrategyAssistant/requirements.txt .
 
-# 升级pip并使用阿里云镜像安装依赖
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# 创建虚拟环境并安装依赖
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# 设置PATH环境变量
+ENV PATH="/opt/venv/bin:$PATH"
 
 # 复制健康检查脚本
 COPY 13AIStrategyAssistant/health_check.py /app/health_check.py
