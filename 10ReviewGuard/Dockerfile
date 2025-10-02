@@ -1,4 +1,4 @@
-﻿# ReviewGuard模块主Dockerfile
+﻿﻿# ReviewGuard模块主Dockerfile
 # 人工审核模块 - 基于Python 3.11-slim，支持FastAPI + ZeroMQ + Redis
 # 遵循AI智能体驱动交易系统架构规范
 
@@ -47,6 +47,9 @@ RUN mkdir -p /app/data /app/logs /app/config && \
 
 # 切换到非root用户
 USER reviewguard
+
+# 设置虚拟环境PATH
+ENV PATH="/opt/venv/bin:$PATH"
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
