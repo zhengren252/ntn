@@ -6,8 +6,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # 设置环境变量
-ENV PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH=/app \
+ENV PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \

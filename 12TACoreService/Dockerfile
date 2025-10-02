@@ -27,8 +27,7 @@ COPY 12TACoreService/. .
 RUN mkdir -p /app/data /app/logs /app/config
 
 # 设置环境变量
-ENV PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH=/app \
+ENV PYTHONPATH=/app \
     TACORESERVICE_ENV=production \
     TACORESERVICE_LOG_LEVEL=INFO
 
