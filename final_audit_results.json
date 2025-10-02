@@ -1,0 +1,97 @@
+{
+  "total_files": 18,
+  "needs_fix_count": 0,
+  "needs_fix_files": [],
+  "detailed_results": {
+    "01APIForge\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\01APIForge\\Dockerfile"
+    },
+    "02DataSpider\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\02DataSpider\\Dockerfile"
+    },
+    "03ScanPulse\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\03ScanPulse\\Dockerfile"
+    },
+    "04OptiCore\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\04OptiCore\\Dockerfile"
+    },
+    "04OptiCore\\node_modules\\bcrypt\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\04OptiCore\\node_modules\\bcrypt\\Dockerfile"
+    },
+    "05-07TradeGuard\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\05-07TradeGuard\\Dockerfile"
+    },
+    "05-07TradeGuard\\node_modules\\bcrypt\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\05-07TradeGuard\\node_modules\\bcrypt\\Dockerfile"
+    },
+    "08NeuroHub\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\08NeuroHub\\Dockerfile"
+    },
+    "08NeuroHub\\node_modules\\bcrypt\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\08NeuroHub\\node_modules\\bcrypt\\Dockerfile"
+    },
+    "09MMS\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\09MMS\\Dockerfile"
+    },
+    "10ReviewGuard\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\10ReviewGuard\\Dockerfile"
+    },
+    "10ReviewGuard\\backend\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "读取错误",
+      "absolute_path": ".\\10ReviewGuard\\backend\\Dockerfile"
+    },
+    "10ReviewGuard\\frontend\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\10ReviewGuard\\frontend\\Dockerfile"
+    },
+    "11ASTSConsole\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\11ASTSConsole\\Dockerfile"
+    },
+    "12TACoreService\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\12TACoreService\\Dockerfile"
+    },
+    "12TACoreService\\TradingAgents-CN\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\12TACoreService\\TradingAgents-CN\\Dockerfile"
+    },
+    "13AIStrategyAssistant\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "不使用虚拟环境",
+      "absolute_path": ".\\13AIStrategyAssistant\\Dockerfile"
+    },
+    "14ObservabilityCenter\\Dockerfile": {
+      "needs_fix": false,
+      "reason": "已有PATH配置",
+      "absolute_path": ".\\14ObservabilityCenter\\Dockerfile"
+    }
+  }
+}
