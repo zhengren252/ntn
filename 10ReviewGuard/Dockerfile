@@ -1,4 +1,4 @@
-﻿# ReviewGuard模块主Dockerfile
+# ReviewGuard模块主Dockerfile
 # 人工审核模块 - 基于Python 3.11-slim，支持FastAPI + ZeroMQ + Redis
 # 遵循AI智能体驱动交易系统架构规范
 
