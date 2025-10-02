@@ -6,9 +6,10 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # 设置环境变量
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \

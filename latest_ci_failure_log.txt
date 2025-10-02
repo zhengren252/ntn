@@ -1,0 +1,99 @@
+ASTS CI Pipeline - GitHub Actions CI失败日志
+=====================================================
+
+执行时间: 2025年10月2日 12:49分 (24分钟前)
+作业状态: 失败 (integration-test作业)
+提交ID: c58edce
+分支: main
+运行时长: 17分22秒
+
+详细日志内容:
+=============
+
+ASTS CI Pipeline
+fix(api-forge): set correct PATH for venv in final docker stage #51
+
+Summary
+Jobs
+- lint-and-test (3.11) ✅ 成功
+- security-scan ✅ 成功  
+- docker-build ✅ 成功
+- integration-test ❌ 失败
+- deploy ⏭️ 跳过
+
+失败作业详情 - integration-test:
+===============================
+
+步骤1: Set up job (0s) ✅
+步骤2: Run actions/checkout@v4 (1s) ✅
+步骤3: Install system-level build dependencies (20s) ✅
+步骤4: Set up Python (0s) ✅
+步骤5: Pre-install Cython for build dependencies (3s) ✅
+步骤6: Upgrade packaging tools (1s) ✅
+步骤7: Install test dependencies (25s) ✅
+步骤8: Run integration tests (6m 6s) ❌ 失败
+
+核心错误信息:
+============
+
+Docker容器启动过程:
+- Container ntn-redis Starting ✅
+- Container ntn-redis Started ✅
+- Container ntn-redis Waiting (健康检查中...)
+- Container ntn-redis Healthy ✅ (健康检查通过)
+
+依赖服务启动:
+- Container ntn-ai-strategy-assistant Creating
+- Container ntn-neurohub Created ✅
+- Container ntn-api-forge Created ✅
+- Container ntn-asts-console Creating
+- Container ntn-reviewguard Created ✅
+- Container ntn-data-spider Created ✅
+- Container ntn-observability-center Created ✅
+- Container ntn-mms Created ✅
+- Container ntn-tradeguard Created ✅
+- Container ntn-opticore Created ✅
+- Container ntn-ai-strategy-assistant Created ✅
+- Container ntn-asts-console Created ✅
+
+服务启动状态:
+- Container ntn-reviewguard Starting
+- Container ntn-opticore Starting  
+- Container ntn-api-forge Starting
+- Container ntn-tradeguard Starting
+- Container ntn-mms Starting
+- Container ntn-data-spider Starting
+- Container ntn-scan-pulse Starting
+- Container ntn-observability-center Starting
+- Container ntn-neurohub Starting
+- Container ntn-tacore-service Starting
+
+- Container ntn-tradeguard Started ✅
+- Container ntn-tacore-service Started ✅
+- Container ntn-api-forge Started ✅
+- Container ntn-reviewguard Started ✅
+- Container ntn-observability-center Started ✅
+- Container ntn-mms Started ✅
+- Container ntn-scan-pulse Started ✅
+- Container ntn-neurohub Started ✅
+- Container ntn-data-spider Started ✅
+
+关键失败信息:
+[13453行] Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: "uvicorn": executable file not found in $PATH: unknown
+
+[13454行] Error: Process completed with exit code 1.
+
+后续清理步骤:
+- Dump Redis logs on failure (1s) ✅
+- Upload test results (2s) ✅
+- Post Set up Python (0s) ✅
+- Post Run actions/checkout@v4 (1s) ✅
+- Complete job (1s) ✅
+
+错误摘要:
+========
+在容器启动阶段，当尝试启动某个服务容器时，Docker无法找到uvicorn可执行文件。错误消息显示："uvicorn": executable file not found in $PATH，表明容器内的PATH环境变量未正确配置，导致无法找到uvicorn命令。
+
+错误发生在第13453行，此时大部分服务已成功启动，包括ntn-api-forge容器本身也显示为Started状态，但随后发生了uvicorn可执行文件找不到的错误。
+
+这表明问题仍然存在于api-forge服务的Dockerfile中的PATH配置，尽管我们之前进行了修复。

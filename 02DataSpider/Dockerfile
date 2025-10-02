@@ -52,7 +52,8 @@ RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
 # 设置环境变量
-ENV APP_ENV=development \
+ENV PATH="/opt/venv/bin:$PATH" \
+    APP_ENV=development \
     NTN_ENV=development \
     PYTHONPATH=/app \
     LOG_LEVEL=DEBUG
@@ -77,7 +78,8 @@ RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
 # 设置环境变量
-ENV APP_ENV=staging \
+ENV PATH="/opt/venv/bin:$PATH" \
+    APP_ENV=staging \
     NTN_ENV=staging \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO
@@ -109,7 +111,8 @@ RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
 # 设置环境变量
-ENV APP_ENV=production \
+ENV PATH="/opt/venv/bin:$PATH" \
+    APP_ENV=production \
     NTN_ENV=production \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO

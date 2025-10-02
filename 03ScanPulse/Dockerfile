@@ -29,9 +29,10 @@ FROM python:3.11-slim as runtime
 WORKDIR /app
 
 # 环境变量
-ENV PYTHONPATH=/app:/app/deps
-ENV PYTHONUNBUFFERED=1
-ENV SCANNER_ENV=production
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app:/app/deps \
+    PYTHONUNBUFFERED=1 \
+    SCANNER_ENV=production
 
 # 安装运行时依赖（保留必要的）
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && apt-get update && apt-get install -y \

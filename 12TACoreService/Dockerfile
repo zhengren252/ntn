@@ -27,9 +27,10 @@ COPY 12TACoreService/. .
 RUN mkdir -p /app/data /app/logs /app/config
 
 # 设置环境变量
-ENV PYTHONPATH=/app
-ENV TACORESERVICE_ENV=production
-ENV TACORESERVICE_LOG_LEVEL=INFO
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app \
+    TACORESERVICE_ENV=production \
+    TACORESERVICE_LOG_LEVEL=INFO
 
 # 暴露端口
 EXPOSE 5555 8000

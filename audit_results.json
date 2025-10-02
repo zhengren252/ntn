@@ -1,11 +1,19 @@
 {
-  "timestamp": "2025-09-27T18:21:04.772893",
-  "project_root": "E:\\NTN_Clean",
-  "scope": "python",
-  "python_review": {
-    "status": "error",
-    "message": "code_review.py not found at E:\\NTN_Clean\\code_review.py"
-  },
-  "powershell_syntax": null,
-  "shell_syntax": null
+  "total_dockerfiles": 18,
+  "python_dockerfiles": 10,
+  "already_configured": [
+    "e:\\NTN_Clean\\01APIForge\\Dockerfile",
+    "e:\\NTN_Clean\\04OptiCore\\Dockerfile",
+    "e:\\NTN_Clean\\09MMS\\Dockerfile",
+    "e:\\NTN_Clean\\10ReviewGuard\\Dockerfile"
+  ],
+  "needs_fix": [
+    "e:\\NTN_Clean\\02DataSpider\\Dockerfile",
+    "e:\\NTN_Clean\\03ScanPulse\\Dockerfile",
+    "e:\\NTN_Clean\\12TACoreService\\Dockerfile",
+    "e:\\NTN_Clean\\12TACoreService\\TradingAgents-CN\\Dockerfile",
+    "e:\\NTN_Clean\\13AIStrategyAssistant\\Dockerfile",
+    "e:\\NTN_Clean\\14ObservabilityCenter\\Dockerfile"
+  ],
+  "timestamp": "1759382550.2450228"
 }

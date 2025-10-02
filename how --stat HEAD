@@ -1,0 +1,10 @@
+[33m06bfb37[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix(ci): implement robust healthcheck for redis service
+[33ma18afe5[m CI: Add Redis logs capture on failure for diagnostic enhancement
+[33m4e9e033[m refactor(deps): remove obsolete PyYAML pin to resolve conflict
+[33m5ef0b47[m 现代化CI工具链：废弃旧版docker-compose，使用内置docker compose
+[33ma2d33e6[m fix(ci): pin PyYAML to 5.3.1 to avoid build failure
+[33mf2157be[m chore(ci): enable verbose logging for pip install diagnostics
+[33me788cfe[m fix(ci): unify build environment for all jobs
+[33mab1abb1[m fix(ci): unify build environment for all jobs
+[33mf703948[m fix(build): correct Dockerfile encoding for opticore service
+[33m6cedf4e[m fix: 移除Docker构建中的清华PyPI镜像源配置
