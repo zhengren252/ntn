@@ -15,11 +15,10 @@ services:
     networks:
       - ntn_network
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" PING | grep -q PONG"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 模组01: API统一管理工厂
   api_forge:
