@@ -27,6 +27,7 @@ services:
       dockerfile: 01APIForge/Dockerfile
     container_name: ntn-api-forge
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "api_factory.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
@@ -58,6 +59,7 @@ services:
       target: production
     container_name: ntn-data-spider
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "data_spider.main:app", "--host", "0.0.0.0", "--port", "5000"]
     environment:
       - APP_ENV=production
       - NTN_ENV=production
@@ -98,6 +100,7 @@ services:
       - 1.1.1.1
     container_name: ntn-scan-pulse
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "scan_pulse.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - APP_ENV=production
       - REDIS_HOST=redis
@@ -147,6 +150,7 @@ services:
       dockerfile: ./04OptiCore/Dockerfile
     container_name: ntn-opticore
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "opticore.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
@@ -231,6 +235,7 @@ services:
       dockerfile: ./09MMS/Dockerfile
     container_name: ntn-mms
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "mms.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
@@ -287,6 +292,7 @@ services:
       dockerfile: ./12TACoreService/Dockerfile
     container_name: ntn-tacore-service
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "tacore_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
@@ -315,6 +321,7 @@ services:
       dockerfile: ./13AIStrategyAssistant/Dockerfile
     container_name: ntn-ai-strategy-assistant
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "ai_strategy_assistant.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
@@ -345,6 +352,7 @@ services:
       dockerfile: ./14ObservabilityCenter/Dockerfile
     container_name: ntn-observability-center
     restart: unless-stopped
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "observability_center.main:app", "--host", "0.0.0.0", "--port", "3000"]
     environment:
       - PORT=3000
     ports:
