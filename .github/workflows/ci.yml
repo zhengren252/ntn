@@ -170,6 +170,10 @@ jobs:
         # Cleanup
         docker compose down
     
+    - name: Dump Redis logs on failure
+      if: failure()
+      run: docker compose logs redis
+    
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
