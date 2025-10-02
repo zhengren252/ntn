@@ -114,8 +114,9 @@ jobs:
       env:
         REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
       run: |
-        # Build all module images
-        docker compose -f docker-compose.yml build
+        echo "::warning::Performing aggressive cache prune to resolve build issues."
+        docker system prune -a --force
+        docker compose -f docker-compose.yml build --no-cache
         
         # Test basic container startup
         docker compose -f docker-compose.yml up -d redis
