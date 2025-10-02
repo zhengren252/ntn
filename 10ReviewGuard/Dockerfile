@@ -45,11 +45,12 @@ COPY 10ReviewGuard/.env.production 10ReviewGuard/.env.staging 10ReviewGuard/.env
 RUN mkdir -p /app/data /app/logs /app/config && \
     chown -R reviewguard:reviewguard /app
 
+# 创建虚拟环境并设置PATH
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # 切换到非root用户
 USER reviewguard
-
-# 设置虚拟环境PATH
-ENV PATH="/opt/venv/bin:$PATH"
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

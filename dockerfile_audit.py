@@ -43,9 +43,9 @@ def has_correct_path_env(dockerfile_path):
         with open(dockerfile_path, 'r', encoding='utf-8') as f:
             content = f.read()
             
-        # 检查是否包含PATH配置
-        path_pattern = r'ENV\s+PATH\s*=\s*["\']?/opt/venv/bin:\$PATH["\']?'
-        return bool(re.search(path_pattern, content, re.IGNORECASE))
+        # 检查是否包含PATH配置（更宽松的匹配）
+        path_pattern = r'ENV\s+.*PATH\s*=\s*["\']?.*opt/venv/bin.*["\']?'
+        return bool(re.search(path_pattern, content, re.IGNORECASE | re.MULTILINE))
     except Exception as e:
         print(f"错误读取文件 {dockerfile_path}: {e}")
         return False

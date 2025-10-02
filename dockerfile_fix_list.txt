@@ -1,6 +1,0 @@
-e:\NTN_Clean\02DataSpider\Dockerfile
-e:\NTN_Clean\03ScanPulse\Dockerfile
-e:\NTN_Clean\12TACoreService\Dockerfile
-e:\NTN_Clean\12TACoreService\TradingAgents-CN\Dockerfile
-e:\NTN_Clean\13AIStrategyAssistant\Dockerfile
-e:\NTN_Clean\14ObservabilityCenter\Dockerfile

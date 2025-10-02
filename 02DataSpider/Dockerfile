@@ -52,8 +52,7 @@ RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
 # 设置环境变量
-ENV PATH="/opt/venv/bin:$PATH" \
-    APP_ENV=development \
+ENV APP_ENV=development \
     NTN_ENV=development \
     PYTHONPATH=/app \
     LOG_LEVEL=DEBUG
@@ -78,8 +77,7 @@ RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
 # 设置环境变量
-ENV PATH="/opt/venv/bin:$PATH" \
-    APP_ENV=staging \
+ENV APP_ENV=staging \
     NTN_ENV=staging \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO
@@ -110,9 +108,12 @@ COPY 02DataSpider/main.py 02DataSpider/requirements.txt ./
 RUN mkdir -p data logs temp \
     && chown -R appuser:appuser /app
 
+# 创建虚拟环境并设置PATH
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # 设置环境变量
-ENV PATH="/opt/venv/bin:$PATH" \
-    APP_ENV=production \
+ENV APP_ENV=production \
     NTN_ENV=production \
     PYTHONPATH=/app \
     LOG_LEVEL=INFO
