@@ -124,6 +124,7 @@ jobs:
     - name: Build and test Docker images
       env:
         REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        COMPOSE_PARALLEL_LIMIT: 1
       run: |
         echo "::warning::Performing aggressive cache prune to resolve build issues."
         docker system prune -a --force
