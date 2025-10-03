@@ -5,8 +5,8 @@ services:
     container_name: ntn-redis
     restart: unless-stopped
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
-    command: redis-server --requirepass ${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-ntn-ci-redis-password}
     # 取消宿主机端口映射，避免与本地/其他Redis冲突
     # ports:
     #   - "6379:6379"
@@ -31,7 +31,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
       - ZMQ_PUBLISHER_PORT=5555
       - ZMQ_SUBSCRIBER_PORT=5556
       - ZMQ_CONNECT_ADDRESS=tcp://ntn-data-spider
@@ -64,7 +64,7 @@ services:
       - APP_ENV=production
       - NTN_ENV=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
       - ZMQ_PUBLISHER_PORT=5556
       - ZMQ_SUBSCRIBER_PORT=5555
       - ZMQ_PUBLISHER_HOST=0.0.0.0
@@ -104,7 +104,7 @@ services:
     environment:
       - APP_ENV=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8001:8000"
     depends_on:
@@ -154,7 +154,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8002:8000"
     depends_on:
@@ -182,7 +182,7 @@ services:
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8003:3000"
     depends_on:
@@ -210,7 +210,7 @@ services:
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8004:3000"
     depends_on:
@@ -239,7 +239,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8005:8000"
     depends_on:
@@ -267,7 +267,7 @@ services:
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8006:3000"
     depends_on:
@@ -296,7 +296,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8007:8000"
     depends_on:
@@ -325,7 +325,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn_redis_2024}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8008:8000"
     depends_on:

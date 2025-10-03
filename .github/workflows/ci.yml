@@ -146,6 +146,9 @@ jobs:
     needs: [docker-build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
+    env:
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+    
     steps:
     - uses: actions/checkout@v4
     
