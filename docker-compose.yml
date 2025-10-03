@@ -268,6 +268,7 @@ services:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8006:3000"
     depends_on:
@@ -355,6 +356,8 @@ services:
     command: ["python", "-m", "uvicorn", "observability_center.main:app", "--host", "0.0.0.0", "--port", "3000"]
     environment:
       - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "5010:3000" # API
       - "3005:3000" # Dashboard
