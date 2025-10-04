@@ -174,7 +174,7 @@ jobs:
     
     - name: Run diagnostic import test on tacore-service
       run: |
-        docker compose run --rm tacore-service python -c "import tacoreservice.main; print('Import test successful!')"
+        docker compose run --rm tacore_service python -c "import tacoreservice.main; print('Import test successful!')"
     
     - name: Dump all container logs on failure
       if: failure()
