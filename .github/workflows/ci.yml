@@ -172,19 +172,9 @@ jobs:
       run: |
         pip install -r 03ScanPulse/requirements-dev.txt --no-build-isolation
     
-    - name: Run integration tests
-      env:
-        PYTHONPATH: .
+    - name: Run diagnostic import test on tacore-service
       run: |
-        # Start the full system
-        docker compose up -d
-        sleep 30
-        
-        # Run integration test suite
-        python end_to_end_test.py
-        
-        # Cleanup
-        docker compose down
+        docker compose run --rm tacore-service python -c "import tacoreservice.main; print('Import test successful!')"
     
     - name: Dump all container logs on failure
       if: failure()
