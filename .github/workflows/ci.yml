@@ -173,8 +173,7 @@ jobs:
         pip install -r 03ScanPulse/requirements-dev.txt --no-build-isolation
     
     - name: Run diagnostic import test on tacore-service
-      run: |
-        docker compose run --rm tacore_service python -c "import tacoreservice.main; print('Import test successful!')"
+      run: docker compose run --rm tacore_service sh -c "echo '--- Listing files in /app ---' && ls -R && echo '--- Attempting import ---' && python -c 'import tacoreservice.main; print(\"Import test successful!\")'"
     
     - name: Dump all container logs on failure
       if: failure()
