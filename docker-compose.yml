@@ -293,7 +293,7 @@ services:
       dockerfile: ./12TACoreService/Dockerfile
     container_name: ntn-tacore-service
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "tacore_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["python", "-m", "uvicorn", "tacoreservice.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
