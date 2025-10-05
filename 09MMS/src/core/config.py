@@ -52,12 +52,12 @@ class Settings(BaseSettings):
     REDIS_MAX_CONNECTIONS: int = Field(default=20, env="REDIS_MAX_CONNECTIONS")
 
     # 数据库配置
-    DATABASE_URL: str = Field(default="sqlite:///./data/mms.db", env="DATABASE_URL")
+    DATABASE_URL: str = Field(default="sqlite:///app/data/mms.db", env="DATABASE_URL")
     DATABASE_ECHO: bool = Field(default=False, env="DATABASE_ECHO")
 
     # 日志配置
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
-    LOG_FILE: str = Field(default="./logs/mms.log", env="LOG_FILE")
+    LOG_FILE: str = Field(default="/app/logs/mms.log", env="LOG_FILE")
     LOG_ROTATION: str = Field(default="1 day", env="LOG_ROTATION")
     LOG_RETENTION: str = Field(default="30 days", env="LOG_RETENTION")
 

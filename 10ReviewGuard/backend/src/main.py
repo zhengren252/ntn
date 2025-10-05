@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
         redis_client = redis.Redis(
             host=settings.redis_host,
             port=settings.redis_port,
+            password=settings.redis_password,
             decode_responses=True
         )
         redis_client.ping()

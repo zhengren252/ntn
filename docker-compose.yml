@@ -13,7 +13,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -35,15 +35,20 @@ services:
       - ZMQ_PUBLISHER_PORT=5555
       - ZMQ_SUBSCRIBER_PORT=5556
       - ZMQ_CONNECT_ADDRESS=tcp://ntn-data-spider
+      - TACORE_SERVICE_URL=tcp://ntn-tacore-service:5555
 
     depends_on:
       redis:
         condition: service_healthy
+      tacore_service:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
     volumes:
       - ./01APIForge/data:/app/data
       - ./01APIForge/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -59,7 +64,7 @@ services:
       target: production
     container_name: ntn-data-spider
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "data_spider.main:app", "--host", "0.0.0.0", "--port", "5000"]
+    command: ["python", "main.py", "--env", "production", "--mode", "all"]
     environment:
       - APP_ENV=production
       - NTN_ENV=production
@@ -81,7 +86,7 @@ services:
       - ./02DataSpider/data:/app/data
       - ./02DataSpider/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:5000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -100,21 +105,24 @@ services:
       - 1.1.1.1
     container_name: ntn-scan-pulse
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "scan_pulse.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["python", "main.py", "start", "--environment", "production"]
     environment:
       - APP_ENV=production
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - TACORE_SERVICE_URL=tcp://ntn-tacore-service:5555
     ports:
       - "8001:8000"
     depends_on:
       redis:
         condition: service_healthy
+      tacore_service:
+        condition: service_healthy
     volumes:
       - ./03ScanPulse/data:/app/data
       - ./03ScanPulse/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -131,13 +139,17 @@ services:
     restart: unless-stopped
     ports:
       - "8088:4173"
+    environment:
+      - API_BASE_URL=http://ntn-api-forge:8000
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     depends_on:
       api_forge:
         condition: service_healthy
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
-      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:4173/health || exit 1"]
+      test: ["CMD-SHELL", "test -f /app/dist/index.html && ps aux | grep -q '[n]ode' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -150,21 +162,24 @@ services:
       dockerfile: ./04OptiCore/Dockerfile
     container_name: ntn-opticore
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "opticore.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["/opt/venv/bin/python", "-m", "uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - TACORE_SERVICE_URL=tcp://ntn-tacore-service:5555
     ports:
       - "8002:8000"
     depends_on:
       redis:
         condition: service_healthy
+      tacore_service:
+        condition: service_healthy
     volumes:
       - ./04OptiCore/data:/app/data
       - ./04OptiCore/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -184,7 +199,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
-      - "8003:3000"
+      - "8003:3001"
     depends_on:
       redis:
         condition: service_healthy
@@ -192,9 +207,9 @@ services:
       - ./05-07TradeGuard/data:/app/data
       - ./05-07TradeGuard/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
-      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
+      test: ["CMD", "nc", "-z", "localhost", "3001"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -209,6 +224,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - PORT=3000
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
@@ -220,7 +236,7 @@ services:
       - ./08NeuroHub/data:/app/data
       - ./08NeuroHub/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
       interval: 30s
@@ -235,21 +251,24 @@ services:
       dockerfile: ./09MMS/Dockerfile
     container_name: ntn-mms
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "mms.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["python", "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - TACORE_SERVICE_URL=tcp://ntn-tacore-service:5555
     ports:
       - "8005:8000"
     depends_on:
       redis:
         condition: service_healthy
+      tacore_service:
+        condition: service_healthy
     volumes:
       - ./09MMS/data:/app/data
       - ./09MMS/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -266,8 +285,8 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - REDIS_HOST=ntn-redis
+      - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
     ports:
       - "8006:3000"
@@ -278,9 +297,9 @@ services:
       - ./10ReviewGuard/data:/app/data
       - ./10ReviewGuard/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
-      test: ["CMD-SHELL", "rid=$$(cat /proc/sys/kernel/random/uuid) && curl -fsS -H \"X-Request-ID: $$rid\" -H \"Accept: application/json\" --max-time 10 http://localhost:3000/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -307,7 +326,7 @@ services:
       - ./12TACoreService/data:/app/data
       - ./12TACoreService/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -322,11 +341,12 @@ services:
       dockerfile: ./13AIStrategyAssistant/Dockerfile
     container_name: ntn-ai-strategy-assistant
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "ai_strategy_assistant.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["/opt/venv/bin/python", "main.py"]
     environment:
       - ENVIRONMENT=production
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-ntn-ci-redis-password}
+      - TACORE_SERVICE_URL=tcp://ntn-tacore-service:5555
     ports:
       - "8008:8000"
     depends_on:
@@ -338,7 +358,7 @@ services:
       - ./13AIStrategyAssistant/data:/app/data
       - ./13AIStrategyAssistant/logs:/app/logs
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import sys,urllib.request,urllib.error,socket,uuid; socket.setdefaulttimeout(10); rid=str(uuid.uuid4()); req=urllib.request.Request('http://localhost:8000/health', headers={'X-Request-ID': rid, 'Accept':'application/json'}); resp=urllib.request.urlopen(req, timeout=10); code=resp.getcode(); sys.exit(0 if 200<=code<300 else 1)\""]
       interval: 30s
@@ -353,7 +373,7 @@ services:
       dockerfile: ./14ObservabilityCenter/Dockerfile
     container_name: ntn-observability-center
     restart: unless-stopped
-    command: ["python", "-m", "uvicorn", "observability_center.main:app", "--host", "0.0.0.0", "--port", "3000"]
+    command: ["/opt/venv/bin/python", "main.py"]
     environment:
       - PORT=3000
       - REDIS_HOST=redis
@@ -365,7 +385,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - ntn_network
+      - asts_network
     healthcheck:
       test: ["CMD-SHELL", "python /app/health_check.py http://localhost:3000/health 10 3 1.0 || exit 1"]
       interval: 30s
@@ -423,8 +443,9 @@ services:
   #     start_period: 30s
 
 networks:
-  ntn_network:
+  asts_network:
     driver: bridge
+    name: asts_network
 volumes:
   redis_data:
     driver: local

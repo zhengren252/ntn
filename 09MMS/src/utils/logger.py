@@ -100,11 +100,6 @@ class LoggerManager:
         # 获取配置
         config = cls._get_config()
 
-        # 创建日志目录
-        log_file_path = Path(config.LOG_FILE)
-        log_dir = log_file_path.parent
-        log_dir.mkdir(parents=True, exist_ok=True)
-
         # 设置根日志器
         root_logger = logging.getLogger()
         root_logger.setLevel(getattr(logging, config.LOG_LEVEL.upper()))
@@ -112,14 +107,8 @@ class LoggerManager:
         # 清除现有处理器
         root_logger.handlers.clear()
 
-        # 添加控制台处理器
+        # 仅添加控制台处理器(临时禁用文件日志解决权限问题)
         cls._add_console_handler(root_logger)
-
-        # 添加文件处理器
-        cls._add_file_handlers(root_logger)
-
-        # 添加错误文件处理器
-        cls._add_error_handler(root_logger)
 
         # 设置第三方库日志级别
         cls._configure_third_party_loggers()
@@ -128,7 +117,7 @@ class LoggerManager:
 
         # 记录初始化完成
         logger = cls.get_logger("LoggerManager")
-        logger.info("日志系统初始化完成")
+        logger.info("日志系统初始化完成 (仅控制台输出)")
 
     @classmethod
     def _add_console_handler(cls, logger):
@@ -158,9 +147,25 @@ class LoggerManager:
         """添加文件处理器"""
         config = cls._get_config()
         log_dir = Path(config.LOG_FILE).parent
+        
+        # 确保日志目录存在并可写
+        log_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            import os
+            import stat
+            os.chmod(log_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 777权限
+        except Exception:
+            pass
 
         # 应用日志文件
         app_log_file = log_dir / "mms_app.log"
+        # 预创建文件确保可写
+        try:
+            app_log_file.touch(exist_ok=True)
+            os.chmod(app_log_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)  # 666权限
+        except Exception:
+            pass
+            
         app_handler = logging.handlers.RotatingFileHandler(
             app_log_file,
             maxBytes=10 * 1024 * 1024,  # 10MB
@@ -171,6 +176,13 @@ class LoggerManager:
 
         # 调试日志文件
         debug_log_file = log_dir / "mms_debug.log"
+        # 预创建文件确保可写
+        try:
+            debug_log_file.touch(exist_ok=True)
+            os.chmod(debug_log_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)  # 666权限
+        except Exception:
+            pass
+            
         debug_handler = logging.handlers.RotatingFileHandler(
             debug_log_file,
             maxBytes=10 * 1024 * 1024,  # 10MB

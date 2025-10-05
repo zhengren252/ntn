@@ -20,8 +20,8 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建应用用户
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# 创建与宿主机匹配的用户 (UID 1000)
+RUN groupadd -g 1000 vscode && useradd -m -u 1000 -g 1000 vscode
 
 # 设置工作目录
 WORKDIR /app
@@ -49,7 +49,7 @@ COPY 02DataSpider/. .
 
 # 创建数据目录
 RUN mkdir -p data logs temp \
-    && chown -R appuser:appuser /app
+    && chown -R vscode:vscode /app
 
 # 设置环境变量
 ENV APP_ENV=development \
@@ -58,7 +58,7 @@ ENV APP_ENV=development \
     LOG_LEVEL=DEBUG
 
 # 切换到应用用户
-USER appuser
+USER vscode
 
 # 暴露端口
 EXPOSE 5000 5555 5556
@@ -74,7 +74,7 @@ COPY 02DataSpider/. .
 
 # 创建数据目录
 RUN mkdir -p data logs temp \
-    && chown -R appuser:appuser /app
+    && chown -R vscode:vscode /app
 
 # 设置环境变量
 ENV APP_ENV=staging \
@@ -83,7 +83,7 @@ ENV APP_ENV=staging \
     LOG_LEVEL=INFO
 
 # 切换到应用用户
-USER appuser
+USER vscode
 
 # 暴露端口
 EXPOSE 5000 5555 5556
@@ -104,13 +104,12 @@ COPY 02DataSpider/config/ ./config/
 COPY 02DataSpider/scripts/ ./scripts/
 COPY 02DataSpider/main.py 02DataSpider/requirements.txt ./
 
-# 创建数据目录
-RUN mkdir -p data logs temp \
-    && chown -R appuser:appuser /app
-
-# 创建虚拟环境并设置PATH
+# 创建数据目录和虚拟环境
+RUN mkdir -p data logs temp
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
+RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+RUN chown -R vscode:vscode /app /opt/venv
 
 # 设置环境变量
 ENV APP_ENV=production \
@@ -119,7 +118,7 @@ ENV APP_ENV=production \
     LOG_LEVEL=INFO
 
 # 切换到应用用户
-USER appuser
+USER vscode
 
 # 暴露端口
 EXPOSE 5000 5555 5556
@@ -129,4 +128,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
     CMD python -c "import sys,urllib.request,socket; socket.setdefaulttimeout(5); sys.exit(0 if 200<=urllib.request.urlopen('http://localhost:5000/live', timeout=5).getcode()<300 else 1)"
 
 # 启动命令
-CMD ["python", "main.py", "--env", "production", "--mode", "all"]
+CMD ["/opt/venv/bin/python", "main.py", "--env", "production", "--mode", "all"]

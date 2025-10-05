@@ -56,8 +56,15 @@ COPY 08NeuroHub/package*.json ./
 # Install dependencies with --legacy-peer-deps to avoid peer dependency conflicts
 RUN npm install --legacy-peer-deps
 
+# 创建与宿主机匹配的用户 (UID 1000)
+RUN groupadd -g 1000 vscode && useradd -u 1000 -g 1000 vscode
+
 # Create necessary directories
-RUN mkdir -p logs data
+RUN mkdir -p logs data && \
+    chown -R vscode:vscode /app
+
+# Switch to non-root user
+USER vscode
 
 # Expose ports (adjust if needed based on your configuration)
 EXPOSE 3000 5555 5556

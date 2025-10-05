@@ -18,15 +18,16 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建非root用户
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# 创建与宿主机匹配的用户 (UID 1000)
+RUN groupadd -g 1000 vscode && useradd -u 1000 -g 1000 vscode
 
 # 复制requirements文件
 COPY 14ObservabilityCenter/requirements.txt .
 
-# 安装Python依赖
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# 创建虚拟环境并安装依赖
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # 复制健康检查脚本
 COPY 14ObservabilityCenter/health_check.py /app/health_check.py
@@ -36,10 +37,11 @@ COPY 14ObservabilityCenter/. .
 
 # 创建必要的目录
 RUN mkdir -p logs data && \
-    chown -R appuser:appuser /app
+    chown -R vscode:vscode /app && \
+    chmod 755 logs data
 
 # 切换到非root用户
-USER appuser
+USER vscode
 
 # 暴露端口
 EXPOSE 8000 5555
@@ -49,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python /app/health_check.py http://localhost:8000/health 10 3 1.0 || exit 1
 
 # 启动命令
-CMD ["python", "main.py"]
+CMD ["/opt/venv/bin/python", "main.py"]

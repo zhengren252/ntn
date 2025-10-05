@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.app import create_app
+from api.app import create_app
 from config.settings import get_settings
 
 def main():

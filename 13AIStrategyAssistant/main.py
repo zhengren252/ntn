@@ -36,12 +36,26 @@ import uvicorn
 import zmq
 import zmq.asyncio
 
-# 配置日志
+# 创建日志目录并设置权限
+import stat
+log_dir = "/app/logs"
+os.makedirs(log_dir, mode=0o755, exist_ok=True)
+
+# 创建日志文件并设置权限
+log_file = os.path.join(log_dir, "app.log")
+try:
+    if not os.path.exists(log_file):
+        open(log_file, 'a').close()
+        os.chmod(log_file, 0o644)
+except Exception as e:
+    print(f"Warning: Could not create log file: {e}")
+
+# 设置日志
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("logs/app.log"),
+        logging.FileHandler(log_file) if os.access(log_file, os.W_OK) else logging.NullHandler(),
         logging.StreamHandler()
     ]
 )

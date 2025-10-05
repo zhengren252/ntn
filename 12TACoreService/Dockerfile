@@ -23,8 +23,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY 12TACoreService/. .
 
+# 创建与宿主机匹配的用户 (UID 1000)
+RUN groupadd -g 1000 vscode && useradd -u 1000 -g 1000 vscode
+
 # 创建必要的目录
-RUN mkdir -p /app/data /app/logs /app/config
+RUN mkdir -p /app/data /app/logs /app/config && \
+    chown -R vscode:vscode /app
+
+# Switch to non-root user
+USER vscode
 
 # 设置环境变量
 ENV PYTHONPATH=/app \

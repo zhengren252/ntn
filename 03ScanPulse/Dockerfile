@@ -43,21 +43,21 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
 # 从构建阶段复制Python依赖
 COPY --from=builder /build/deps /app/deps
 
-# 创建非root用户与组
-RUN groupadd -r scanner && useradd -r -g scanner -s /bin/false scanner
+# 创建与宿主机匹配的用户 (UID 1000)
+RUN groupadd -g 1000 vscode && useradd -m -u 1000 -g 1000 vscode
 
 # 创建必需目录并设置权限（统一写入 /app/logs，避免 /var/log 权限问题）
 RUN mkdir -p /app/logs /app/config && \
-    chown -R scanner:scanner /app
+    chown -R vscode:vscode /app
 
 # 复制应用代码
 COPY 03ScanPulse/. /app/
 
 # 设置文件权限
-RUN chown -R scanner:scanner /app
+RUN chown -R vscode:vscode /app
 
 # 切换到非root用户
-USER scanner
+USER vscode
 
 # 暴露端口（Web 8000, ZMQ 5555/5558）
 EXPOSE 8000 5555 5558

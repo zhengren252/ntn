@@ -26,8 +26,7 @@ FROM mcr.microsoft.com/devcontainers/python:3.11-bookworm as runtime
 # 在运行阶段安装健康检查所需工具（curl）
 RUN apt-get update && apt-get install -y curl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# 创建非root用户
-RUN groupadd -r apiuser && useradd -r -g apiuser apiuser
+# 使用现有的 vscode 用户 (UID/GID 1000)
 
 # 设置工作目录
 WORKDIR /app
@@ -45,10 +44,10 @@ COPY 01APIForge/pytest.ini ./
 
 # 创建运行时需要的目录
 RUN mkdir -p /app/data /app/logs && \
-    chown -R apiuser:apiuser /app
+    chown -R vscode:vscode /app
 
 # 切换到非root用户
-USER apiuser
+USER vscode
 
 # 设置环境变量
 ENV PATH="/opt/venv/bin:$PATH"
